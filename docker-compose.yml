@@ -1,0 +1,5 @@
+# Docker Compose configuration for Mosquitto MQTT broker, MongoDB, Backend service, and Frontend UI
+version: '3.8'
+
+services:
+  # Broker, MongoDB, Backend, Frontend services will be configured here
