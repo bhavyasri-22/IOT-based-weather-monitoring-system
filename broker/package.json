@@ -1,0 +1,12 @@
+{
+  "name": "weather-mqtt-broker",
+  "version": "1.0.0",
+  "description": "Standalone Node.js MQTT Broker (Aedes) for local non-Docker development",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "aedes": "^0.51.0"
+  }
+}
