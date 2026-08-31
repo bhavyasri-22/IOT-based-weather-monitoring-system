@@ -2,15 +2,16 @@ const SensorReading = require('../models/SensorReading');
 const DeviceHealth = require('../models/DeviceHealth');
 const { validateTelemetryPayload, validateHeartbeatPayload } = require('../validators/telemetryValidator');
 const { calculateHeatIndex } = require('../utils/weatherDerivations');
+const { handleHeartbeat } = require('../deviceHealth/heartbeatHandler');
 const mongoose = require('mongoose');
 
 /**
- * Centralized Ingestion Service for MQTT Telemetry and Heartbeats
+ * Centralized Ingestion Service for MQTT Telemetry and Heartbeats (SRS F.6, F.7, F.11)
  */
 class IngestionService {
   /**
    * Processes incoming weather telemetry message
-   * @param {Buffer|string} rawPayload 
+   * @param {Buffer|string|Object} rawPayload 
    */
   async processTelemetry(rawPayload) {
     const validation = validateTelemetryPayload(rawPayload);
@@ -18,14 +19,14 @@ class IngestionService {
     if (!validation.isValid) {
       console.warn(`[Ingestion Service] ⚠️ INVALID TELEMETRY DROPPED:`, {
         errors: validation.errors,
-        rawPayload: rawPayload.toString()
+        rawPayload: typeof rawPayload === 'object' && !Buffer.isBuffer(rawPayload) ? JSON.stringify(rawPayload) : rawPayload.toString()
       });
       return { success: false, reason: 'validation_failed', errors: validation.errors };
     }
 
     const telemetryData = validation.parsed;
 
-    // Calculate derived parameters (Heat Index)
+    // Calculate derived parameters (Heat Index per SRS F.8)
     const heatIndex = calculateHeatIndex(telemetryData.temperature, telemetryData.humidity);
 
     const docToSave = {
@@ -39,22 +40,35 @@ class IngestionService {
 
     let savedReading = docToSave;
 
-    // Persist to MongoDB if connection is ready
+    // Persist to MongoDB if connection is ready (SRS F.7)
     if (mongoose.connection.readyState === 1) {
       try {
         savedReading = await SensorReading.create(docToSave);
 
-        // Upsert Device Health state
+        // Update Device Health state (SRS F.11, last_seen & status: online)
+        const prevDevice = await DeviceHealth.findOne({ device_id: telemetryData.device_id });
+        const wasOffline = prevDevice && prevDevice.status === 'offline';
+
         await DeviceHealth.findOneAndUpdate(
           { device_id: telemetryData.device_id },
           {
             $set: {
               status: 'online',
+              last_seen: telemetryData.timestamp,
+              last_seen_timestamp: telemetryData.timestamp,
               last_telemetry: telemetryData.timestamp
+            },
+            $setOnInsert: {
+              first_seen: telemetryData.timestamp,
+              firmware_version: '1.0.0'
             }
           },
           { upsert: true, new: true }
         );
+
+        if (wasOffline) {
+          console.log(`[Device Health Monitor] 🟢 Device '${telemetryData.device_id}' recovered back ONLINE (Telemetry received)`);
+        }
       } catch (dbErr) {
         console.error(`[Ingestion Service] DB Persistence Error: ${dbErr.message}`);
       }
@@ -63,7 +77,7 @@ class IngestionService {
     }
 
     console.log(
-      `[Ingestion Service] ✅ INGESTED: Device='${telemetryData.device_id}' | ` +
+      `[Ingestion Service] ✅ INGESTED & PERSISTED: Device='${telemetryData.device_id}' | ` +
       `Temp=${telemetryData.temperature ?? 'N/A'}°C | Hum=${telemetryData.humidity ?? 'N/A'}% | ` +
       `HeatIndex=${heatIndex ?? 'N/A'}°C | Press=${telemetryData.pressure ?? 'N/A'}hPa`
     );
@@ -72,8 +86,8 @@ class IngestionService {
   }
 
   /**
-   * Processes incoming node heartbeat message
-   * @param {Buffer|string} rawPayload 
+   * Processes incoming node heartbeat message (SRS F.5, DFD 0.3.4)
+   * @param {Buffer|string|Object} rawPayload 
    */
   async processHeartbeat(rawPayload) {
     const validation = validateHeartbeatPayload(rawPayload);
@@ -84,27 +98,12 @@ class IngestionService {
     }
 
     const heartbeat = validation.parsed;
+    const result = await handleHeartbeat(heartbeat);
 
-    if (mongoose.connection.readyState === 1) {
-      try {
-        await DeviceHealth.findOneAndUpdate(
-          { device_id: heartbeat.device_id },
-          {
-            $set: {
-              status: heartbeat.status || 'online',
-              last_heartbeat: heartbeat.heartbeat_timestamp
-            }
-          },
-          { upsert: true, new: true }
-        );
-      } catch (dbErr) {
-        console.error(`[Ingestion Service] Heartbeat DB Error: ${dbErr.message}`);
-      }
-    }
-
-    console.log(`[Ingestion Service] 💓 HEARTBEAT: Device='${heartbeat.device_id}' Status='${heartbeat.status}'`);
-    return { success: true, data: heartbeat };
+    console.log(`[Ingestion Service] 💓 HEARTBEAT TRACKED: Device='${heartbeat.device_id}' Status='${heartbeat.status}'`);
+    return { success: true, data: result };
   }
 }
 
 module.exports = new IngestionService();
+

@@ -3,6 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const mqttSubscriber = require('./mqtt/subscriber');
+const { startOfflineDetectionJob, stopOfflineDetectionJob } = require('./deviceHealth/offlineJob');
+const devicesRouter = require('./api/devices.routes');
+const telemetryRouter = require('./api/telemetry.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -11,7 +14,11 @@ const PORT = process.env.PORT || 5001;
 app.use(cors());
 app.use(express.json());
 
-// Health Check Endpoint
+// API Routes
+app.use('/api/devices', devicesRouter);
+app.use('/api/telemetry', telemetryRouter);
+
+// Health Check Endpoint (SRS F.9)
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
@@ -20,14 +27,50 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Initialize Database & MQTT Consumer Pipeline
+// Backward-compatible alias for /api/system/health
+app.get('/api/system/health', (req, res) => {
+  res.json({
+    status: 'online',
+    service: 'Weather Monitoring System',
+    timestamp: new Date().toISOString()
+  });
+});
+
+let server = null;
+
+// Initialize Database, MQTT Consumer Pipeline & Scheduled Background Jobs
 async function startServer() {
   await connectDB();
   mqttSubscriber.init();
+  
+  // Start scheduled background job for device offline detection (SRS F.11)
+  startOfflineDetectionJob();
 
-  app.listen(PORT, () => {
+  server = app.listen(PORT, () => {
     console.log(`[Backend Ingestion Server] Server running on port ${PORT}`);
   });
 }
 
-startServer();
+function shutdown() {
+  console.log('[Backend Ingestion Server] Gracefully shutting down...');
+  stopOfflineDetectionJob();
+  mqttSubscriber.disconnect();
+  if (server) {
+    server.close(() => {
+      console.log('[Backend Ingestion Server] HTTP server closed.');
+      process.exit(0);
+    });
+  } else {
+    process.exit(0);
+  }
+}
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
+
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = { app, startServer, shutdown };
+

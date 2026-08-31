@@ -20,7 +20,9 @@ service-account*.json
 # NODE / JAVASCRIPT / TYPESCRIPT
 # ============================================================
 node_modules/
+.tmp_db/
 .npm/
+
 .pnpm-store/
 .yarn/
 .yarn-cache/

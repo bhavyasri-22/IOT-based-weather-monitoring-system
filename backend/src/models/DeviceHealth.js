@@ -11,7 +11,17 @@ const deviceHealthSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ['online', 'offline', 'degraded'],
-      default: 'online'
+      default: 'online',
+      index: true
+    },
+    last_seen: {
+      type: Date,
+      default: Date.now,
+      index: true
+    },
+    last_seen_timestamp: {
+      type: Date,
+      default: Date.now
     },
     last_heartbeat: {
       type: Date,
@@ -28,6 +38,10 @@ const deviceHealthSchema = new mongoose.Schema(
     firmware_version: {
       type: String,
       default: '1.0.0'
+    },
+    first_seen: {
+      type: Date,
+      default: Date.now
     }
   },
   {
@@ -35,4 +49,8 @@ const deviceHealthSchema = new mongoose.Schema(
   }
 );
 
+// Compound index for querying devices needing offline transition check
+deviceHealthSchema.index({ status: 1, last_seen: 1 });
+
 module.exports = mongoose.model('DeviceHealth', deviceHealthSchema);
+

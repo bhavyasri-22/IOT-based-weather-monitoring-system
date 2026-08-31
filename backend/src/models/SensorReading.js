@@ -63,4 +63,8 @@ const sensorReadingSchema = new mongoose.Schema(
 // Compound index for querying recent readings by device
 sensorReadingSchema.index({ device_id: 1, timestamp: -1 });
 
+// Index for date range queries
+sensorReadingSchema.index({ timestamp: -1 });
+
 module.exports = mongoose.model('SensorReading', sensorReadingSchema);
+

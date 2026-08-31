@@ -5,8 +5,10 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "test": "node src/tests/test_phase4.js"
   },
+
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -17,6 +19,7 @@
     "ws": "^8.17.0"
   },
   "devDependencies": {
+    "aedes": "^1.1.1",
     "nodemon": "^3.1.2"
   }
 }

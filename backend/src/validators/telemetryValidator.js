@@ -3,6 +3,9 @@
  */
 
 function parseJSON(rawBufferOrString) {
+  if (rawBufferOrString !== null && typeof rawBufferOrString === 'object' && !Buffer.isBuffer(rawBufferOrString)) {
+    return { success: true, data: rawBufferOrString };
+  }
   try {
     const stringData = Buffer.isBuffer(rawBufferOrString)
       ? rawBufferOrString.toString('utf8')
@@ -12,6 +15,7 @@ function parseJSON(rawBufferOrString) {
     return { success: false, error: `Invalid JSON syntax: ${err.message}` };
   }
 }
+
 
 /**
  * Validates incoming telemetry payload against schema and realistic bounds
