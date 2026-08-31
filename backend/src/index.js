@@ -1,8 +1,10 @@
 require('dotenv').config();
+const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const mqttSubscriber = require('./mqtt/subscriber');
+const wsGateway = require('./ws/gateway');
 const { startOfflineDetectionJob, stopOfflineDetectionJob } = require('./deviceHealth/offlineJob');
 const devicesRouter = require('./api/devices.routes');
 const telemetryRouter = require('./api/telemetry.routes');
@@ -48,18 +50,26 @@ app.get('/api/system/health', (req, res) => {
 app.use(notFoundHandler);
 app.use(globalErrorHandler);
 
-let server = null;
+// Create HTTP server wrapping Express app
+const server = http.createServer(app);
 
-// Initialize Database, MQTT Consumer Pipeline & Scheduled Background Jobs
+// Initialize Database, MQTT Consumer Pipeline, WebSocket Gateway & Scheduled Background Jobs
 async function startServer() {
   await connectDB();
+  
+  // Attach WebSocket Server to HTTP server (SRS F.10)
+  wsGateway.init(server);
+
   mqttSubscriber.init();
   
   // Start scheduled background job for device offline detection (SRS F.11)
   startOfflineDetectionJob();
 
-  server = app.listen(PORT, () => {
-    console.log(`[Backend Ingestion Server] Server running on port ${PORT}`);
+  return new Promise((resolve) => {
+    server.listen(PORT, () => {
+      console.log(`[Backend Ingestion Server] Server running on port ${PORT}`);
+      resolve(server);
+    });
   });
 }
 
@@ -67,9 +77,10 @@ function shutdown() {
   console.log('[Backend Ingestion Server] Gracefully shutting down...');
   stopOfflineDetectionJob();
   mqttSubscriber.disconnect();
-  if (server) {
+  wsGateway.close();
+  if (server && server.listening) {
     server.close(() => {
-      console.log('[Backend Ingestion Server] HTTP server closed.');
+      console.log('[Backend Ingestion Server] HTTP & WebSocket server closed.');
       process.exit(0);
     });
   } else {
@@ -84,4 +95,4 @@ if (require.main === module) {
   startServer();
 }
 
-module.exports = { app, startServer, shutdown };
+module.exports = { app, server, startServer, shutdown, wsGateway };

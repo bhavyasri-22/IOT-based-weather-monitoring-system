@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Threshold = require('../models/Threshold');
 const AlertLog = require('../models/AlertLog');
+const wsGateway = require('../ws/gateway');
 
 // Default System Threshold Definitions (SRS F.8, F.9, F.10)
 const DEFAULT_THRESHOLDS = [
@@ -147,6 +148,7 @@ async function evaluateTelemetryAlerts(deviceId, telemetryData) {
         activeThresholdAlert.resolved_at = new Date();
         await activeThresholdAlert.save();
         resolvedAlerts.push(activeThresholdAlert);
+        wsGateway.broadcastAlertResolved(activeThresholdAlert);
       }
 
       // Check if active sensor_fault alert already exists (Prevent Duplicates)
@@ -169,6 +171,7 @@ async function evaluateTelemetryAlerts(deviceId, telemetryData) {
           status: 'active'
         });
         createdAlerts.push(newFault);
+        wsGateway.broadcastAlert(newFault);
         console.warn(`[Threshold Engine] ⚠️ SENSOR FAULT ALERT: Device '${deviceId}', Parameter '${paramKey}' unavailable.`);
       }
       continue;
@@ -190,6 +193,7 @@ async function evaluateTelemetryAlerts(deviceId, telemetryData) {
       activeFaultAlert.resolved_at = new Date();
       await activeFaultAlert.save();
       resolvedAlerts.push(activeFaultAlert);
+      wsGateway.broadcastAlertResolved(activeFaultAlert);
       console.log(`[Threshold Engine] 🟢 SENSOR FAULT RESOLVED: Device '${deviceId}', Parameter '${paramKey}' restored.`);
     }
 
@@ -236,6 +240,7 @@ async function evaluateTelemetryAlerts(deviceId, telemetryData) {
           activeThresholdAlert.resolved_at = new Date();
           await activeThresholdAlert.save();
           resolvedAlerts.push(activeThresholdAlert);
+          wsGateway.broadcastAlertResolved(activeThresholdAlert);
         }
       }
 
@@ -251,6 +256,7 @@ async function evaluateTelemetryAlerts(deviceId, telemetryData) {
         status: 'active'
       });
       createdAlerts.push(newAlert);
+      wsGateway.broadcastAlert(newAlert);
 
       console.warn(
         `[Threshold Engine] 🚨 ALERT CREATED [${violationSeverity.toUpperCase()}]: ` +
@@ -263,6 +269,7 @@ async function evaluateTelemetryAlerts(deviceId, telemetryData) {
         activeThresholdAlert.resolved_at = new Date();
         await activeThresholdAlert.save();
         resolvedAlerts.push(activeThresholdAlert);
+        wsGateway.broadcastAlertResolved(activeThresholdAlert);
 
         console.log(
           `[Threshold Engine] 🟢 ALERT RESOLVED: Device '${deviceId}', ` +
@@ -300,6 +307,9 @@ async function evaluateDeviceOfflineAlert(deviceId) {
       threshold_limit: null,
       status: 'active'
     });
+
+    wsGateway.broadcastAlert(offlineAlert);
+    wsGateway.broadcastDeviceStatus(deviceId, 'offline');
     console.warn(`[Threshold Engine] 🚨 DEVICE OFFLINE ALERT: Device '${deviceId}' is OFFLINE.`);
     return offlineAlert;
   }
@@ -324,6 +334,9 @@ async function resolveDeviceOfflineAlert(deviceId) {
     activeOfflineAlert.status = 'resolved';
     activeOfflineAlert.resolved_at = new Date();
     await activeOfflineAlert.save();
+
+    wsGateway.broadcastAlertResolved(activeOfflineAlert);
+    wsGateway.broadcastDeviceStatus(deviceId, 'online');
     console.log(`[Threshold Engine] 🟢 DEVICE OFFLINE ALERT RESOLVED: Device '${deviceId}' recovered back ONLINE.`);
     return activeOfflineAlert;
   }

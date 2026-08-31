@@ -4,6 +4,7 @@ const { validateTelemetryPayload, validateHeartbeatPayload } = require('../valid
 const { calculateHeatIndex } = require('../utils/weatherDerivations');
 const { handleHeartbeat } = require('../deviceHealth/heartbeatHandler');
 const { evaluateTelemetryAlerts, resolveDeviceOfflineAlert } = require('../alerts/thresholdEngine');
+const wsGateway = require('../ws/gateway');
 const mongoose = require('mongoose');
 
 /**
@@ -70,6 +71,7 @@ class IngestionService {
         if (wasOffline) {
           console.log(`[Device Health Monitor] 🟢 Device '${telemetryData.device_id}' recovered back ONLINE (Telemetry received)`);
           await resolveDeviceOfflineAlert(telemetryData.device_id);
+          wsGateway.broadcastDeviceStatus(telemetryData.device_id, 'online');
         }
 
         // Evaluate system thresholds and manage active alerts
@@ -87,6 +89,9 @@ class IngestionService {
       `Temp=${telemetryData.temperature ?? 'N/A'}°C | Hum=${telemetryData.humidity ?? 'N/A'}% | ` +
       `HeatIndex=${heatIndex ?? 'N/A'}°C | Press=${telemetryData.pressure ?? 'N/A'}hPa`
     );
+
+    // Broadcast telemetry:new real-time event to connected WebSocket clients (SRS F.10)
+    wsGateway.broadcastTelemetry(savedReading);
 
     return { success: true, data: savedReading };
   }
