@@ -1,0 +1,12 @@
+{
+  "name": "weather-monitoring-mock-publisher",
+  "version": "1.0.0",
+  "description": "Mock ESP32 Telemetry & Heartbeat MQTT Publisher",
+  "main": "mockPublisher.js",
+  "scripts": {
+    "start": "node mockPublisher.js"
+  },
+  "dependencies": {
+    "mqtt": "^5.7.0"
+  }
+}
