@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const DeviceHealth = require('../models/DeviceHealth');
+const { evaluateDeviceOfflineAlert } = require('../alerts/thresholdEngine');
 
 // SRS Configuration values
 const DEFAULT_OFFLINE_TIMEOUT_MS = parseInt(process.env.DEVICE_OFFLINE_TIMEOUT_MS, 10) || (2 * 60 * 1000); // 2 minutes per SRS F.11
@@ -41,6 +42,9 @@ async function checkOfflineDevices(timeoutMs = DEFAULT_OFFLINE_TIMEOUT_MS) {
         `[Device Health Monitor] ⚠️ Device '${device.device_id}' timed out ` +
         `(Inactive for ${elapsedSeconds}s, limit: ${timeoutMs / 1000}s). Status set to OFFLINE.`
       );
+
+      // Trigger critical device offline alert
+      await evaluateDeviceOfflineAlert(device.device_id);
 
       transitionedDevices.push(device);
     }

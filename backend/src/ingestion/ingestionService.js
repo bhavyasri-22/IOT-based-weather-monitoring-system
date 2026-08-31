@@ -3,6 +3,7 @@ const DeviceHealth = require('../models/DeviceHealth');
 const { validateTelemetryPayload, validateHeartbeatPayload } = require('../validators/telemetryValidator');
 const { calculateHeatIndex } = require('../utils/weatherDerivations');
 const { handleHeartbeat } = require('../deviceHealth/heartbeatHandler');
+const { evaluateTelemetryAlerts, resolveDeviceOfflineAlert } = require('../alerts/thresholdEngine');
 const mongoose = require('mongoose');
 
 /**
@@ -68,7 +69,12 @@ class IngestionService {
 
         if (wasOffline) {
           console.log(`[Device Health Monitor] 🟢 Device '${telemetryData.device_id}' recovered back ONLINE (Telemetry received)`);
+          await resolveDeviceOfflineAlert(telemetryData.device_id);
         }
+
+        // Evaluate system thresholds and manage active alerts
+        await evaluateTelemetryAlerts(telemetryData.device_id, docToSave);
+
       } catch (dbErr) {
         console.error(`[Ingestion Service] DB Persistence Error: ${dbErr.message}`);
       }
@@ -106,4 +112,3 @@ class IngestionService {
 }
 
 module.exports = new IngestionService();
-

@@ -1,4 +1,5 @@
 const DeviceHealth = require('../models/DeviceHealth');
+const { resolveDeviceOfflineAlert } = require('../alerts/thresholdEngine');
 const mongoose = require('mongoose');
 
 /**
@@ -37,6 +38,7 @@ async function handleHeartbeat(heartbeatData) {
 
       if (wasOffline) {
         console.log(`[Device Health Monitor] 🟢 Device '${device_id}' recovered back ONLINE (Heartbeat received)`);
+        await resolveDeviceOfflineAlert(device_id);
       }
 
       return updated;

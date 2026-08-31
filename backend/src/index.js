@@ -6,6 +6,8 @@ const mqttSubscriber = require('./mqtt/subscriber');
 const { startOfflineDetectionJob, stopOfflineDetectionJob } = require('./deviceHealth/offlineJob');
 const devicesRouter = require('./api/devices.routes');
 const telemetryRouter = require('./api/telemetry.routes');
+const alertsRouter = require('./api/alerts.routes');
+const configRouter = require('./api/config.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -17,6 +19,9 @@ app.use(express.json());
 // API Routes
 app.use('/api/devices', devicesRouter);
 app.use('/api/telemetry', telemetryRouter);
+app.use('/api/alerts', alertsRouter);
+app.use('/api/config', configRouter);
+app.use('/api/thresholds', configRouter);
 
 // Health Check Endpoint (SRS F.9)
 app.get('/api/health', (req, res) => {
@@ -73,4 +78,3 @@ if (require.main === module) {
 }
 
 module.exports = { app, startServer, shutdown };
-

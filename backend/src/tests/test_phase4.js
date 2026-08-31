@@ -13,7 +13,7 @@ const { handleHeartbeat } = require('../deviceHealth/heartbeatHandler');
 const { checkOfflineDevices, DEFAULT_OFFLINE_TIMEOUT_MS } = require('../deviceHealth/offlineJob');
 const ingestionService = require('../ingestion/ingestionService');
 
-const TEST_MONGO_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27018/weather_test_phase4';
+const TEST_MONGO_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/weather_test_phase4';
 const TEST_MQTT_PORT = 18883;
 
 // Helper to log test progress
@@ -189,8 +189,7 @@ async function runTests() {
     logTestStep(6, 'End-to-End Integration: Mock ESP32 -> MQTT Broker -> Ingestion -> MongoDB');
 
     // Start in-memory / local Aedes MQTT Broker on test port
-    const { Aedes } = require('aedes');
-    const aedesBroker = await Aedes.createBroker();
+    const aedesBroker = require('aedes')();
     const brokerServer = net.createServer(aedesBroker.handle);
 
 
