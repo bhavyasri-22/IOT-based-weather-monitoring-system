@@ -14,6 +14,10 @@ const deviceHealthSchema = new mongoose.Schema(
       default: 'online',
       index: true
     },
+    api_key: {
+      type: String,
+      default: null
+    },
     last_seen: {
       type: Date,
       default: Date.now,
@@ -53,4 +57,3 @@ const deviceHealthSchema = new mongoose.Schema(
 deviceHealthSchema.index({ status: 1, last_seen: 1 });
 
 module.exports = mongoose.model('DeviceHealth', deviceHealthSchema);
-

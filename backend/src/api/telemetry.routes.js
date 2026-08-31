@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const SensorReading = require('../models/SensorReading');
 const ingestionService = require('../ingestion/ingestionService');
+const { requireDeviceApiKey } = require('../middlewares/apiKeyAuth');
 
 /**
  * GET /api/telemetry/latest
@@ -10,11 +11,16 @@ const ingestionService = require('../ingestion/ingestionService');
 router.get('/latest', async (req, res) => {
   try {
     const { deviceId } = req.query;
-    const filter = deviceId ? { device_id: deviceId } : {};
     
-    // If deviceId provided, get latest for that device; otherwise get latest for all unique devices
     if (deviceId) {
-      const latest = await SensorReading.findOne(filter).sort({ timestamp: -1 });
+      const latest = await SensorReading.findOne({ device_id: deviceId }).sort({ timestamp: -1 });
+      if (!latest) {
+        return res.status(404).json({
+          success: false,
+          data: null,
+          error: `No telemetry found for device '${deviceId}'`
+        });
+      }
       return res.json({
         success: true,
         data: latest,
@@ -22,7 +28,7 @@ router.get('/latest', async (req, res) => {
       });
     }
 
-    // Get latest reading per device using aggregation
+    // Aggregate latest reading per unique device
     const latestPerDevice = await SensorReading.aggregate([
       { $sort: { timestamp: -1 } },
       {
@@ -50,7 +56,7 @@ router.get('/latest', async (req, res) => {
 
 /**
  * GET /api/telemetry/latest/:deviceId
- * Returns latest telemetry reading for a specific device
+ * Returns latest telemetry reading for a specific device node
  */
 router.get('/latest/:deviceId', async (req, res) => {
   try {
@@ -95,9 +101,10 @@ router.get('/history', async (req, res) => {
       if (end) filter.timestamp.$lte = new Date(end);
     }
 
+    const maxLimit = Math.min(parseInt(limit, 10) || 100, 1000);
     const readings = await SensorReading.find(filter)
       .sort({ timestamp: -1 })
-      .limit(Math.min(parseInt(limit, 10) || 100, 1000));
+      .limit(maxLimit);
 
     res.json({
       success: true,
@@ -117,10 +124,13 @@ router.get('/history', async (req, res) => {
 /**
  * POST /api/telemetry/ingest
  * HTTPS REST Fallback ingestion endpoint (SRS F.4)
+ * Protected by per-device API key middleware.
+ * Uses exact same ingestionService processing pipeline as MQTT subscriber.
  */
-router.post('/ingest', async (req, res) => {
+router.post('/ingest', requireDeviceApiKey, async (req, res) => {
   try {
     const result = await ingestionService.processTelemetry(req.body);
+    
     if (!result.success) {
       return res.status(400).json({
         success: false,
@@ -138,7 +148,7 @@ router.post('/ingest', async (req, res) => {
     res.status(500).json({
       success: false,
       data: null,
-      error: `Ingestion error: ${err.message}`
+      error: `Ingestion processing error: ${err.message}`
     });
   }
 });

@@ -8,6 +8,8 @@ const devicesRouter = require('./api/devices.routes');
 const telemetryRouter = require('./api/telemetry.routes');
 const alertsRouter = require('./api/alerts.routes');
 const configRouter = require('./api/config.routes');
+const authRouter = require('./api/auth.routes');
+const { notFoundHandler, globalErrorHandler } = require('./middlewares/errorHandler');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -17,6 +19,7 @@ app.use(cors());
 app.use(express.json());
 
 // API Routes
+app.use('/api/auth', authRouter);
 app.use('/api/devices', devicesRouter);
 app.use('/api/telemetry', telemetryRouter);
 app.use('/api/alerts', alertsRouter);
@@ -40,6 +43,10 @@ app.get('/api/system/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// Catch-all 404 & Centralized Error Handler Middlewares
+app.use(notFoundHandler);
+app.use(globalErrorHandler);
 
 let server = null;
 
