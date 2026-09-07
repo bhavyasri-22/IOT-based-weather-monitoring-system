@@ -1,112 +1,228 @@
-import React from 'react';
-import { Bell, LogOut, ShieldCheck, UserCheck } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useLocation, Link } from 'react-router-dom';
+import { 
+  Menu, 
+  X, 
+  MapPin, 
+  Bell, 
+  Clock, 
+  Radio, 
+  ShieldCheck, 
+  UserCheck, 
+  ChevronRight, 
+  Check, 
+  AlertTriangle,
+  LogOut
+} from 'lucide-react';
+import { formatRelativeTime } from '../utils/weatherUtils';
 
 const PAGE_META = {
-  '/': { title: 'Dashboard', subtitle: 'Live environmental monitoring console' },
-  '/live': { title: 'Live Monitor', subtitle: 'Real-time sensor telemetry feed' },
-  '/history': { title: 'Historical Data', subtitle: 'Sensor data analysis and trend view' },
-  '/alerts': { title: 'Alerts', subtitle: 'Active and resolved system alerts' },
-  '/devices': { title: 'Devices', subtitle: 'Registered hardware nodes and diagnostics' },
-  '/admin': { title: 'Admin Config', subtitle: 'Alert thresholds and system configuration' },
+  '/': { title: 'Weather Overview', subtitle: 'Real-time environmental conditions' },
+  '/live': { title: 'Live Sensor Monitor', subtitle: 'High-frequency telemetry streams' },
+  '/analytics': { title: 'Environmental Analytics', subtitle: 'Multi-sensor historical trend intelligence' },
+  '/history': { title: 'Historical Archive', subtitle: 'Time-series data logs and exports' },
+  '/devices': { title: 'Sensors & Hardware', subtitle: 'Node diagnostics, pinouts, and calibration' },
+  '/alerts': { title: 'Environmental Alerts', subtitle: 'Active system breaches and audit logs' },
+  '/admin': { title: 'System Configuration', subtitle: 'Alert threshold limits and node parameters' },
 };
 
-function formatLastSeen(lastUpdated) {
-  if (!lastUpdated) return 'No data';
-  const diff = Math.floor((Date.now() - new Date(lastUpdated).getTime()) / 1000);
-  if (diff < 5) return 'Just now';
-  if (diff < 60) return `${diff}s ago`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  return `${Math.floor(diff / 3600)}h ago`;
-}
-
-export default function TopHeader({ deviceId, deviceStatus, lastUpdated, activeAlertCount = 0, user, onLogout }) {
+export default function TopHeader({
+  onToggleSidebar,
+  isSidebarOpen,
+  deviceId,
+  deviceStatus,
+  wsState,
+  lastUpdated,
+  activeAlertCount = 0,
+  activeAlerts = [],
+  onResolveAlert,
+  user,
+  onLogout,
+}) {
   const { pathname } = useLocation();
-  const meta = PAGE_META[pathname] || { title: 'Weather Station', subtitle: 'IoT monitoring system' };
+  const meta = PAGE_META[pathname] || { title: 'Weather Overview', subtitle: 'Real-time environmental conditions' };
+
   const isOnline = deviceStatus === 'online';
-  const isAdmin = user?.role === 'admin';
+  const isWsConnected = wsState === 'connected';
+
+  // Live wall clock
+  const [clockTime, setClockTime] = useState(() => new Date().toLocaleTimeString());
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setClockTime(new Date().toLocaleTimeString());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Notifications popup
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notifRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotifications(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
-    <header className="h-14 flex items-center justify-between px-6 border-b border-[#1A212B] bg-[#0D1117] flex-shrink-0">
-      {/* Left: Page title */}
-      <div>
-        <h1 className="text-sm font-semibold text-[#F1F5F9] leading-tight">{meta.title}</h1>
-        <p className="text-xs text-[#64748B] leading-tight mt-0.5">{meta.subtitle}</p>
+    <header className="sticky top-0 z-40 h-16 w-full px-4 sm:px-6 bg-[#07111F]/80 backdrop-blur-2xl border-b border-white/[0.08] flex items-center justify-between transition-colors">
+      {/* Left side: Hamburger ☰ menu trigger + Page Title */}
+      <div className="flex items-center gap-3 sm:gap-4">
+        <button
+          onClick={onToggleSidebar}
+          className="w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] flex items-center justify-center text-white transition-all hover:scale-105 active:scale-95"
+          aria-label="Toggle Navigation Drawer"
+          title="Open Menu"
+        >
+          {isSidebarOpen ? <X size={18} /> : <Menu size={18} />}
+        </button>
+
+        <div>
+          <h1 className="text-base sm:text-lg font-semibold text-white tracking-tight leading-tight">
+            {meta.title}
+          </h1>
+          <p className="text-[11px] text-[#64748B] hidden sm:block leading-tight">
+            {meta.subtitle}
+          </p>
+        </div>
       </div>
 
-      {/* Right: Device status + alerts + role badge + logout */}
-      <div className="flex items-center gap-3">
-        {/* Device status pill */}
-        <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-[#151B23] border border-[#26303B]">
-          <div className="flex items-center gap-1.5">
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-[#22C55E]' : 'bg-[#EF4444]'}`}
-              style={isOnline ? { boxShadow: '0 0 5px #22C55E88' } : {}}
-            />
-            <span className={`text-[11px] font-semibold tracking-wider ${isOnline ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
-              {isOnline ? 'ONLINE' : 'OFFLINE'}
-            </span>
-          </div>
-          {deviceId && (
-            <>
-              <span className="w-px h-3.5 bg-[#26303B]" />
-              <span className="text-[11px] text-[#94A3B8] font-mono">{deviceId}</span>
-            </>
+      {/* Right side: Location Selector + Live Status + Clock + Notification Bell + Profile */}
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        {/* Location Selector Indicator */}
+        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+          <MapPin size={13} className="text-[#60A5FA]" />
+          <span className="text-xs font-semibold text-[#F1F5F9]">NITK Surathkal</span>
+        </div>
+
+        {/* Live Status Indicator (Section 6) */}
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+          {isWsConnected ? (
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#34D399] shadow-[0_0_8px_#34D399] animate-pulse" />
+              <span className="text-xs font-bold tracking-wider text-[#34D399]">LIVE</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#F59E0B] animate-ping" />
+              <span className="text-xs font-bold tracking-wider text-[#F59E0B]">Reconnecting...</span>
+            </div>
           )}
-          {lastUpdated && (
-            <>
-              <span className="w-px h-3.5 bg-[#26303B]" />
-              <span className="text-[11px] text-[#64748B]">
-                {formatLastSeen(lastUpdated)}
+
+          <span className="hidden sm:inline w-px h-3.5 bg-white/[0.1]" />
+
+          <div className="hidden sm:flex items-center gap-1 text-xs text-[#94A3B8] font-mono">
+            <Clock size={12} className="text-[#64748B]" />
+            <span>{clockTime}</span>
+          </div>
+        </div>
+
+        {/* Notifications Bell Dropdown */}
+        <div className="relative" ref={notifRef}>
+          <button
+            onClick={() => setShowNotifications((prev) => !prev)}
+            className={`relative w-9 h-9 rounded-xl border flex items-center justify-center transition-all ${
+              showNotifications || activeAlertCount > 0
+                ? 'bg-[#60A5FA]/15 border-[#60A5FA]/30 text-[#60A5FA]'
+                : 'bg-white/[0.03] border-white/[0.06] text-[#94A3B8] hover:text-white hover:bg-white/[0.06]'
+            }`}
+            title="System Alerts"
+          >
+            <Bell size={16} className={activeAlertCount > 0 ? 'text-[#F87171] animate-bounce-subtle' : ''} />
+            {activeAlertCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#F87171] flex items-center justify-center text-[9px] font-bold text-white shadow-md">
+                {activeAlertCount}
               </span>
-            </>
+            )}
+          </button>
+
+          {/* Notifications Flyout */}
+          {showNotifications && (
+            <div className="absolute right-0 top-12 w-80 sm:w-88 p-4 rounded-2xl bg-[#0B1728]/95 border border-white/[0.12] shadow-2xl backdrop-blur-2xl z-50 space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
+                <div className="flex items-center gap-2">
+                  <Bell size={14} className="text-[#60A5FA]" />
+                  <span className="text-xs font-bold text-white uppercase tracking-wider">Alert Center</span>
+                </div>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#F87171]/20 text-[#F87171] font-bold border border-[#F87171]/30">
+                  {activeAlertCount} active
+                </span>
+              </div>
+
+              {activeAlerts.length === 0 ? (
+                <div className="py-6 text-center">
+                  <Check size={20} className="text-[#34D399] mx-auto mb-1.5" />
+                  <p className="text-xs font-semibold text-white">All Systems Normal</p>
+                  <p className="text-[10px] text-[#64748B]">No active breaches or anomalies</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {activeAlerts.map((a) => (
+                    <div
+                      key={a._id || a.id}
+                      className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] text-xs flex items-start gap-2.5"
+                    >
+                      <AlertTriangle size={14} className="text-[#F87171] flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1 mb-0.5">
+                          <span className="text-[9px] font-bold uppercase text-[#F87171]">
+                            {a.parameter} · {a.severity}
+                          </span>
+                          <span className="text-[9px] text-[#64748B] font-mono">
+                            {formatRelativeTime(a.triggered_at || a.createdAt)}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#E2E8F0] leading-snug">{a.message}</p>
+                      </div>
+                      {onResolveAlert && a._id && (
+                        <button
+                          onClick={() => onResolveAlert(a._id)}
+                          className="p-1 rounded bg-white/[0.05] hover:bg-[#34D399]/20 text-[#94A3B8] hover:text-[#34D399] transition-all"
+                          title="Resolve"
+                        >
+                          <Check size={12} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-xs">
+                <Link
+                  to="/alerts"
+                  onClick={() => setShowNotifications(false)}
+                  className="text-[#60A5FA] hover:text-[#93C5FD] flex items-center gap-1 font-semibold"
+                >
+                  View full logs <ChevronRight size={12} />
+                </Link>
+                <button
+                  onClick={() => setShowNotifications(false)}
+                  className="text-[#64748B] hover:text-[#94A3B8]"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
           )}
         </div>
 
-        {/* Alert bell */}
-        <button
-          className="relative w-8 h-8 rounded-lg bg-[#151B23] border border-[#26303B] flex items-center justify-center hover:bg-[#1A212B] transition-colors"
-          aria-label="Notifications"
-        >
-          <Bell size={14} className="text-[#64748B]" />
-          {activeAlertCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#EF4444] flex items-center justify-center text-[9px] font-bold text-white">
-              {activeAlertCount > 9 ? '9+' : activeAlertCount}
-            </span>
-          )}
-        </button>
-
-        {/* Role & User Badge */}
-        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[#151B23] border border-[#26303B]">
-          <div className="flex items-center gap-1.5">
-            {isAdmin ? (
-              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#0E2A3A] text-[#38BDF8] border border-[#38BDF844]">
-                <ShieldCheck size={10} />
-                Admin
-              </span>
+        {/* Profile / User Badge */}
+        <div className="hidden sm:flex items-center gap-2 pl-1.5">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+            {user?.role === 'admin' ? (
+              <ShieldCheck size={14} className="text-[#60A5FA]" />
             ) : (
-              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#0F2B1D] text-[#22C55E] border border-[#22C55E44]">
-                <UserCheck size={10} />
-                Operator
-              </span>
+              <UserCheck size={14} className="text-[#34D399]" />
             )}
-            <span className="text-[11px] text-[#CBD5E1] font-medium truncate max-w-[120px]">
-              {user?.email ? user.email.split('@')[0] : 'user'}
+            <span className="text-xs font-semibold text-white truncate max-w-[100px]">
+              {user?.email ? user.email.split('@')[0] : 'Operator'}
             </span>
           </div>
-
-          {onLogout && (
-            <>
-              <span className="w-px h-3.5 bg-[#26303B]" />
-              <button
-                onClick={onLogout}
-                title="Sign Out"
-                className="text-[#64748B] hover:text-[#EF4444] transition-colors p-0.5"
-              >
-                <LogOut size={13} />
-              </button>
-            </>
-          )}
         </div>
       </div>
     </header>

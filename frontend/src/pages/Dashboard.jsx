@@ -1,11 +1,16 @@
-import React, { useState, useCallback } from 'react';
-import SensorCard from '../components/SensorCard';
-import TrendChart from '../components/TrendChart';
-import AlertFeed from '../components/AlertFeed';
-import ActivityFeed from '../components/ActivityFeed';
-import DeviceBadge from '../components/DeviceBadge';
-import StatusStrip from '../components/StatusStrip';
-import { telemetryApi } from '../api/client';
+import React from 'react';
+import { motion } from 'framer-motion';
+import WeatherHero from '../components/WeatherHero';
+import QuickMetricCards from '../components/QuickMetricCards';
+import LiveSensorNetwork from '../components/LiveSensorNetwork';
+import MultiMetricAnalytics from '../components/MultiMetricAnalytics';
+import TempHumidityCorrelation from '../components/TempHumidityCorrelation';
+import WindCompass from '../components/WindCompass';
+import AQIIndicator from '../components/AQIIndicator';
+import LightIntensityChart from '../components/LightIntensityChart';
+import RainfallVisualization from '../components/RainfallVisualization';
+import LiveActivityFeed from '../components/LiveActivityFeed';
+import AlertsPanel from '../components/AlertsPanel';
 
 export default function Dashboard({
   telemetry,
@@ -17,78 +22,63 @@ export default function Dashboard({
   onResolveAlert,
   activityFeed,
 }) {
-  const T = telemetry;
-  const derived = T?.derived || {};
-
-  const handleFetchHistory = useCallback(
-    async (metric, range) => {
-      if (!deviceId) return [];
-      try {
-        const data = await telemetryApi.history(deviceId, metric, range, 200);
-        return data?.data || data || [];
-      } catch {
-        return [];
-      }
-    },
-    [deviceId]
-  );
-
   return (
-    <div className="space-y-5">
-      {/* Status strip */}
-      <StatusStrip
-        deviceId={deviceId}
-        deviceStatus={deviceStatus}
-        wsState={wsState}
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
+      className="space-y-6 pb-12 max-w-[1600px] mx-auto"
+    >
+      {/* 1. Hero Weather Section + Concentric Atmospheric Radar */}
+      <WeatherHero
+        telemetry={telemetry}
         lastUpdated={lastUpdated}
+        deviceStatus={deviceStatus}
       />
 
-      {/* Live Conditions */}
-      <div>
-        <p className="text-[10px] font-semibold tracking-widest text-[#64748B] uppercase mb-3">
-          Live Conditions
-        </p>
-
-        {/* Primary sensors – 2x2 grid */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <SensorCard sensor="temperature" value={T?.temperature ?? null} updated={lastUpdated} />
-          <SensorCard sensor="humidity" value={T?.humidity ?? null} updated={lastUpdated} />
-          <SensorCard sensor="wind_speed" value={T?.wind_speed ?? null} updated={lastUpdated} />
-          <SensorCard sensor="rain_intensity" value={T?.rain_intensity ?? null} updated={lastUpdated} />
-        </div>
-
-        {/* Secondary sensors – 2x2 compact grid */}
-        <div className="grid grid-cols-2 gap-3">
-          <SensorCard sensor="pressure" value={T?.pressure ?? null} variant="secondary" />
-          <SensorCard sensor="light_lux" value={T?.light_lux ?? null} variant="secondary" />
-          <SensorCard sensor="gas_aqi" value={T?.gas_aqi ?? null} variant="secondary" />
-          <SensorCard sensor="heat_index" value={derived.heat_index ?? null} variant="secondary" />
-        </div>
-      </div>
-
-      {/* Trend Chart */}
-      <TrendChart
-        deviceId={deviceId}
-        onFetchHistory={handleFetchHistory}
-        defaultMetric="temperature"
+      {/* 2. Quick Metric Cards (6 Compact Metrics with Sparklines) */}
+      <QuickMetricCards
+        telemetry={telemetry}
       />
 
-      {/* Bottom row: Alerts + Activity + Device Health */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="col-span-1">
-          <AlertFeed
-            activeAlerts={activeAlerts}
-            onResolve={onResolveAlert}
-            compact
+      {/* 3. Live Sensor Network (5 Physical Hardware Sensors) */}
+      <LiveSensorNetwork
+        telemetry={telemetry}
+        lastUpdated={lastUpdated}
+        deviceStatus={deviceStatus}
+      />
+
+      {/* 4. Multi-Metric Time Series & Temp vs Humidity Correlation */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-7 xl:col-span-8">
+          <MultiMetricAnalytics
+            deviceId={deviceId}
+            telemetry={telemetry}
           />
         </div>
-        <div className="col-span-1">
-          <ActivityFeed events={activityFeed} />
-        </div>
-        <div className="col-span-1">
-          <DeviceBadge telemetry={T} />
+        <div className="lg:col-span-5 xl:col-span-4">
+          <TempHumidityCorrelation
+            telemetry={telemetry}
+          />
         </div>
       </div>
-    </div>
+
+      {/* 5. Environmental Transducer Visualizations Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <WindCompass telemetry={telemetry} />
+        <AQIIndicator telemetry={telemetry} />
+        <LightIntensityChart telemetry={telemetry} />
+        <RainfallVisualization telemetry={telemetry} />
+      </div>
+
+      {/* 6. Live Activity Stream & Active Environmental Alerts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <LiveActivityFeed events={activityFeed} />
+        <AlertsPanel
+          activeAlerts={activeAlerts}
+          onResolve={onResolveAlert}
+        />
+      </div>
+    </motion.div>
   );
 }

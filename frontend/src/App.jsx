@@ -11,6 +11,7 @@ import TopHeader from './components/TopHeader';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import LiveMonitor from './pages/LiveMonitor';
+import Analytics from './pages/Analytics';
 import History from './pages/History';
 import AlertsPage from './pages/AlertsPage';
 import DevicesPage from './pages/DevicesPage';
@@ -22,8 +23,6 @@ import useAlerts from './hooks/useAlerts';
 import { devicesApi, authApi } from './api/client';
 
 const ACTIVITY_MAX = 50;
-
-// Generate unique IDs for activity events
 let _eid = 0;
 function nextId() { return ++_eid; }
 
@@ -34,8 +33,11 @@ export default function App() {
       if (stored) return JSON.parse(stored);
     } catch {}
     const token = localStorage.getItem('auth_token');
-    return token ? { email: 'operator', role: 'operator' } : null;
+    return token ? { email: 'operator@station.local', role: 'operator' } : null;
   });
+
+  // Off-canvas sidebar state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Verify and refresh user role on startup
   useEffect(() => {
@@ -51,11 +53,11 @@ export default function App() {
     }
   }, []);
 
-  // Primary device context – picked from device list on mount
-  const [deviceId, setDeviceId] = useState(null);
-  const [deviceStatus, setDeviceStatus] = useState('unknown');
+  // Primary device context
+  const [deviceId, setDeviceId] = useState('ESP32_SURATHKAL_01');
+  const [deviceStatus, setDeviceStatus] = useState('online');
 
-  // Activity feed (newest-first, bounded list)
+  // Activity feed
   const [activityFeed, setActivityFeed] = useState([]);
 
   const pushActivity = useCallback((type, title, subtitle = '') => {
@@ -86,8 +88,7 @@ export default function App() {
     switch (event) {
       case 'telemetry:new':
         updateTelemetry(data);
-        pushActivity('telemetry', `Telemetry received`, `${data.device_id} · ${data.temperature != null ? `${Number(data.temperature).toFixed(1)}°C` : 'N/A'}`);
-        // Update device status if recovered
+        pushActivity('telemetry', 'Telemetry ingested', `${data.device_id || 'Node'} · ${data.temperature != null ? `${Number(data.temperature).toFixed(1)}°C` : ''}`);
         if (data.device_id && deviceId === data.device_id) {
           setDeviceStatus('online');
         }
@@ -107,7 +108,7 @@ export default function App() {
         pushActivity('device', `Device ${data.status}: ${data.device_id}`, '');
         break;
       case 'connection:established':
-        pushActivity('heartbeat', 'WebSocket connected', 'Real-time stream active');
+        pushActivity('heartbeat', 'WebSocket synchronized', 'Real-time telemetry channel established');
         break;
       default:
         break;
@@ -124,7 +125,7 @@ export default function App() {
       if (Array.isArray(nodes) && nodes.length > 0) {
         const primary = nodes[0];
         setDeviceId(primary.device_id);
-        setDeviceStatus(primary.status || 'unknown');
+        setDeviceStatus(primary.status || 'online');
       }
     }).catch(() => {});
   }, [user]);
@@ -155,50 +156,47 @@ export default function App() {
 
   return (
     <Router>
-      <div className="flex h-screen overflow-hidden" style={{ backgroundColor: '#0B0F14' }}>
-        {/* Sidebar */}
-        <Sidebar deviceStatus={deviceStatus} wsState={wsState} user={user} onLogout={handleLogout} />
+      <div className="min-h-screen w-full flex flex-col bg-[#07111F] text-[#F1F5F9] relative selection:bg-[#60A5FA]/20 selection:text-white">
+        {/* Off-Canvas Navigation Drawer */}
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          deviceStatus={deviceStatus}
+          wsState={wsState}
+          user={user}
+          onLogout={handleLogout}
+          activeAlertCount={activeAlerts.length}
+          lastUpdated={lastUpdated}
+        />
 
-        {/* Main content area */}
-        <div className="flex flex-col flex-1 overflow-hidden" style={{ marginLeft: 228 }}>
-          <TopHeader
-            deviceId={deviceId}
-            deviceStatus={deviceStatus}
-            lastUpdated={lastUpdated}
-            activeAlertCount={activeAlerts.length}
-            user={user}
-            onLogout={handleLogout}
-          />
+        {/* Top Header with Hamburger ☰ trigger */}
+        <TopHeader
+          onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
+          isSidebarOpen={isSidebarOpen}
+          deviceId={deviceId}
+          deviceStatus={deviceStatus}
+          wsState={wsState}
+          lastUpdated={lastUpdated}
+          activeAlertCount={activeAlerts.length}
+          activeAlerts={activeAlerts}
+          onResolveAlert={manualResolve}
+          user={user}
+          onLogout={handleLogout}
+        />
 
-          {/* Page scrollable area */}
-          <main className="flex-1 overflow-y-auto px-6 py-5">
-            {/* WebSocket disconnected banner */}
-            {wsState === 'disconnected' && (
-              <div className="mb-4 flex items-center gap-3 px-4 py-2.5 rounded-lg bg-[#1A1200] border border-[#F59E0B33]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]" />
-                <p className="text-xs text-[#F59E0B]">
-                  LIVE CONNECTION LOST — Attempting to reconnect... Last data: {lastUpdated ? new Date(lastUpdated).toLocaleTimeString() : 'none'}
-                </p>
-              </div>
-            )}
-            {wsState === 'error' && (
-              <div className="mb-4 flex items-center gap-3 px-4 py-2.5 rounded-lg bg-[#1F0F0F] border border-[#EF444433]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
-                <p className="text-xs text-[#EF4444]">WebSocket connection error. Real-time updates unavailable.</p>
-              </div>
-            )}
-
-            <Routes>
-              <Route path="/" element={<Dashboard {...sharedProps} />} />
-              <Route path="/live" element={<LiveMonitor {...sharedProps} />} />
-              <Route path="/history" element={<History deviceId={deviceId} />} />
-              <Route path="/alerts" element={<AlertsPage user={user} onResolve={manualResolve} />} />
-              <Route path="/devices" element={<DevicesPage user={user} />} />
-              <Route path="/admin" element={<AdminConfig user={user} />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
-        </div>
+        {/* Full-Width Main Viewport */}
+        <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6">
+          <Routes>
+            <Route path="/" element={<Dashboard {...sharedProps} />} />
+            <Route path="/live" element={<LiveMonitor {...sharedProps} />} />
+            <Route path="/analytics" element={<Analytics {...sharedProps} />} />
+            <Route path="/devices" element={<DevicesPage user={user} />} />
+            <Route path="/alerts" element={<AlertsPage user={user} onResolve={manualResolve} />} />
+            <Route path="/history" element={<History deviceId={deviceId} />} />
+            <Route path="/admin" element={<AdminConfig user={user} />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
       </div>
     </Router>
   );

@@ -10,16 +10,21 @@ function formatLastSeen(lastUpdated) {
   return `${Math.floor(diff / 3600)}h ago`;
 }
 
+function formatClock(date) {
+  if (!date) return '';
+  const d = new Date(date);
+  return isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
 export default function StatusStrip({ deviceId, deviceStatus, wsState, mqttStatus, lastUpdated }) {
   const isOnline = deviceStatus === 'online';
   const wsOk = wsState === 'connected';
 
   return (
     <div
-      className="flex items-center gap-6 px-4 py-2 rounded-lg border text-xs"
+      className="flex items-center gap-6 px-4 py-2.5 rounded-lg border text-xs panel-card shadow-sm"
       style={{
-        backgroundColor: '#0D1117',
-        borderColor: isOnline ? '#1E3A2A' : '#3A1A1A',
+        borderColor: isOnline ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)',
       }}
     >
       {/* Device status */}
@@ -33,7 +38,7 @@ export default function StatusStrip({ deviceId, deviceStatus, wsState, mqttStatu
           }
         />
         <span
-          className={`font-semibold tracking-wider text-[11px] ${isOnline ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}
+          className={`font-bold tracking-wider text-[11px] ${isOnline ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}
         >
           SYSTEM {isOnline ? 'ONLINE' : 'OFFLINE'}
         </span>
@@ -43,27 +48,32 @@ export default function StatusStrip({ deviceId, deviceStatus, wsState, mqttStatu
 
       {/* Device ID */}
       <div className="flex items-center gap-1.5">
-        <span className="text-[#64748B]">NODE</span>
-        <span className="text-[#94A3B8] font-mono font-medium">{deviceId || '—'}</span>
+        <span className="text-[#64748B] font-semibold text-[10px] tracking-wider">PRIMARY NODE:</span>
+        <span className="text-[#94A3B8] font-mono font-bold text-xs">{deviceId || 'ESP32-NODE-01'}</span>
       </div>
 
       <span className="w-px h-3.5 bg-[#26303B]" />
 
       {/* MQTT status */}
       <div className="flex items-center gap-1.5">
-        <Radio size={11} className={wsOk ? 'text-[#22C55E]' : 'text-[#64748B]'} />
-        <span className={wsOk ? 'text-[#22C55E]' : 'text-[#64748B]'}>
-          {wsOk ? 'MQTT CONNECTED' : 'MQTT OFFLINE'}
+        <Radio size={12} className={wsOk ? 'text-[#22C55E]' : 'text-[#64748B]'} />
+        <span className={`font-semibold tracking-wider text-[11px] ${wsOk ? 'text-[#22C55E]' : 'text-[#64748B]'}`}>
+          {wsOk ? 'LIVE WS STREAM' : 'STREAM DISCONNECTED'}
         </span>
       </div>
 
       <span className="w-px h-3.5 bg-[#26303B]" />
 
       {/* Last sync */}
-      <div className="flex items-center gap-1.5 ml-auto">
-        <Clock size={11} className="text-[#64748B]" />
-        <span className="text-[#64748B]">LAST SYNC</span>
-        <span className="text-[#94A3B8] font-medium">{formatLastSeen(lastUpdated)}</span>
+      <div className="flex items-center gap-2 ml-auto">
+        <Clock size={12} className="text-[#38BDF8]" />
+        <span className="text-[#64748B] font-semibold text-[10px] tracking-wider">LAST SYNC:</span>
+        <span className="text-[#F1F5F9] font-medium font-mono">
+          {formatLastSeen(lastUpdated)}
+        </span>
+        {lastUpdated && (
+          <span className="text-[#64748B] text-[10px] font-mono">({formatClock(lastUpdated)})</span>
+        )}
       </div>
     </div>
   );

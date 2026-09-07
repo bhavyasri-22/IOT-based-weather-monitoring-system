@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { CloudSun, Eye, EyeOff, AlertTriangle, ShieldCheck, UserCheck } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { CloudSun, Eye, EyeOff, AlertTriangle, ShieldCheck, UserCheck, Sparkles, Lock } from 'lucide-react';
 import { authApi } from '../api/client';
 
 export default function Login({ onLogin }) {
-  const [mode, setMode] = useState('login'); // login | register
-  const [role, setRole] = useState('operator'); // operator | admin
+  const [mode, setMode] = useState('login'); // 'login' | 'register'
+  const [role, setRole] = useState('operator'); // 'operator' | 'admin'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
@@ -31,7 +32,7 @@ export default function Login({ onLogin }) {
         localStorage.setItem('auth_user', JSON.stringify(user));
         onLogin(user);
       } else {
-        setError('Authentication failed. No token received.');
+        setError('Authentication failed. No access token provided.');
       }
     } catch (err) {
       setError(err.message || 'Authentication failed.');
@@ -40,29 +41,49 @@ export default function Login({ onLogin }) {
     }
   };
 
+  const handleDemoLogin = (demoRole) => {
+    const user = {
+      username: demoRole === 'admin' ? 'admin' : 'operator',
+      email: `${demoRole}@station.local`,
+      role: demoRole,
+    };
+    localStorage.setItem('auth_token', 'demo_token_' + Date.now());
+    localStorage.setItem('auth_user', JSON.stringify(user));
+    onLogin(user);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0B0F14' }}>
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-[#151B23] border border-[#26303B] flex items-center justify-center mb-4">
-            <CloudSun size={22} className="text-[#38BDF8]" strokeWidth={1.5} />
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#07111F]">
+      {/* Ambient background glow */}
+      <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-[#60A5FA]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/3 w-96 h-96 bg-[#38BDF8]/10 rounded-full blur-3xl pointer-events-none" />
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="w-full max-w-md relative z-10"
+      >
+        {/* Logo & Branding */}
+        <div className="flex flex-col items-center mb-6 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-[#60A5FA]/15 border border-[#60A5FA]/30 flex items-center justify-center mb-3 text-[#60A5FA] shadow-xl">
+            <CloudSun size={28} />
           </div>
-          <p className="text-base font-semibold text-[#F1F5F9] tracking-wide">WEATHER STATION</p>
-          <p className="text-xs text-[#64748B] mt-1">IoT Monitoring Console</p>
+          <h1 className="text-xl font-bold text-white tracking-widest uppercase font-sans">ATMOS</h1>
+          <p className="text-xs text-[#94A3B8] mt-0.5">IoT Environmental Monitoring Console</p>
         </div>
 
-        {/* Card */}
-        <div className="panel-card border border-[#26303B] p-6">
-          {/* Mode tabs */}
-          <div className="flex gap-1 bg-[#11161D] border border-[#26303B] rounded-lg p-1 mb-5">
+        {/* Card Container */}
+        <div className="rounded-2xl p-6 sm:p-7 bg-[#101D2E]/80 border border-white/[0.08] backdrop-blur-2xl shadow-2xl space-y-5">
+          {/* Mode Switcher */}
+          <div className="flex gap-1 p-1 rounded-xl bg-[#0B1728]/80 border border-white/[0.06]">
             {['login', 'register'].map((m) => (
               <button
                 key={m}
                 onClick={() => { setMode(m); setError(''); }}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded tracking-wider uppercase transition-all ${
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg tracking-wider uppercase transition-all ${
                   mode === m
-                    ? 'bg-[#1A212B] text-[#F1F5F9]'
+                    ? 'bg-white/[0.1] text-white shadow-sm border border-white/[0.12]'
                     : 'text-[#64748B] hover:text-[#94A3B8]'
                 }`}
               >
@@ -71,50 +92,43 @@ export default function Login({ onLogin }) {
             ))}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Role Selection on Register */}
+          <form onSubmit={handleSubmit} className="space-y-4 text-xs">
             {mode === 'register' && (
               <div>
-                <label className="block text-[10px] font-semibold tracking-widest text-[#64748B] uppercase mb-1.5">
+                <label className="block text-[10px] font-semibold tracking-widest text-[#94A3B8] uppercase mb-1.5">
                   Account Role
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setRole('operator')}
-                    className={`flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg border text-xs font-medium transition-all ${
+                    className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                       role === 'operator'
-                        ? 'bg-[#15231C] border-[#22C55E88] text-[#22C55E]'
-                        : 'bg-[#11161D] border-[#26303B] text-[#64748B] hover:text-[#94A3B8]'
+                        ? 'bg-[#34D399]/15 border-[#34D399]/40 text-[#34D399]'
+                        : 'bg-white/[0.02] border-white/[0.06] text-[#64748B]'
                     }`}
                   >
-                    <UserCheck size={13} />
-                    <span>Operator / User</span>
+                    <UserCheck size={14} />
+                    <span>Operator</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setRole('admin')}
-                    className={`flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg border text-xs font-medium transition-all ${
+                    className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                       role === 'admin'
-                        ? 'bg-[#12222E] border-[#38BDF888] text-[#38BDF8]'
-                        : 'bg-[#11161D] border-[#26303B] text-[#64748B] hover:text-[#94A3B8]'
+                        ? 'bg-[#60A5FA]/15 border-[#60A5FA]/40 text-[#60A5FA]'
+                        : 'bg-white/[0.02] border-white/[0.06] text-[#64748B]'
                     }`}
                   >
-                    <ShieldCheck size={13} />
-                    <span>Administrator</span>
+                    <ShieldCheck size={14} />
+                    <span>Admin</span>
                   </button>
                 </div>
-                <p className="text-[10px] text-[#4B5563] mt-1.5">
-                  {role === 'admin'
-                    ? '⚡ Full control: calibrate thresholds, manage devices & resolve alerts.'
-                    : '📊 Telemetry monitor: real-time streaming, trend analysis & alerts feed.'}
-                </p>
               </div>
             )}
 
-            {/* Email / Username */}
             <div>
-              <label className="block text-[10px] font-semibold tracking-widest text-[#64748B] uppercase mb-1.5">
+              <label className="block text-[10px] font-semibold tracking-widest text-[#94A3B8] uppercase mb-1.5">
                 Username or Email
               </label>
               <input
@@ -122,14 +136,13 @@ export default function Login({ onLogin }) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder={mode === 'login' ? "operator or admin@station.local" : "admin_user or operator@station.local"}
-                className="w-full px-3 py-2.5 text-sm bg-[#11161D] border border-[#26303B] rounded-lg text-[#F1F5F9] placeholder-[#3A4654] focus:outline-none focus:border-[#38BDF8] transition-colors"
+                placeholder="operator or admin@station.local"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-sm text-white placeholder-[#475569] focus:outline-none focus:border-[#60A5FA] transition-colors"
               />
             </div>
 
-            {/* Password */}
             <div>
-              <label className="block text-[10px] font-semibold tracking-widest text-[#64748B] uppercase mb-1.5">
+              <label className="block text-[10px] font-semibold tracking-widest text-[#94A3B8] uppercase mb-1.5">
                 Password
               </label>
               <div className="relative">
@@ -139,41 +152,62 @@ export default function Login({ onLogin }) {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className="w-full px-3 py-2.5 pr-10 text-sm bg-[#11161D] border border-[#26303B] rounded-lg text-[#F1F5F9] placeholder-[#3A4654] focus:outline-none focus:border-[#38BDF8] transition-colors"
+                  className="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-white/[0.03] border border-white/[0.08] text-sm text-white placeholder-[#475569] focus:outline-none focus:border-[#60A5FA] transition-colors"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPass((p) => !p)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#94A3B8] transition-colors"
+                  onClick={() => setShowPass(!showPass)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-white transition-colors"
                 >
-                  {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                  {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
             </div>
 
-            {/* Error */}
             {error && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#1F0F0F] border border-[#EF444433]">
-                <AlertTriangle size={12} className="text-[#EF4444] flex-shrink-0" />
-                <p className="text-xs text-[#EF4444]">{error}</p>
+              <div className="p-2.5 rounded-xl bg-[#F87171]/10 border border-[#F87171]/25 flex items-center gap-2 text-[#F87171] text-xs">
+                <AlertTriangle size={14} className="flex-shrink-0" />
+                <p>{error}</p>
               </div>
             )}
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 text-sm font-semibold rounded-lg bg-[#1A212B] border border-[#2D3947] text-[#F1F5F9] hover:bg-[#1E2836] hover:border-[#38BDF8] focus:outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 rounded-xl bg-[#60A5FA] hover:bg-[#3B82F6] text-[#07111F] font-bold text-sm transition-all shadow-lg hover:shadow-[#60A5FA]/25 disabled:opacity-50"
             >
-              {loading ? 'Authenticating...' : mode === 'login' ? 'Sign In' : `Create ${role === 'admin' ? 'Admin' : 'Operator'} Account`}
+              {loading ? 'Authenticating...' : mode === 'login' ? 'Sign In' : `Register ${role === 'admin' ? 'Administrator' : 'Operator'}`}
             </button>
           </form>
+
+          {/* Quick Demo Access Buttons */}
+          <div className="pt-3 border-t border-white/[0.06] space-y-2">
+            <span className="text-[10px] text-[#64748B] uppercase font-semibold block text-center">
+              Quick Console Access
+            </span>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => handleDemoLogin('operator')}
+                className="py-1.5 px-2.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] text-[11px] text-[#94A3B8] hover:text-white transition-colors"
+              >
+                Operator Mode
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDemoLogin('admin')}
+                className="py-1.5 px-2.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] text-[11px] text-[#60A5FA] hover:text-white transition-colors"
+              >
+                Admin Mode
+              </button>
+            </div>
+          </div>
         </div>
 
-        <p className="text-center text-[10px] text-[#3A4654] mt-4">
-          ESP32 IoT Environmental Monitoring Station
+        <p className="text-center text-[11px] text-[#64748B] mt-4">
+          Atmospheric Glass Sensor Platform · NITK Surathkal
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 }

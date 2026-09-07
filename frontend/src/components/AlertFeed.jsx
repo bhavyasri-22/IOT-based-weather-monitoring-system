@@ -24,48 +24,78 @@ const SEVERITY_STYLES = {
 };
 
 function formatRelativeTime(isoString) {
-  if (!isoString) return '';
-  const diff = Math.floor((Date.now() - new Date(isoString).getTime()) / 1000);
+  if (!isoString) return 'Just now';
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return 'Recently';
+  const diff = Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000));
+  if (diff < 5) return 'Just now';
   if (diff < 60) return `${diff}s ago`;
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
 function AlertItem({ alert, onResolve }) {
   const styles = SEVERITY_STYLES[alert.severity] || SEVERITY_STYLES.warning;
+  const rawTime = alert.triggered_at || alert.createdAt || alert.timestamp;
+  const timeStr = rawTime ? new Date(rawTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
+  const [resolving, setResolving] = React.useState(false);
+
+  const handleResolveClick = async (e) => {
+    e.stopPropagation();
+    if (!onResolve || resolving) return;
+    setResolving(true);
+    try {
+      await onResolve(alert._id);
+    } catch {}
+  };
 
   return (
-    <div className={`${styles.bg} ${styles.border} border rounded-lg px-3 py-2.5 flex items-start gap-3`}>
-      <div className="flex items-center pt-0.5">
+    <div className={`${styles.bg} ${styles.border} border rounded-lg px-3.5 py-3 flex items-start gap-3 transition-all hover:border-opacity-100 shadow-sm relative group`}>
+      <div className="flex items-center pt-1">
         <span
-          className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${styles.indicator}`}
+          className={`w-2 h-2 rounded-full flex-shrink-0 ${styles.indicator}`}
           style={{ boxShadow: styles.glow }}
         />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className={`text-[9px] font-bold tracking-widest ${styles.text}`}>
+        <div className="flex items-center gap-2 mb-1">
+          <span className={`text-[9px] font-bold tracking-widest ${styles.text} px-1.5 py-0.2 rounded bg-black/20 uppercase`}>
             {styles.label}
           </span>
-          <span className="text-[10px] text-[#64748B]">{alert.parameter?.toUpperCase()}</span>
+          <span className="text-[10px] text-[#94A3B8] font-semibold">{alert.parameter?.toUpperCase()}</span>
+          {alert.device_id && (
+            <span className="text-[9px] text-[#64748B] font-mono">· {alert.device_id}</span>
+          )}
         </div>
-        <p className="text-xs font-medium text-[#F1F5F9] leading-snug truncate">{alert.message}</p>
-        {alert.trigger_value !== null && alert.trigger_value !== undefined && (
-          <p className="text-[10px] text-[#94A3B8] mt-0.5">
-            Value: <span className="font-mono font-semibold">{alert.trigger_value}</span>
-          </p>
-        )}
+        <p className="text-xs font-semibold text-[#F1F5F9] leading-snug break-words">{alert.message}</p>
+        <div className="flex items-center gap-3 mt-1.5 text-[10px] text-[#64748B]">
+          {alert.trigger_value !== null && alert.trigger_value !== undefined && (
+            <span>
+              Val: <span className="font-mono font-bold text-[#F1F5F9]">{alert.trigger_value}</span>
+            </span>
+          )}
+          {alert.threshold_limit !== null && alert.threshold_limit !== undefined && (
+            <span>
+              Limit: <span className="font-mono font-semibold text-[#F59E0B]">{alert.threshold_limit}</span>
+            </span>
+          )}
+        </div>
       </div>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <span className="text-[10px] text-[#64748B] whitespace-nowrap">{formatRelativeTime(alert.created_at)}</span>
+
+      <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+        <span className="text-[10px] text-[#64748B] font-mono whitespace-nowrap" title={timeStr}>
+          {formatRelativeTime(rawTime)}
+        </span>
         {onResolve && (
           <button
-            onClick={() => onResolve(alert._id)}
-            className="w-5 h-5 rounded flex items-center justify-center text-[#64748B] hover:text-[#94A3B8] hover:bg-[#1A212B] transition-colors"
-            title="Mark resolved"
+            onClick={handleResolveClick}
+            disabled={resolving}
+            className="px-2 py-1 rounded bg-[#1A212B] border border-[#2D3947] text-[#94A3B8] hover:text-[#22C55E] hover:border-[#22C55E55] hover:bg-[#15231B] transition-all flex items-center gap-1 text-[10px] font-semibold shadow-xs disabled:opacity-50"
+            title="Resolve & Dismiss alert"
           >
-            <X size={11} />
+            <X size={11} className={resolving ? 'animate-spin' : ''} />
+            <span>{resolving ? 'Resolving...' : 'Dismiss'}</span>
           </button>
         )}
       </div>
@@ -77,36 +107,36 @@ export default function AlertFeed({ activeAlerts = [], onResolve, compact = fals
   const displayed = compact ? activeAlerts.slice(0, 4) : activeAlerts;
 
   return (
-    <div className="panel-card border border-[#26303B] p-4">
-      <div className="flex items-center justify-between mb-3">
+    <div className="panel-card border border-[#26303B] p-4.5 shadow-md">
+      <div className="flex items-center justify-between mb-3.5">
         <div className="flex items-center gap-2">
-          <AlertTriangle size={13} className="text-[#64748B]" />
-          <p className="text-[10px] font-semibold tracking-widest text-[#64748B]">ACTIVE ALERTS</p>
+          <AlertTriangle size={14} className="text-[#F59E0B]" />
+          <p className="text-[10px] font-bold tracking-widest text-[#64748B] uppercase">ACTIVE ALERTS</p>
           {activeAlerts.length > 0 && (
-            <span className="w-4 h-4 rounded-full bg-[#EF444420] border border-[#EF444433] flex items-center justify-center text-[9px] font-bold text-[#EF4444]">
+            <span className="px-1.5 py-0.5 rounded-full bg-[#EF444420] border border-[#EF444455] text-[10px] font-bold text-[#EF4444] animate-pulse">
               {activeAlerts.length}
             </span>
           )}
         </div>
         {compact && activeAlerts.length > 4 && (
-          <Link to="/alerts" className="flex items-center gap-1 text-[10px] text-[#38BDF8] hover:text-[#7DD3FC] transition-colors">
-            View all <ChevronRight size={10} />
+          <Link to="/alerts" className="flex items-center gap-1 text-[11px] font-medium text-[#38BDF8] hover:text-[#7DD3FC] transition-colors">
+            View all ({activeAlerts.length}) <ChevronRight size={12} />
           </Link>
         )}
       </div>
 
       {displayed.length === 0 ? (
-        <div className="py-4 text-center">
-          <div className="w-8 h-8 rounded-full bg-[#22C55E14] border border-[#22C55E33] flex items-center justify-center mx-auto mb-2">
-            <span className="text-[#22C55E] text-xs">✓</span>
+        <div className="py-6 text-center">
+          <div className="w-9 h-9 rounded-full bg-[#22C55E14] border border-[#22C55E33] flex items-center justify-center mx-auto mb-2">
+            <span className="text-[#22C55E] text-sm">✓</span>
           </div>
-          <p className="text-xs text-[#64748B]">No active alerts</p>
-          <p className="text-[10px] text-[#3A4654] mt-0.5">All parameters within normal range</p>
+          <p className="text-xs font-semibold text-[#F1F5F9]">All Clear</p>
+          <p className="text-[10px] text-[#64748B] mt-0.5">No active alerts. All parameters are within normal thresholds.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2.5 max-h-[380px] overflow-y-auto pr-1">
           {displayed.map((alert) => (
-            <AlertItem key={alert._id} alert={alert} onResolve={onResolve} />
+            <AlertItem key={alert._id || alert.id || Math.random()} alert={alert} onResolve={onResolve} />
           ))}
         </div>
       )}

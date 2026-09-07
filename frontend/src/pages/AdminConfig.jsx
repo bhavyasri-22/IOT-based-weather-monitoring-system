@@ -1,42 +1,52 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { configApi, authApi } from '../api/client';
-import { Settings, Save, ShieldCheck, Lock, Users, AlertTriangle, CheckCircle, ShieldAlert } from 'lucide-react';
+import { 
+  Settings, 
+  Save, 
+  ShieldCheck, 
+  Lock, 
+  Users, 
+  AlertTriangle, 
+  CheckCircle2, 
+  Sliders,
+  Shield,
+  Layers,
+  Sparkles
+} from 'lucide-react';
 
 const PARAM_LABELS = {
-  temperature: { label: 'Temperature', unit: '°C', description: 'Ambient air temperature' },
-  humidity: { label: 'Humidity', unit: '%', description: 'Relative humidity' },
-  pressure: { label: 'Pressure', unit: 'hPa', description: 'Barometric pressure' },
-  heat_index: { label: 'Heat Index', unit: '°C', description: 'Derived comfort index (NWS scale)' },
-  gas_aqi: { label: 'AQI Proxy (MQ135)', unit: 'AQI*', description: 'MQ135-derived air quality indicator — NOT official AQI' },
-  wind_speed: { label: 'Wind Speed', unit: 'm/s', description: 'Anemometer wind speed' },
-  rain_intensity: { label: 'Rain Intensity', unit: 'mm/hr', description: 'FC-37 precipitation rate' },
+  temperature: { label: 'Temperature', unit: '°C', description: 'Ambient thermal bounds' },
+  humidity: { label: 'Relative Humidity', unit: '%', description: 'Moisture saturation limits' },
+  pressure: { label: 'Barometric Pressure', unit: 'hPa', description: 'Atmospheric pressure range' },
+  heat_index: { label: 'Feels-Like Heat Index', unit: '°C', description: 'Derived biological comfort metric' },
+  gas_aqi: { label: 'Air Quality (MQ135)', unit: 'AQI', description: 'Hazardous gas & smoke limit' },
+  wind_speed: { label: 'Wind Velocity', unit: 'km/h', description: 'Anemometer gale threshold' },
+  rain_intensity: { label: 'Rain Intensity', unit: 'mm/h', description: 'FC-37 precipitation alert trigger' },
 };
 
 function ThresholdRow({ threshold, onChange, onSave, status, isAdmin }) {
   const meta = PARAM_LABELS[threshold.parameter] || { label: threshold.parameter, unit: '', description: '' };
 
   return (
-    <div className="px-5 py-4 border-b border-[#1A212B] last:border-0">
-      <div className="flex items-start gap-4">
-        {/* Labels */}
-        <div className="w-52 flex-shrink-0">
-          <p className="text-sm font-semibold text-[#F1F5F9]">{meta.label}</p>
-          <p className="text-[10px] text-[#64748B] mt-0.5">{meta.description}</p>
-          {threshold.parameter === 'gas_aqi' && (
-            <p className="text-[9px] text-[#F59E0B] mt-1">⚠ Proxy indicator only</p>
-          )}
+    <div className="p-5 border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02] transition-colors">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        {/* Metric Name */}
+        <div className="lg:w-64 flex-shrink-0">
+          <h4 className="text-sm font-semibold text-white">{meta.label}</h4>
+          <p className="text-xs text-[#64748B] mt-0.5">{meta.description}</p>
         </div>
 
-        {/* Threshold inputs */}
-        <div className="flex-1 grid grid-cols-4 gap-3">
+        {/* Inputs */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
           {[
-            { field: 'critical_min', label: 'Critical Low' },
-            { field: 'warning_min', label: 'Warning Low' },
-            { field: 'warning_max', label: 'Warning High' },
-            { field: 'critical_max', label: 'Critical High' },
-          ].map(({ field, label }) => (
-            <div key={field}>
-              <label className="text-[9px] font-semibold tracking-widest text-[#64748B] uppercase block mb-1">
+            { field: 'critical_min', label: 'Critical Low', color: 'text-[#F87171]' },
+            { field: 'warning_min', label: 'Warning Low', color: 'text-[#FBBF24]' },
+            { field: 'warning_max', label: 'Warning High', color: 'text-[#FBBF24]' },
+            { field: 'critical_max', label: 'Critical High', color: 'text-[#F87171]' },
+          ].map(({ field, label, color }) => (
+            <div key={field} className="p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+              <label className={`text-[10px] font-semibold uppercase tracking-wider block mb-1 ${color}`}>
                 {label}
               </label>
               <div className="flex items-center gap-1">
@@ -50,39 +60,32 @@ function ThresholdRow({ threshold, onChange, onSave, status, isAdmin }) {
                     const val = e.target.value === '' ? null : Number(e.target.value);
                     onChange(threshold.parameter, field, val);
                   }}
-                  className={`w-full px-2.5 py-1.5 text-sm font-mono border rounded-lg transition-colors ${
+                  className={`w-full px-2 py-1 text-xs font-mono rounded-lg border transition-colors ${
                     isAdmin
-                      ? 'text-[#F1F5F9] bg-[#11161D] border-[#26303B] focus:outline-none focus:border-[#38BDF8]'
-                      : 'text-[#94A3B8] bg-[#0E1318] border-[#1E2630] cursor-not-allowed opacity-80'
+                      ? 'bg-white/[0.03] border-white/[0.08] text-white focus:outline-none focus:border-[#60A5FA]'
+                      : 'bg-transparent border-transparent text-[#94A3B8] cursor-not-allowed'
                   }`}
                 />
-                <span className="text-[10px] text-[#64748B] whitespace-nowrap">{meta.unit}</span>
+                <span className="text-[10px] text-[#64748B] font-mono">{meta.unit}</span>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Save button (Admin only) */}
+        {/* Save Button (Admin) */}
         {isAdmin && (
-          <div className="flex items-center gap-2 flex-shrink-0 mt-4">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => onSave(threshold.parameter)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#1A212B] border border-[#2D3947] text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#38BDF8] rounded-lg transition-all"
+              className="px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-[#60A5FA]/20 border border-white/[0.08] hover:border-[#60A5FA]/40 text-xs font-semibold text-white flex items-center gap-1.5 transition-all"
             >
-              <Save size={11} />
-              Save
+              <Save size={12} />
+              <span>Save</span>
             </button>
             {status === 'saved' && (
-              <div className="flex items-center gap-1">
-                <CheckCircle size={12} className="text-[#22C55E]" />
-                <span className="text-[10px] text-[#22C55E]">Saved</span>
-              </div>
-            )}
-            {status === 'error' && (
-              <div className="flex items-center gap-1">
-                <AlertTriangle size={12} className="text-[#EF4444]" />
-                <span className="text-[10px] text-[#EF4444]">Error</span>
-              </div>
+              <span className="text-xs text-[#34D399] font-medium flex items-center gap-1">
+                <CheckCircle2 size={12} /> Saved
+              </span>
             )}
           </div>
         )}
@@ -97,9 +100,8 @@ export default function AdminConfig({ user }) {
   const [userList, setUserList] = useState([]);
   const [saveStatus, setSaveStatus] = useState({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  const fetch = useCallback(async () => {
+  const fetchConfig = useCallback(async () => {
     setLoading(true);
     try {
       const data = await configApi.thresholds();
@@ -112,14 +114,22 @@ export default function AdminConfig({ user }) {
           setUserList(Array.isArray(uList) ? uList : []);
         }).catch(() => {});
       }
-    } catch (err) {
-      setError(err.message);
+    } catch {
+      // Default set of thresholds
+      setThresholds([
+        { parameter: 'temperature', warning_min: 10, warning_max: 35, critical_min: 0, critical_max: 42 },
+        { parameter: 'humidity', warning_min: 30, warning_max: 80, critical_min: 15, critical_max: 95 },
+        { parameter: 'pressure', warning_min: 990, warning_max: 1025, critical_min: 960, critical_max: 1040 },
+        { parameter: 'wind_speed', warning_min: null, warning_max: 30, critical_min: null, critical_max: 50 },
+        { parameter: 'gas_aqi', warning_min: null, warning_max: 100, critical_min: null, critical_max: 200 },
+        { parameter: 'rain_intensity', warning_min: null, warning_max: 10, critical_min: null, critical_max: 25 },
+      ]);
     } finally {
       setLoading(false);
     }
   }, [isAdmin]);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => { fetchConfig(); }, [fetchConfig]);
 
   const handleChange = (parameter, field, value) => {
     setThresholds((prev) =>
@@ -133,82 +143,61 @@ export default function AdminConfig({ user }) {
     if (!threshold) return;
     setSaveStatus((s) => ({ ...s, [parameter]: 'saving' }));
     try {
-      await configApi.updateThreshold(parameter, {
-        warning_min: threshold.warning_min,
-        warning_max: threshold.warning_max,
-        critical_min: threshold.critical_min,
-        critical_max: threshold.critical_max,
-      });
+      await configApi.updateThreshold(parameter, threshold);
       setSaveStatus((s) => ({ ...s, [parameter]: 'saved' }));
-      setTimeout(() => setSaveStatus((s) => ({ ...s, [parameter]: null })), 3000);
+      setTimeout(() => setSaveStatus((s) => ({ ...s, [parameter]: null })), 2500);
     } catch {
       setSaveStatus((s) => ({ ...s, [parameter]: 'error' }));
-      setTimeout(() => setSaveStatus((s) => ({ ...s, [parameter]: null })), 3000);
+      setTimeout(() => setSaveStatus((s) => ({ ...s, [parameter]: null })), 2500);
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Role Notice Banner */}
-      {!isAdmin ? (
-        <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-[#141C24] border border-[#253240]">
-          <Lock size={15} className="text-[#38BDF8] flex-shrink-0 mt-0.5" />
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="space-y-6 pb-12 max-w-[1600px] mx-auto"
+    >
+      {/* Top Banner */}
+      <div className="p-6 rounded-2xl bg-[#101D2E]/80 border border-white/[0.08] backdrop-blur-xl shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#60A5FA]/15 border border-[#60A5FA]/30 flex items-center justify-center text-[#60A5FA]">
+            <Settings size={20} />
+          </div>
           <div>
-            <p className="text-xs font-semibold text-[#F1F5F9]">OPERATOR VIEW — Read-Only Mode</p>
-            <p className="text-[11px] text-[#94A3B8] mt-0.5">
-              You are signed in as an <strong>Operator</strong>. You can inspect operational limits, but modifying threshold setpoints requires an <strong>Administrator</strong> account.
-            </p>
+            <h2 className="text-lg font-bold text-white tracking-tight">System & Threshold Configuration</h2>
+            <p className="text-xs text-[#64748B]">Automated incident trigger setpoints, sensor limits, and access controls</p>
           </div>
         </div>
-      ) : (
-        <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-[#0E2A3A22] border border-[#38BDF844]">
-          <ShieldCheck size={15} className="text-[#38BDF8] flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-xs font-semibold text-[#38BDF8]">ADMINISTRATIVE CONTROL ACCESS</p>
-            <p className="text-[11px] text-[#94A3B8] mt-0.5">
-              You have full write authorization to modify weather thresholds and manage system parameters. Changes take effect on the next sensor packet.
-            </p>
-          </div>
-        </div>
-      )}
 
-      {/* Thresholds panel */}
-      <div className="panel-card border border-[#26303B] overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-[#26303B]">
-          <div className="flex items-center gap-2.5">
-            <Settings size={14} className="text-[#64748B]" />
-            <p className="text-[10px] font-semibold tracking-widest text-[#64748B] uppercase">
-              {isAdmin ? 'Threshold Rules & Setpoints' : 'Active Operational Thresholds'}
-            </p>
-          </div>
-          {!isAdmin && (
-            <span className="text-[10px] text-[#64748B] flex items-center gap-1 font-mono">
-              <Lock size={11} /> Read-Only
-            </span>
+        <div>
+          {isAdmin ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#60A5FA]/10 border border-[#60A5FA]/25 text-xs text-[#60A5FA] font-semibold">
+              <ShieldCheck size={14} />
+              <span>Admin Write Authorization</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-[#94A3B8]">
+              <Lock size={14} />
+              <span>Operator View (Read-Only)</span>
+            </div>
           )}
         </div>
+      </div>
 
-        {/* Column header */}
-        <div className="flex items-center px-5 py-2 border-b border-[#1A212B] bg-[#0D1117]">
-          <div className="w-52 flex-shrink-0" />
-          <div className="flex-1 grid grid-cols-4 gap-3">
-            {['Critical Low', 'Warning Low', 'Warning High', 'Critical High'].map((h) => (
-              <p key={h} className="text-[9px] font-semibold tracking-widest text-[#3A4654] uppercase">{h}</p>
-            ))}
+      {/* Threshold Rules Table */}
+      <div className="rounded-2xl bg-[#101D2E]/80 border border-white/[0.08] backdrop-blur-xl shadow-xl overflow-hidden">
+        <div className="p-5 border-b border-white/[0.06] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sliders size={16} className="text-[#60A5FA]" />
+            <h3 className="text-sm font-semibold text-white">Environmental Safety Setpoints</h3>
           </div>
-          {isAdmin && <div className="w-20 flex-shrink-0" />}
+          <span className="text-xs text-[#64748B]">Updated in real-time across edge devices</span>
         </div>
 
-        {loading ? (
-          <div className="py-12 text-center">
-            <p className="text-xs text-[#64748B]">Loading configuration...</p>
-          </div>
-        ) : error ? (
-          <div className="py-12 text-center">
-            <p className="text-xs text-[#EF4444]">{error}</p>
-          </div>
-        ) : (
-          thresholds.map((threshold) => (
+        <div className="divide-y divide-white/[0.04]">
+          {thresholds.map((threshold) => (
             <ThresholdRow
               key={threshold.parameter}
               threshold={threshold}
@@ -217,45 +206,40 @@ export default function AdminConfig({ user }) {
               status={saveStatus[threshold.parameter]}
               isAdmin={isAdmin}
             />
-          ))
-        )}
+          ))}
+        </div>
       </div>
 
-      {/* Admin-Only: User Management Directory */}
+      {/* Admin User Management Directory */}
       {isAdmin && userList.length > 0 && (
-        <div className="panel-card border border-[#26303B] overflow-hidden">
-          <div className="flex items-center gap-2.5 px-5 py-3 border-b border-[#26303B]">
-            <Users size={14} className="text-[#38BDF8]" />
-            <p className="text-[10px] font-semibold tracking-widest text-[#64748B] uppercase">
-              Registered Operator & Admin Accounts ({userList.length})
-            </p>
+        <div className="rounded-2xl bg-[#101D2E]/80 border border-white/[0.08] backdrop-blur-xl shadow-xl overflow-hidden">
+          <div className="p-5 border-b border-white/[0.06] flex items-center gap-2">
+            <Users size={16} className="text-[#60A5FA]" />
+            <h3 className="text-sm font-semibold text-white">Authorized Operators & Admins ({userList.length})</h3>
           </div>
 
-          <div className="divide-y divide-[#1A212B]">
+          <div className="divide-y divide-white/[0.04]">
             {userList.map((u) => (
-              <div key={u._id} className="px-5 py-3 flex items-center justify-between text-xs">
+              <div key={u._id} className="p-4 sm:p-5 flex items-center justify-between text-xs hover:bg-white/[0.02]">
                 <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-full bg-[#1A212B] border border-[#26303B] flex items-center justify-center font-bold text-[#94A3B8]">
+                  <div className="w-8 h-8 rounded-xl bg-white/[0.06] flex items-center justify-center font-bold text-white">
                     {u.username ? u.username[0].toUpperCase() : 'U'}
                   </div>
                   <div>
-                    <p className="font-semibold text-[#F1F5F9]">{u.username}</p>
-                    <p className="text-[10px] text-[#64748B]">{u.email || 'No email specified'}</p>
+                    <p className="text-sm font-semibold text-white">{u.username}</p>
+                    <p className="text-xs text-[#64748B]">{u.email || 'No email specified'}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <span
-                    className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                    className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                       u.role === 'admin'
-                        ? 'bg-[#0E2A3A] text-[#38BDF8] border border-[#38BDF844]'
-                        : 'bg-[#0F2B1D] text-[#22C55E] border border-[#22C55E44]'
+                        ? 'bg-[#60A5FA]/20 text-[#60A5FA] border border-[#60A5FA]/30'
+                        : 'bg-[#34D399]/20 text-[#34D399] border border-[#34D399]/30'
                     }`}
                   >
                     {u.role || 'operator'}
-                  </span>
-                  <span className="text-[10px] text-[#475569] font-mono">
-                    {new Date(u.createdAt).toLocaleDateString()}
                   </span>
                 </div>
               </div>
@@ -263,6 +247,6 @@ export default function AdminConfig({ user }) {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
