@@ -14,16 +14,22 @@ async function request(path, options = {}) {
     ...options,
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw Object.assign(new Error(data.message || res.statusText), { status: res.status, data });
+  if (!res.ok) throw Object.assign(new Error(data.error || data.message || res.statusText), { status: res.status, data });
   return data;
 }
 
 // Auth
 export const authApi = {
-  login: (email, password) =>
-    request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
-  register: (email, password) =>
-    request('/auth/register', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  login: (identifier, password) =>
+    request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username: identifier, email: identifier, password })
+    }),
+  register: (identifier, password, email) =>
+    request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ username: identifier, email: email || identifier, password })
+    }),
   me: () => request('/auth/me'),
 };
 

@@ -63,17 +63,17 @@ export default function Login({ onLogin }) {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email */}
+            {/* Username or Email */}
             <div>
               <label className="block text-[10px] font-semibold tracking-widest text-[#64748B] uppercase mb-1.5">
-                Email
+                Username or Email
               </label>
               <input
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="operator@station.local"
+                placeholder={mode === 'login' ? "operator or admin@station.local" : "admin_user or operator@station.local"}
                 className="w-full px-3 py-2.5 text-sm bg-[#11161D] border border-[#26303B] rounded-lg text-[#F1F5F9] placeholder-[#3A4654] focus:outline-none focus:border-[#38BDF8] transition-colors"
               />
             </div>

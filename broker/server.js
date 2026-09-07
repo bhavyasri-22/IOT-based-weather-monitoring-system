@@ -1,9 +1,11 @@
-const { Aedes } = require('aedes');
+const Aedes = require('aedes');
 const net = require('net');
 const PORT = process.env.MQTT_PORT || 1883;
 
 async function startBroker() {
-  const aedes = await Aedes.createBroker();
+  const aedes = typeof Aedes.createBroker === 'function'
+    ? await Aedes.createBroker()
+    : (typeof Aedes === 'function' ? Aedes() : new (Aedes.Aedes || Aedes)());
   const server = net.createServer(aedes.handle);
 
   server.listen(PORT, function () {
