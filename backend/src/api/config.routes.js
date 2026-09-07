@@ -2,10 +2,11 @@ const express = require('express');
 const router = express.Router();
 const Threshold = require('../models/Threshold');
 const { seedDefaultThresholds } = require('../alerts/thresholdEngine');
+const { authenticateJWT, requireRole } = require('../auth/jwt');
 
 /**
  * GET /api/config/thresholds
- * Returns all configured system threshold rules
+ * Returns all configured system threshold rules (accessible to all authenticated operators & admins)
  */
 router.get('/thresholds', async (req, res) => {
   try {
@@ -28,8 +29,9 @@ router.get('/thresholds', async (req, res) => {
 /**
  * PUT /api/config/thresholds/:parameter
  * Admin updates threshold rule limits for a specific weather parameter
+ * Requires Admin Role
  */
-router.put('/thresholds/:parameter', async (req, res) => {
+router.put('/thresholds/:parameter', authenticateJWT, requireRole(['admin']), async (req, res) => {
   try {
     const { parameter } = req.params;
     const { warning_min, warning_max, critical_min, critical_max, is_enabled, metric_name, unit, description } = req.body;

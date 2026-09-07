@@ -9,6 +9,7 @@ import {
   Settings,
   CloudSun,
   Radio,
+  LogOut,
 } from 'lucide-react';
 
 const NavItem = ({ to, icon: Icon, label, end = false }) => (
@@ -44,7 +45,7 @@ const NavSection = ({ title, children }) => (
   </div>
 );
 
-export default function Sidebar({ deviceStatus, wsState }) {
+export default function Sidebar({ deviceStatus, wsState, user, onLogout }) {
   const isOnline = deviceStatus === 'online';
   const wsConnected = wsState === 'connected';
 
@@ -107,9 +108,18 @@ export default function Sidebar({ deviceStatus, wsState }) {
       </nav>
 
       {/* Footer */}
-      <div className="px-3 pb-4 border-t border-[#1A212B] pt-3">
+      <div className="px-3 pb-4 border-t border-[#1A212B] pt-3 space-y-1">
         <NavItem to="/admin" icon={Settings} label="Admin Config" />
-        <p className="mt-3 px-2 text-[10px] text-[#3A4654]">
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-[#64748B] hover:text-[#EF4444] hover:bg-[#151B23] transition-colors"
+          >
+            <LogOut size={15} strokeWidth={1.8} />
+            <span>Sign Out</span>
+          </button>
+        )}
+        <p className="mt-2 px-2 text-[10px] text-[#3A4654]">
           ESP32 IoT Weather Station
         </p>
       </div>

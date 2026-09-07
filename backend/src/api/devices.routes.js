@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const DeviceHealth = require('../models/DeviceHealth');
+const { authenticateJWT, requireRole } = require('../auth/jwt');
 
 /**
  * GET /api/devices/status
@@ -85,10 +86,59 @@ router.get('/:deviceId', async (req, res) => {
 });
 
 /**
+ * POST /api/devices
+ * Admin registers a new hardware device node
+ */
+router.post('/', authenticateJWT, requireRole(['admin']), async (req, res) => {
+  try {
+    const { device_id, location, firmware_version, api_key } = req.body;
+    if (!device_id || typeof device_id !== 'string') {
+      return res.status(400).json({
+        success: false,
+        data: null,
+        error: 'device_id is required'
+      });
+    }
+
+    const existing = await DeviceHealth.findOne({ device_id: device_id.trim() });
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        data: null,
+        error: `Device '${device_id}' already registered`
+      });
+    }
+
+    const device = new DeviceHealth({
+      device_id: device_id.trim(),
+      location: location || 'Station Unit',
+      firmware_version: firmware_version || '1.0.0',
+      api_key: api_key || `esp32-key-${Date.now()}`,
+      status: 'offline',
+      last_seen: new Date()
+    });
+
+    await device.save();
+
+    res.status(201).json({
+      success: true,
+      data: device,
+      error: null
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      data: null,
+      error: `Failed to register device: ${err.message}`
+    });
+  }
+});
+
+/**
  * PUT /api/devices/:deviceId/key
  * Admin sets or updates a specific per-device API key
  */
-router.put('/:deviceId/key', async (req, res) => {
+router.put('/:deviceId/key', authenticateJWT, requireRole(['admin']), async (req, res) => {
   try {
     const { apiKey } = req.body;
     if (!apiKey || typeof apiKey !== 'string' || apiKey.trim() === '') {
@@ -115,6 +165,34 @@ router.put('/:deviceId/key', async (req, res) => {
       success: false,
       data: null,
       error: `Failed to update device API key: ${err.message}`
+    });
+  }
+});
+
+/**
+ * DELETE /api/devices/:deviceId
+ * Admin decommissions and removes a hardware node
+ */
+router.delete('/:deviceId', authenticateJWT, requireRole(['admin']), async (req, res) => {
+  try {
+    const deleted = await DeviceHealth.findOneAndDelete({ device_id: req.params.deviceId });
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        data: null,
+        error: `Device '${req.params.deviceId}' not found`
+      });
+    }
+    res.json({
+      success: true,
+      data: { message: `Device '${req.params.deviceId}' removed successfully` },
+      error: null
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      data: null,
+      error: `Failed to remove device: ${err.message}`
     });
   }
 });

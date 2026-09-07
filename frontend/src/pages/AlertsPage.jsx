@@ -21,7 +21,7 @@ function formatRelativeTime(ts) {
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
-function AlertRow({ alert, showResolve, onResolve }) {
+function AlertRow({ alert, showResolve, onResolve, isAdmin }) {
   const styles = SEVERITY_STYLES[alert.severity] || SEVERITY_STYLES.warning;
   return (
     <div className={`flex items-start gap-4 px-4 py-3 border-b border-[#1A212B] hover:bg-[#151B23] transition-colors border-l-2 ${styles.border}`}>
@@ -54,19 +54,26 @@ function AlertRow({ alert, showResolve, onResolve }) {
         </div>
       </div>
       {showResolve && alert.status === 'active' && (
-        <button
-          onClick={() => onResolve(alert._id)}
-          className="flex-shrink-0 w-7 h-7 rounded-lg bg-[#1A212B] border border-[#26303B] flex items-center justify-center text-[#64748B] hover:text-[#94A3B8] transition-colors"
-          title="Resolve alert"
-        >
-          <X size={12} />
-        </button>
+        isAdmin ? (
+          <button
+            onClick={() => onResolve(alert._id)}
+            className="flex-shrink-0 w-7 h-7 rounded-lg bg-[#1A212B] border border-[#26303B] flex items-center justify-center text-[#64748B] hover:text-[#EF4444] hover:border-[#EF444455] transition-colors"
+            title="Admin Override: Force resolve alert"
+          >
+            <X size={12} />
+          </button>
+        ) : (
+          <span className="text-[9px] font-mono text-[#475569] uppercase border border-[#1E2630] px-1.5 py-0.5 rounded">
+            Monitoring
+          </span>
+        )
       )}
     </div>
   );
 }
 
-export default function AlertsPage() {
+export default function AlertsPage({ user, onResolve }) {
+  const isAdmin = user?.role === 'admin';
   const [tab, setTab] = useState('active');
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -166,6 +173,7 @@ export default function AlertsPage() {
               alert={a}
               showResolve={tab === 'active'}
               onResolve={handleResolve}
+              isAdmin={isAdmin}
             />
           ))
         )}

@@ -53,8 +53,39 @@ function authenticateJWT(req, res, next) {
   }
 }
 
+/**
+ * Express middleware to enforce role-based access control (RBAC)
+ * @param {string[]|string} allowedRoles 
+ */
+function requireRole(allowedRoles) {
+  const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        data: null,
+        error: 'Authentication required'
+      });
+    }
+
+    const userRole = (req.user.role || 'operator').toLowerCase();
+    const isAuthorized = roles.some((r) => r.toLowerCase() === userRole);
+
+    if (!isAuthorized) {
+      return res.status(403).json({
+        success: false,
+        data: null,
+        error: `Forbidden: Action requires '${roles.join(' or ')}' role. Current role: '${userRole}'.`
+      });
+    }
+
+    next();
+  };
+}
+
 module.exports = {
   generateToken,
   authenticateJWT,
+  requireRole,
   JWT_SECRET
 };

@@ -19,7 +19,7 @@ import AdminConfig from './pages/AdminConfig';
 import useWebSocket from './hooks/useWebSocket';
 import useTelemetry from './hooks/useTelemetry';
 import useAlerts from './hooks/useAlerts';
-import { devicesApi } from './api/client';
+import { devicesApi, authApi } from './api/client';
 
 const ACTIVITY_MAX = 50;
 
@@ -29,9 +29,27 @@ function nextId() { return ++_eid; }
 
 export default function App() {
   const [user, setUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem('auth_user');
+      if (stored) return JSON.parse(stored);
+    } catch {}
     const token = localStorage.getItem('auth_token');
-    return token ? { email: 'operator' } : null;
+    return token ? { email: 'operator', role: 'operator' } : null;
   });
+
+  // Verify and refresh user role on startup
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      authApi.me().then((res) => {
+        const u = res?.data || res;
+        if (u && u.role) {
+          setUser(u);
+          localStorage.setItem('auth_user', JSON.stringify(u));
+        }
+      }).catch(() => {});
+    }
+  }, []);
 
   // Primary device context – picked from device list on mount
   const [deviceId, setDeviceId] = useState(null);
@@ -115,6 +133,7 @@ export default function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
     setUser(null);
   };
 
@@ -131,13 +150,14 @@ export default function App() {
     activeAlerts,
     onResolveAlert: manualResolve,
     activityFeed,
+    user,
   };
 
   return (
     <Router>
       <div className="flex h-screen overflow-hidden" style={{ backgroundColor: '#0B0F14' }}>
         {/* Sidebar */}
-        <Sidebar deviceStatus={deviceStatus} wsState={wsState} />
+        <Sidebar deviceStatus={deviceStatus} wsState={wsState} user={user} onLogout={handleLogout} />
 
         {/* Main content area */}
         <div className="flex flex-col flex-1 overflow-hidden" style={{ marginLeft: 228 }}>
@@ -146,6 +166,8 @@ export default function App() {
             deviceStatus={deviceStatus}
             lastUpdated={lastUpdated}
             activeAlertCount={activeAlerts.length}
+            user={user}
+            onLogout={handleLogout}
           />
 
           {/* Page scrollable area */}
@@ -170,9 +192,9 @@ export default function App() {
               <Route path="/" element={<Dashboard {...sharedProps} />} />
               <Route path="/live" element={<LiveMonitor {...sharedProps} />} />
               <Route path="/history" element={<History deviceId={deviceId} />} />
-              <Route path="/alerts" element={<AlertsPage />} />
-              <Route path="/devices" element={<DevicesPage />} />
-              <Route path="/admin" element={<AdminConfig />} />
+              <Route path="/alerts" element={<AlertsPage user={user} onResolve={manualResolve} />} />
+              <Route path="/devices" element={<DevicesPage user={user} />} />
+              <Route path="/admin" element={<AdminConfig user={user} />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { configApi } from '../api/client';
-import { Settings, Save, RotateCcw, CheckCircle, AlertTriangle } from 'lucide-react';
+import { configApi, authApi } from '../api/client';
+import { Settings, Save, ShieldCheck, Lock, Users, AlertTriangle, CheckCircle, ShieldAlert } from 'lucide-react';
 
 const PARAM_LABELS = {
   temperature: { label: 'Temperature', unit: '°C', description: 'Ambient air temperature' },
@@ -12,7 +12,7 @@ const PARAM_LABELS = {
   rain_intensity: { label: 'Rain Intensity', unit: 'mm/hr', description: 'FC-37 precipitation rate' },
 };
 
-function ThresholdRow({ threshold, onChange, onSave, status }) {
+function ThresholdRow({ threshold, onChange, onSave, status, isAdmin }) {
   const meta = PARAM_LABELS[threshold.parameter] || { label: threshold.parameter, unit: '', description: '' };
 
   return (
@@ -44,12 +44,17 @@ function ThresholdRow({ threshold, onChange, onSave, status }) {
                   type="number"
                   step="0.1"
                   placeholder="—"
+                  disabled={!isAdmin}
                   value={threshold[field] ?? ''}
                   onChange={(e) => {
                     const val = e.target.value === '' ? null : Number(e.target.value);
                     onChange(threshold.parameter, field, val);
                   }}
-                  className="w-full px-2.5 py-1.5 text-sm text-[#F1F5F9] bg-[#11161D] border border-[#26303B] rounded-lg focus:outline-none focus:border-[#38BDF8] transition-colors font-mono"
+                  className={`w-full px-2.5 py-1.5 text-sm font-mono border rounded-lg transition-colors ${
+                    isAdmin
+                      ? 'text-[#F1F5F9] bg-[#11161D] border-[#26303B] focus:outline-none focus:border-[#38BDF8]'
+                      : 'text-[#94A3B8] bg-[#0E1318] border-[#1E2630] cursor-not-allowed opacity-80'
+                  }`}
                 />
                 <span className="text-[10px] text-[#64748B] whitespace-nowrap">{meta.unit}</span>
               </div>
@@ -57,35 +62,39 @@ function ThresholdRow({ threshold, onChange, onSave, status }) {
           ))}
         </div>
 
-        {/* Save button */}
-        <div className="flex items-center gap-2 flex-shrink-0 mt-4">
-          <button
-            onClick={() => onSave(threshold.parameter)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#1A212B] border border-[#2D3947] text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#38BDF8] rounded-lg transition-all"
-          >
-            <Save size={11} />
-            Save
-          </button>
-          {status === 'saved' && (
-            <div className="flex items-center gap-1">
-              <CheckCircle size={12} className="text-[#22C55E]" />
-              <span className="text-[10px] text-[#22C55E]">Saved</span>
-            </div>
-          )}
-          {status === 'error' && (
-            <div className="flex items-center gap-1">
-              <AlertTriangle size={12} className="text-[#EF4444]" />
-              <span className="text-[10px] text-[#EF4444]">Error</span>
-            </div>
-          )}
-        </div>
+        {/* Save button (Admin only) */}
+        {isAdmin && (
+          <div className="flex items-center gap-2 flex-shrink-0 mt-4">
+            <button
+              onClick={() => onSave(threshold.parameter)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#1A212B] border border-[#2D3947] text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#38BDF8] rounded-lg transition-all"
+            >
+              <Save size={11} />
+              Save
+            </button>
+            {status === 'saved' && (
+              <div className="flex items-center gap-1">
+                <CheckCircle size={12} className="text-[#22C55E]" />
+                <span className="text-[10px] text-[#22C55E]">Saved</span>
+              </div>
+            )}
+            {status === 'error' && (
+              <div className="flex items-center gap-1">
+                <AlertTriangle size={12} className="text-[#EF4444]" />
+                <span className="text-[10px] text-[#EF4444]">Error</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-export default function AdminConfig() {
+export default function AdminConfig({ user }) {
+  const isAdmin = user?.role === 'admin';
   const [thresholds, setThresholds] = useState([]);
+  const [userList, setUserList] = useState([]);
   const [saveStatus, setSaveStatus] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -96,12 +105,19 @@ export default function AdminConfig() {
       const data = await configApi.thresholds();
       const list = data?.data || data || [];
       setThresholds(Array.isArray(list) ? list : []);
+
+      if (isAdmin) {
+        authApi.users().then((res) => {
+          const uList = res?.data || res || [];
+          setUserList(Array.isArray(uList) ? uList : []);
+        }).catch(() => {});
+      }
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
@@ -112,6 +128,7 @@ export default function AdminConfig() {
   };
 
   const handleSave = async (parameter) => {
+    if (!isAdmin) return;
     const threshold = thresholds.find((t) => t.parameter === parameter);
     if (!threshold) return;
     setSaveStatus((s) => ({ ...s, [parameter]: 'saving' }));
@@ -131,23 +148,44 @@ export default function AdminConfig() {
   };
 
   return (
-    <div className="space-y-5">
-      {/* Header note */}
-      <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-[#0D1117] border border-[#26303B]">
-        <AlertTriangle size={14} className="text-[#F59E0B] flex-shrink-0 mt-0.5" />
-        <div>
-          <p className="text-xs text-[#94A3B8]">
-            Threshold changes take effect immediately for new telemetry readings.{' '}
-            <span className="text-[#F59E0B]">AQI Proxy values are MQ135-derived and are not official EPA air quality measurements.</span>
-          </p>
+    <div className="space-y-6">
+      {/* Role Notice Banner */}
+      {!isAdmin ? (
+        <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-[#141C24] border border-[#253240]">
+          <Lock size={15} className="text-[#38BDF8] flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-semibold text-[#F1F5F9]">OPERATOR VIEW — Read-Only Mode</p>
+            <p className="text-[11px] text-[#94A3B8] mt-0.5">
+              You are signed in as an <strong>Operator</strong>. You can inspect operational limits, but modifying threshold setpoints requires an <strong>Administrator</strong> account.
+            </p>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-[#0E2A3A22] border border-[#38BDF844]">
+          <ShieldCheck size={15} className="text-[#38BDF8] flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-semibold text-[#38BDF8]">ADMINISTRATIVE CONTROL ACCESS</p>
+            <p className="text-[11px] text-[#94A3B8] mt-0.5">
+              You have full write authorization to modify weather thresholds and manage system parameters. Changes take effect on the next sensor packet.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Thresholds panel */}
       <div className="panel-card border border-[#26303B] overflow-hidden">
-        <div className="flex items-center gap-2.5 px-5 py-3 border-b border-[#26303B]">
-          <Settings size={14} className="text-[#64748B]" />
-          <p className="text-[10px] font-semibold tracking-widest text-[#64748B] uppercase">Alert Thresholds</p>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[#26303B]">
+          <div className="flex items-center gap-2.5">
+            <Settings size={14} className="text-[#64748B]" />
+            <p className="text-[10px] font-semibold tracking-widest text-[#64748B] uppercase">
+              {isAdmin ? 'Threshold Rules & Setpoints' : 'Active Operational Thresholds'}
+            </p>
+          </div>
+          {!isAdmin && (
+            <span className="text-[10px] text-[#64748B] flex items-center gap-1 font-mono">
+              <Lock size={11} /> Read-Only
+            </span>
+          )}
         </div>
 
         {/* Column header */}
@@ -158,7 +196,7 @@ export default function AdminConfig() {
               <p key={h} className="text-[9px] font-semibold tracking-widest text-[#3A4654] uppercase">{h}</p>
             ))}
           </div>
-          <div className="w-20 flex-shrink-0" />
+          {isAdmin && <div className="w-20 flex-shrink-0" />}
         </div>
 
         {loading ? (
@@ -177,10 +215,54 @@ export default function AdminConfig() {
               onChange={handleChange}
               onSave={handleSave}
               status={saveStatus[threshold.parameter]}
+              isAdmin={isAdmin}
             />
           ))
         )}
       </div>
+
+      {/* Admin-Only: User Management Directory */}
+      {isAdmin && userList.length > 0 && (
+        <div className="panel-card border border-[#26303B] overflow-hidden">
+          <div className="flex items-center gap-2.5 px-5 py-3 border-b border-[#26303B]">
+            <Users size={14} className="text-[#38BDF8]" />
+            <p className="text-[10px] font-semibold tracking-widest text-[#64748B] uppercase">
+              Registered Operator & Admin Accounts ({userList.length})
+            </p>
+          </div>
+
+          <div className="divide-y divide-[#1A212B]">
+            {userList.map((u) => (
+              <div key={u._id} className="px-5 py-3 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-full bg-[#1A212B] border border-[#26303B] flex items-center justify-center font-bold text-[#94A3B8]">
+                    {u.username ? u.username[0].toUpperCase() : 'U'}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[#F1F5F9]">{u.username}</p>
+                    <p className="text-[10px] text-[#64748B]">{u.email || 'No email specified'}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                      u.role === 'admin'
+                        ? 'bg-[#0E2A3A] text-[#38BDF8] border border-[#38BDF844]'
+                        : 'bg-[#0F2B1D] text-[#22C55E] border border-[#22C55E44]'
+                    }`}
+                  >
+                    {u.role || 'operator'}
+                  </span>
+                  <span className="text-[10px] text-[#475569] font-mono">
+                    {new Date(u.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

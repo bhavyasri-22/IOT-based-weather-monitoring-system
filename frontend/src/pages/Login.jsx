@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { CloudSun, Eye, EyeOff, AlertTriangle } from 'lucide-react';
+import { CloudSun, Eye, EyeOff, AlertTriangle, ShieldCheck, UserCheck } from 'lucide-react';
 import { authApi } from '../api/client';
 
 export default function Login({ onLogin }) {
   const [mode, setMode] = useState('login'); // login | register
+  const [role, setRole] = useState('operator'); // operator | admin
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
@@ -15,12 +16,20 @@ export default function Login({ onLogin }) {
     setError('');
     setLoading(true);
     try {
-      const fn = mode === 'login' ? authApi.login : authApi.register;
-      const res = await fn(email, password);
+      let res;
+      if (mode === 'login') {
+        res = await authApi.login(email, password);
+      } else {
+        res = await authApi.register(email, password, role);
+      }
+
       const token = res?.token || res?.data?.token;
+      const user = res?.user || res?.data?.user || { email, role };
+
       if (token) {
         localStorage.setItem('auth_token', token);
-        onLogin(res?.user || res?.data?.user || { email });
+        localStorage.setItem('auth_user', JSON.stringify(user));
+        onLogin(user);
       } else {
         setError('Authentication failed. No token received.');
       }
@@ -63,7 +72,47 @@ export default function Login({ onLogin }) {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Username or Email */}
+            {/* Role Selection on Register */}
+            {mode === 'register' && (
+              <div>
+                <label className="block text-[10px] font-semibold tracking-widest text-[#64748B] uppercase mb-1.5">
+                  Account Role
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setRole('operator')}
+                    className={`flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg border text-xs font-medium transition-all ${
+                      role === 'operator'
+                        ? 'bg-[#15231C] border-[#22C55E88] text-[#22C55E]'
+                        : 'bg-[#11161D] border-[#26303B] text-[#64748B] hover:text-[#94A3B8]'
+                    }`}
+                  >
+                    <UserCheck size={13} />
+                    <span>Operator / User</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole('admin')}
+                    className={`flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg border text-xs font-medium transition-all ${
+                      role === 'admin'
+                        ? 'bg-[#12222E] border-[#38BDF888] text-[#38BDF8]'
+                        : 'bg-[#11161D] border-[#26303B] text-[#64748B] hover:text-[#94A3B8]'
+                    }`}
+                  >
+                    <ShieldCheck size={13} />
+                    <span>Administrator</span>
+                  </button>
+                </div>
+                <p className="text-[10px] text-[#4B5563] mt-1.5">
+                  {role === 'admin'
+                    ? '⚡ Full control: calibrate thresholds, manage devices & resolve alerts.'
+                    : '📊 Telemetry monitor: real-time streaming, trend analysis & alerts feed.'}
+                </p>
+              </div>
+            )}
+
+            {/* Email / Username */}
             <div>
               <label className="block text-[10px] font-semibold tracking-widest text-[#64748B] uppercase mb-1.5">
                 Username or Email
@@ -116,7 +165,7 @@ export default function Login({ onLogin }) {
               disabled={loading}
               className="w-full py-2.5 text-sm font-semibold rounded-lg bg-[#1A212B] border border-[#2D3947] text-[#F1F5F9] hover:bg-[#1E2836] hover:border-[#38BDF8] focus:outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Authenticating...' : mode === 'login' ? 'Sign In' : 'Create Account'}
+              {loading ? 'Authenticating...' : mode === 'login' ? 'Sign In' : `Create ${role === 'admin' ? 'Admin' : 'Operator'} Account`}
             </button>
           </form>
         </div>

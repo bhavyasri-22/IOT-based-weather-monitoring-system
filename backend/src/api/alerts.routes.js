@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const AlertLog = require('../models/AlertLog');
+const { authenticateJWT, requireRole } = require('../auth/jwt');
 
 /**
  * GET /api/alerts
@@ -58,9 +59,9 @@ router.get('/active', async (req, res) => {
 
 /**
  * PUT /api/alerts/:alertId/resolve
- * Manually resolves an active alert
+ * Manually resolves an active alert (Admin Only)
  */
-router.put('/:alertId/resolve', async (req, res) => {
+router.put('/:alertId/resolve', authenticateJWT, requireRole(['admin']), async (req, res) => {
   try {
     const alert = await AlertLog.findById(req.params.alertId);
     if (!alert) {

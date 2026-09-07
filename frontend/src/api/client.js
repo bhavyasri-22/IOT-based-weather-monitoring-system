@@ -25,12 +25,13 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ username: identifier, email: identifier, password })
     }),
-  register: (identifier, password, email) =>
+  register: (identifier, password, role = 'operator', email) =>
     request('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ username: identifier, email: email || identifier, password })
+      body: JSON.stringify({ username: identifier, email: email || identifier, password, role })
     }),
   me: () => request('/auth/me'),
+  users: () => request('/auth/users'),
 };
 
 // Telemetry
@@ -46,6 +47,9 @@ export const devicesApi = {
   list: () => request('/devices/status'),
   health: () => request('/devices/health'),
   single: (deviceId) => request(`/devices/${deviceId}`),
+  create: (deviceData) => request('/devices', { method: 'POST', body: JSON.stringify(deviceData) }),
+  delete: (deviceId) => request(`/devices/${deviceId}`, { method: 'DELETE' }),
+  updateKey: (deviceId, apiKey) => request(`/devices/${deviceId}/key`, { method: 'PUT', body: JSON.stringify({ apiKey }) }),
 };
 
 // Alerts

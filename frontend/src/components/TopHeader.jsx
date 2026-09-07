@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, LogOut, ShieldCheck, UserCheck } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
 const PAGE_META = {
@@ -20,10 +20,11 @@ function formatLastSeen(lastUpdated) {
   return `${Math.floor(diff / 3600)}h ago`;
 }
 
-export default function TopHeader({ deviceId, deviceStatus, lastUpdated, activeAlertCount = 0 }) {
+export default function TopHeader({ deviceId, deviceStatus, lastUpdated, activeAlertCount = 0, user, onLogout }) {
   const { pathname } = useLocation();
   const meta = PAGE_META[pathname] || { title: 'Weather Station', subtitle: 'IoT monitoring system' };
   const isOnline = deviceStatus === 'online';
+  const isAdmin = user?.role === 'admin';
 
   return (
     <header className="h-14 flex items-center justify-between px-6 border-b border-[#1A212B] bg-[#0D1117] flex-shrink-0">
@@ -33,8 +34,8 @@ export default function TopHeader({ deviceId, deviceStatus, lastUpdated, activeA
         <p className="text-xs text-[#64748B] leading-tight mt-0.5">{meta.subtitle}</p>
       </div>
 
-      {/* Right: Device status + alerts */}
-      <div className="flex items-center gap-4">
+      {/* Right: Device status + alerts + role badge + logout */}
+      <div className="flex items-center gap-3">
         {/* Device status pill */}
         <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-[#151B23] border border-[#26303B]">
           <div className="flex items-center gap-1.5">
@@ -74,6 +75,39 @@ export default function TopHeader({ deviceId, deviceStatus, lastUpdated, activeA
             </span>
           )}
         </button>
+
+        {/* Role & User Badge */}
+        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[#151B23] border border-[#26303B]">
+          <div className="flex items-center gap-1.5">
+            {isAdmin ? (
+              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#0E2A3A] text-[#38BDF8] border border-[#38BDF844]">
+                <ShieldCheck size={10} />
+                Admin
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#0F2B1D] text-[#22C55E] border border-[#22C55E44]">
+                <UserCheck size={10} />
+                Operator
+              </span>
+            )}
+            <span className="text-[11px] text-[#CBD5E1] font-medium truncate max-w-[120px]">
+              {user?.email ? user.email.split('@')[0] : 'user'}
+            </span>
+          </div>
+
+          {onLogout && (
+            <>
+              <span className="w-px h-3.5 bg-[#26303B]" />
+              <button
+                onClick={onLogout}
+                title="Sign Out"
+                className="text-[#64748B] hover:text-[#EF4444] transition-colors p-0.5"
+              >
+                <LogOut size={13} />
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );
