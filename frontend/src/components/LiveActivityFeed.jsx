@@ -75,21 +75,21 @@ export default function LiveActivityFeed({ events = [] }) {
   }
 
   return (
-    <div className="rounded-2xl p-5 sm:p-6 bg-[#101D2E]/80 border border-white/[0.08] backdrop-blur-xl shadow-xl flex flex-col h-full space-y-4">
+    <div className="rounded-2xl p-5 sm:p-6 bg-white dark:bg-[#101D2E]/80 border border-slate-200/80 dark:border-white/[0.08] backdrop-blur-xl shadow-sm dark:shadow-xl flex flex-col h-full space-y-4 transition-colors">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#60A5FA]/15 border border-[#60A5FA]/30 flex items-center justify-center text-[#60A5FA]">
+          <div className="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-[#60A5FA]">
             <Activity size={16} />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-white tracking-tight">Live Activity Stream</h3>
-            <p className="text-xs text-[#64748B]">Real-time WebSocket event ingestion</p>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white tracking-tight">Live Activity Stream</h3>
+            <p className="text-xs text-slate-500 dark:text-[#64748B]">Real-time WebSocket event ingestion</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-[10px] text-[#34D399]">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#34D399] animate-pulse" />
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-white/[0.04] border border-emerald-200 dark:border-white/[0.08] text-[10px] text-emerald-700 dark:text-[#34D399]">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-[#34D399] animate-pulse" />
           <span className="font-mono">STREAMING</span>
         </div>
       </div>
@@ -110,7 +110,7 @@ export default function LiveActivityFeed({ events = [] }) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.25 }}
-                className="p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.04] hover:border-white/[0.08] transition-all flex items-start gap-3"
+                className="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-slate-200/80 dark:border-white/[0.04] hover:border-slate-300 dark:hover:border-white/[0.08] transition-all flex items-start gap-3"
               >
                 <div
                   className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
@@ -125,11 +125,11 @@ export default function LiveActivityFeed({ events = [] }) {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-white truncate">{item.title}</span>
-                    <span className="text-[10px] text-[#64748B] font-mono flex-shrink-0">{timeStr}</span>
+                    <span className="text-xs font-semibold text-slate-900 dark:text-white truncate">{item.title}</span>
+                    <span className="text-[10px] text-slate-400 dark:text-[#64748B] font-mono flex-shrink-0">{timeStr}</span>
                   </div>
                   {item.subtitle && (
-                    <p className="text-[11px] text-[#94A3B8] font-mono mt-0.5 truncate">{item.subtitle}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] font-mono mt-0.5 truncate">{item.subtitle}</p>
                   )}
                 </div>
               </motion.div>

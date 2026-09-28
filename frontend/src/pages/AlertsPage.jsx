@@ -70,15 +70,11 @@ export default function AlertsPage({ user, onResolve }) {
   const handleResolveAlert = async (id) => {
     try {
       await alertsApi.resolve(id);
-      setAlerts((prev) =>
-        prev.map((a) => (a._id === id ? { ...a, status: 'resolved', resolved_at: new Date() } : a))
-      );
-      if (onResolve) onResolve(id);
-    } catch {
-      setAlerts((prev) =>
-        prev.map((a) => (a._id === id ? { ...a, status: 'resolved', resolved_at: new Date() } : a))
-      );
-    }
+    } catch {}
+    setAlerts((prev) =>
+      prev.map((a) => ((a._id || a.id) === id ? { ...a, status: 'resolved', resolved_at: new Date() } : a))
+    );
+    if (onResolve) onResolve(id);
   };
 
   const filtered = alerts.filter((a) => {
@@ -108,49 +104,50 @@ export default function AlertsPage({ user, onResolve }) {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="space-y-6 pb-12 max-w-[1600px] mx-auto"
+      className="space-y-6 pb-12 max-w-[1600px] mx-auto text-slate-800 dark:text-white"
     >
       {/* Top Banner & Statistics */}
-      <div className="p-6 rounded-2xl bg-[#101D2E]/80 border border-white/[0.08] backdrop-blur-xl shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="p-6 rounded-2xl bg-white dark:bg-[#101D2E]/80 border border-slate-200/80 dark:border-white/[0.08] backdrop-blur-xl shadow-sm dark:shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition-colors">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#F87171]/15 border border-[#F87171]/30 flex items-center justify-center text-[#F87171]">
+          <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-[#F87171]/15 border border-rose-200 dark:border-[#F87171]/30 flex items-center justify-center text-rose-600 dark:text-[#F87171]">
             <ShieldAlert size={20} />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-white tracking-tight">Environmental Alerts & Audit Center</h2>
-            <p className="text-xs text-[#64748B]">Real-time safety rules, breach events, and incident resolutions</p>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Environmental Alerts & Audit Center</h2>
+            <p className="text-xs text-slate-500 dark:text-[#64748B]">Real-time safety rules, breach events, and incident resolutions</p>
           </div>
         </div>
 
         {/* Counter Badges */}
         <div className="flex items-center gap-3 text-xs">
-          <div className="px-3 py-2 rounded-xl bg-[#F87171]/10 border border-[#F87171]/20 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#F87171]" />
-            <span className="text-[#F87171] font-semibold">{criticalCount} Critical</span>
+          <div className="px-3 py-2 rounded-xl bg-rose-50 dark:bg-[#F87171]/10 border border-rose-200 dark:border-[#F87171]/20 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-rose-500 dark:bg-[#F87171]" />
+            <span className="text-rose-600 dark:text-[#F87171] font-semibold">{criticalCount} Critical</span>
           </div>
-          <div className="px-3 py-2 rounded-xl bg-[#FBBF24]/10 border border-[#FBBF24]/20 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#FBBF24]" />
-            <span className="text-[#FBBF24] font-semibold">{activeCount} Active</span>
+          <div className="px-3 py-2 rounded-xl bg-amber-50 dark:bg-[#FBBF24]/10 border border-amber-200 dark:border-[#FBBF24]/20 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-500 dark:bg-[#FBBF24]" />
+            <span className="text-amber-600 dark:text-[#FBBF24] font-semibold">{activeCount} Active</span>
           </div>
-          <div className="px-3 py-2 rounded-xl bg-[#34D399]/10 border border-[#34D399]/20 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#34D399]" />
-            <span className="text-[#34D399] font-semibold">{resolvedCount} Resolved</span>
+          <div className="px-3 py-2 rounded-xl bg-emerald-50 dark:bg-[#34D399]/10 border border-emerald-200 dark:border-[#34D399]/20 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-[#34D399]" />
+            <span className="text-emerald-600 dark:text-[#34D399] font-semibold">{resolvedCount} Resolved</span>
           </div>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="p-4 rounded-2xl bg-[#101D2E]/80 border border-white/[0.08] backdrop-blur-xl shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="p-4 rounded-2xl bg-white dark:bg-[#101D2E]/80 border border-slate-200/80 dark:border-white/[0.08] backdrop-blur-xl shadow-sm dark:shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors">
         {/* Filter Tabs */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#0B1728]/80 border border-white/[0.06] overflow-x-auto">
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-[#0B1728]/80 border border-slate-200 dark:border-white/[0.06] overflow-x-auto">
           {['all', 'critical', 'warning', 'resolved'].map((t) => (
             <button
               key={t}
+              type="button"
               onClick={() => setTab(t)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all cursor-pointer ${
                 tab === t
-                  ? 'bg-white/[0.1] text-white shadow-sm border border-white/[0.12]'
-                  : 'text-[#64748B] hover:text-[#94A3B8]'
+                  ? 'bg-white dark:bg-white/[0.1] text-blue-600 dark:text-white shadow-sm border border-slate-200 dark:border-white/[0.12]'
+                  : 'text-slate-600 dark:text-[#64748B] hover:text-slate-900 dark:hover:text-[#94A3B8]'
               }`}
             >
               {t}
@@ -161,19 +158,20 @@ export default function AlertsPage({ user, onResolve }) {
         {/* Search Input & Refresh Button */}
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#64748B]" />
             <input
               type="text"
               placeholder="Search alerts..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-xs text-white placeholder-[#64748B] focus:outline-none focus:border-[#60A5FA]"
+              className="pl-9 pr-3 py-1.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#64748B] focus:outline-none focus:border-blue-500 dark:focus:border-[#60A5FA]"
             />
           </div>
 
           <button
+            type="button"
             onClick={fetchAlerts}
-            className="p-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.08] text-[#94A3B8] hover:text-white transition-all"
+            className="p-2 rounded-xl bg-slate-100 dark:bg-white/[0.03] hover:bg-slate-200 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
             title="Refresh"
           >
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
@@ -182,32 +180,33 @@ export default function AlertsPage({ user, onResolve }) {
       </div>
 
       {/* Alerts Table/List */}
-      <div className="rounded-2xl bg-[#101D2E]/80 border border-white/[0.08] backdrop-blur-xl shadow-xl overflow-hidden">
+      <div className="rounded-2xl bg-white dark:bg-[#101D2E]/80 border border-slate-200/80 dark:border-white/[0.08] backdrop-blur-xl shadow-sm dark:shadow-xl overflow-hidden transition-colors">
         {filtered.length === 0 ? (
           <div className="py-16 text-center">
-            <CheckCircle2 size={36} className="text-[#34D399] mx-auto mb-2 opacity-80" />
-            <p className="text-base font-semibold text-white">No alerts found</p>
-            <p className="text-xs text-[#64748B] mt-0.5">All monitored sensors are operating within defined thresholds</p>
+            <CheckCircle2 size={36} className="text-emerald-500 dark:text-[#34D399] mx-auto mb-2 opacity-80" />
+            <p className="text-base font-semibold text-slate-900 dark:text-white">No alerts found</p>
+            <p className="text-xs text-slate-500 dark:text-[#64748B] mt-0.5">All monitored sensors are operating within defined thresholds</p>
           </div>
         ) : (
-          <div className="divide-y divide-white/[0.04]">
+          <div className="divide-y divide-slate-100 dark:divide-white/[0.04]">
             {filtered.map((alert) => {
               const isCrit = alert.severity === 'critical';
               const isResolved = alert.status === 'resolved' || alert.resolved;
+              const alertKey = alert._id || alert.id;
 
               return (
                 <div
-                  key={alert._id || alert.id}
-                  className="p-4 sm:p-5 hover:bg-white/[0.02] transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  key={alertKey}
+                  className="p-4 sm:p-5 hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                 >
                   <div className="flex items-start gap-3.5 min-w-0">
                     <div
                       className={`p-2.5 rounded-xl flex-shrink-0 mt-0.5 ${
                         isResolved
-                          ? 'bg-[#34D399]/15 text-[#34D399]'
+                          ? 'bg-emerald-100 text-emerald-600 dark:bg-[#34D399]/15 dark:text-[#34D399]'
                           : isCrit
-                          ? 'bg-[#F87171]/15 text-[#F87171]'
-                          : 'bg-[#FBBF24]/15 text-[#FBBF24]'
+                          ? 'bg-rose-100 text-rose-600 dark:bg-[#F87171]/15 dark:text-[#F87171]'
+                          : 'bg-amber-100 text-amber-600 dark:bg-[#FBBF24]/15 dark:text-[#FBBF24]'
                       }`}
                     >
                       {isResolved ? (
@@ -222,23 +221,23 @@ export default function AlertsPage({ user, onResolve }) {
                         <span
                           className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
                             isResolved
-                              ? 'bg-[#34D399]/20 text-[#34D399]'
+                              ? 'bg-emerald-100 text-emerald-700 dark:bg-[#34D399]/20 dark:text-[#34D399]'
                               : isCrit
-                              ? 'bg-[#F87171]/20 text-[#F87171]'
-                              : 'bg-[#FBBF24]/20 text-[#FBBF24]'
+                              ? 'bg-rose-100 text-rose-700 dark:bg-[#F87171]/20 dark:text-[#F87171]'
+                              : 'bg-amber-100 text-amber-700 dark:bg-[#FBBF24]/20 dark:text-[#FBBF24]'
                           }`}
                         >
                           {isResolved ? 'Resolved' : alert.severity}
                         </span>
-                        <span className="text-xs font-mono text-[#60A5FA] uppercase font-semibold">
+                        <span className="text-xs font-mono text-blue-600 dark:text-[#60A5FA] uppercase font-semibold">
                           {alert.parameter}
                         </span>
-                        <span className="text-xs text-[#64748B]">·</span>
-                        <span className="text-xs text-[#64748B] font-mono">
+                        <span className="text-xs text-slate-400 dark:text-[#64748B]">·</span>
+                        <span className="text-xs text-slate-500 dark:text-[#64748B] font-mono">
                           {formatRelativeTime(alert.triggered_at || alert.createdAt)}
                         </span>
                       </div>
-                      <p className="text-sm font-medium text-white leading-relaxed">{alert.message}</p>
+                      <p className="text-sm font-medium text-slate-800 dark:text-white leading-relaxed">{alert.message}</p>
                     </div>
                   </div>
 
@@ -246,15 +245,16 @@ export default function AlertsPage({ user, onResolve }) {
                   <div className="flex items-center gap-4 self-end sm:self-center flex-shrink-0">
                     {alert.trigger_value != null && (
                       <div className="text-right">
-                        <span className="text-[10px] text-[#64748B] block font-mono uppercase">Reading</span>
-                        <span className="text-sm font-bold text-white font-mono">{alert.trigger_value}</span>
+                        <span className="text-[10px] text-slate-400 dark:text-[#64748B] block font-mono uppercase">Reading</span>
+                        <span className="text-sm font-bold text-slate-900 dark:text-white font-mono">{alert.trigger_value}</span>
                       </div>
                     )}
 
                     {!isResolved && (
                       <button
-                        onClick={() => handleResolveAlert(alert._id)}
-                        className="px-3.5 py-1.5 rounded-xl bg-white/[0.05] hover:bg-[#34D399]/20 border border-white/[0.08] hover:border-[#34D399]/40 text-[#94A3B8] hover:text-[#34D399] transition-all text-xs font-semibold flex items-center gap-1.5"
+                        type="button"
+                        onClick={() => handleResolveAlert(alertKey)}
+                        className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-100 dark:bg-white/[0.05] dark:hover:bg-[#34D399]/20 border border-slate-200 dark:border-white/[0.08] hover:border-emerald-300 dark:hover:border-[#34D399]/40 text-slate-700 hover:text-emerald-700 dark:text-[#94A3B8] dark:hover:text-[#34D399] transition-all text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-sm"
                       >
                         <Check size={13} />
                         <span>Acknowledge & Resolve</span>

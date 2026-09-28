@@ -39,6 +39,7 @@ export default function Dashboard({
       {/* 2. Quick Metric Cards (6 Compact Metrics with Sparklines) */}
       <QuickMetricCards
         telemetry={telemetry}
+        activeAlerts={activeAlerts}
       />
 
       {/* 3. Live Sensor Network (5 Physical Hardware Sensors) */}
@@ -46,6 +47,7 @@ export default function Dashboard({
         telemetry={telemetry}
         lastUpdated={lastUpdated}
         deviceStatus={deviceStatus}
+        activeAlerts={activeAlerts}
       />
 
       {/* 4. Multi-Metric Time Series & Temp vs Humidity Correlation */}

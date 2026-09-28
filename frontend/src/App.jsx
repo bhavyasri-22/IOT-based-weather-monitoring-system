@@ -16,6 +16,7 @@ import History from './pages/History';
 import AlertsPage from './pages/AlertsPage';
 import DevicesPage from './pages/DevicesPage';
 import AdminConfig from './pages/AdminConfig';
+import { ThemeProvider } from './context/ThemeContext';
 
 import useWebSocket from './hooks/useWebSocket';
 import useTelemetry from './hooks/useTelemetry';
@@ -155,49 +156,54 @@ export default function App() {
   };
 
   return (
-    <Router>
-      <div className="min-h-screen w-full flex flex-col bg-[#07111F] text-[#F1F5F9] relative selection:bg-[#60A5FA]/20 selection:text-white">
-        {/* Off-Canvas Navigation Drawer */}
-        <Sidebar
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          deviceStatus={deviceStatus}
-          wsState={wsState}
-          user={user}
-          onLogout={handleLogout}
-          activeAlertCount={activeAlerts.length}
-          lastUpdated={lastUpdated}
-        />
+    <ThemeProvider>
+      <Router>
+        <div className="min-h-screen w-full flex flex-col bg-[#F8FAFC] dark:bg-[#07111F] text-slate-800 dark:text-[#F1F5F9] transition-colors duration-300 relative selection:bg-[#60A5FA]/20 selection:text-white">
+          {/* Off-Canvas Navigation Drawer */}
+          <Sidebar
+            isOpen={isSidebarOpen}
+            onClose={() => setIsSidebarOpen(false)}
+            deviceStatus={deviceStatus}
+            wsState={wsState}
+            user={user}
+            onLogout={handleLogout}
+            activeAlertCount={activeAlerts.length}
+            lastUpdated={lastUpdated}
+          />
 
-        {/* Top Header with Hamburger ☰ trigger */}
-        <TopHeader
-          onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
-          isSidebarOpen={isSidebarOpen}
-          deviceId={deviceId}
-          deviceStatus={deviceStatus}
-          wsState={wsState}
-          lastUpdated={lastUpdated}
-          activeAlertCount={activeAlerts.length}
-          activeAlerts={activeAlerts}
-          onResolveAlert={manualResolve}
-          user={user}
-          onLogout={handleLogout}
-        />
+          {/* Top Header with Hamburger ☰ trigger */}
+          <TopHeader
+            onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
+            isSidebarOpen={isSidebarOpen}
+            deviceId={deviceId}
+            deviceStatus={deviceStatus}
+            wsState={wsState}
+            lastUpdated={lastUpdated}
+            activeAlertCount={activeAlerts.length}
+            activeAlerts={activeAlerts}
+            onResolveAlert={manualResolve}
+            user={user}
+            onLogout={handleLogout}
+          />
 
-        {/* Full-Width Main Viewport */}
-        <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6">
-          <Routes>
-            <Route path="/" element={<Dashboard {...sharedProps} />} />
-            <Route path="/live" element={<LiveMonitor {...sharedProps} />} />
-            <Route path="/analytics" element={<Analytics {...sharedProps} />} />
-            <Route path="/devices" element={<DevicesPage user={user} />} />
-            <Route path="/alerts" element={<AlertsPage user={user} onResolve={manualResolve} />} />
-            <Route path="/history" element={<History deviceId={deviceId} />} />
-            <Route path="/admin" element={<AdminConfig user={user} />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </main>
-      </div>
-    </Router>
+          {/* Full-Width Main Viewport */}
+          <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6">
+            <Routes>
+              <Route path="/" element={<Dashboard {...sharedProps} />} />
+              <Route path="/live" element={<LiveMonitor {...sharedProps} />} />
+              <Route path="/analytics" element={<Analytics {...sharedProps} />} />
+              <Route path="/devices" element={<DevicesPage user={user} />} />
+              <Route path="/alerts" element={<AlertsPage user={user} onResolve={manualResolve} />} />
+              <Route path="/history" element={<History deviceId={deviceId} />} />
+              <Route
+                path="/admin"
+                element={user?.role === 'admin' ? <AdminConfig user={user} /> : <Navigate to="/" replace />}
+              />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </main>
+        </div>
+      </Router>
+    </ThemeProvider>
   );
 }

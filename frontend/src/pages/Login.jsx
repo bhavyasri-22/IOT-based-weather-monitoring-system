@@ -53,10 +53,10 @@ export default function Login({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#07111F]">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#F8FAFC] dark:bg-[#07111F] transition-colors">
       {/* Ambient background glow */}
-      <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-[#60A5FA]/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/3 w-96 h-96 bg-[#38BDF8]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-blue-400/15 dark:bg-[#60A5FA]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/3 w-96 h-96 bg-sky-400/10 dark:bg-[#38BDF8]/10 rounded-full blur-3xl pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, scale: 0.96, y: 10 }}
@@ -66,25 +66,25 @@ export default function Login({ onLogin }) {
       >
         {/* Logo & Branding */}
         <div className="flex flex-col items-center mb-6 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-[#60A5FA]/15 border border-[#60A5FA]/30 flex items-center justify-center mb-3 text-[#60A5FA] shadow-xl">
+          <div className="w-14 h-14 rounded-2xl bg-blue-500/10 dark:bg-[#60A5FA]/15 border border-blue-500/30 dark:border-[#60A5FA]/30 flex items-center justify-center mb-3 text-blue-600 dark:text-[#60A5FA] shadow-xl">
             <CloudSun size={28} />
           </div>
-          <h1 className="text-xl font-bold text-white tracking-widest uppercase font-sans">ATMOS</h1>
-          <p className="text-xs text-[#94A3B8] mt-0.5">IoT Environmental Monitoring Console</p>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-widest uppercase font-sans">ATMOS</h1>
+          <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">IoT Environmental Monitoring Console</p>
         </div>
 
         {/* Card Container */}
-        <div className="rounded-2xl p-6 sm:p-7 bg-[#101D2E]/80 border border-white/[0.08] backdrop-blur-2xl shadow-2xl space-y-5">
+        <div className="rounded-2xl p-6 sm:p-7 bg-white dark:bg-[#101D2E]/80 border border-slate-200/80 dark:border-white/[0.08] backdrop-blur-2xl shadow-lg dark:shadow-2xl space-y-5 transition-colors">
           {/* Mode Switcher */}
-          <div className="flex gap-1 p-1 rounded-xl bg-[#0B1728]/80 border border-white/[0.06]">
+          <div className="flex gap-1 p-1 rounded-xl bg-slate-100 dark:bg-[#0B1728]/80 border border-slate-200 dark:border-white/[0.06]">
             {['login', 'register'].map((m) => (
               <button
                 key={m}
                 onClick={() => { setMode(m); setError(''); }}
                 className={`flex-1 py-1.5 text-xs font-semibold rounded-lg tracking-wider uppercase transition-all ${
                   mode === m
-                    ? 'bg-white/[0.1] text-white shadow-sm border border-white/[0.12]'
-                    : 'text-[#64748B] hover:text-[#94A3B8]'
+                    ? 'bg-white dark:bg-white/[0.1] text-blue-700 dark:text-white shadow-sm border border-slate-200 dark:border-white/[0.12]'
+                    : 'text-slate-500 dark:text-[#64748B] hover:text-slate-800 dark:hover:text-[#94A3B8]'
                 }`}
               >
                 {m}
@@ -95,7 +95,7 @@ export default function Login({ onLogin }) {
           <form onSubmit={handleSubmit} className="space-y-4 text-xs">
             {mode === 'register' && (
               <div>
-                <label className="block text-[10px] font-semibold tracking-widest text-[#94A3B8] uppercase mb-1.5">
+                <label className="block text-[10px] font-semibold tracking-widest text-slate-500 dark:text-[#94A3B8] uppercase mb-1.5">
                   Account Role
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -104,8 +104,8 @@ export default function Login({ onLogin }) {
                     onClick={() => setRole('operator')}
                     className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                       role === 'operator'
-                        ? 'bg-[#34D399]/15 border-[#34D399]/40 text-[#34D399]'
-                        : 'bg-white/[0.02] border-white/[0.06] text-[#64748B]'
+                        ? 'bg-emerald-50 dark:bg-[#34D399]/15 border-emerald-300 dark:border-[#34D399]/40 text-emerald-700 dark:text-[#34D399]'
+                        : 'bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/[0.06] text-slate-500 dark:text-[#64748B]'
                     }`}
                   >
                     <UserCheck size={14} />
@@ -116,8 +116,8 @@ export default function Login({ onLogin }) {
                     onClick={() => setRole('admin')}
                     className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                       role === 'admin'
-                        ? 'bg-[#60A5FA]/15 border-[#60A5FA]/40 text-[#60A5FA]'
-                        : 'bg-white/[0.02] border-white/[0.06] text-[#64748B]'
+                        ? 'bg-blue-50 dark:bg-[#60A5FA]/15 border-blue-300 dark:border-[#60A5FA]/40 text-blue-700 dark:text-[#60A5FA]'
+                        : 'bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/[0.06] text-slate-500 dark:text-[#64748B]'
                     }`}
                   >
                     <ShieldCheck size={14} />
@@ -128,7 +128,7 @@ export default function Login({ onLogin }) {
             )}
 
             <div>
-              <label className="block text-[10px] font-semibold tracking-widest text-[#94A3B8] uppercase mb-1.5">
+              <label className="block text-[10px] font-semibold tracking-widest text-slate-500 dark:text-[#94A3B8] uppercase mb-1.5">
                 Username or Email
               </label>
               <input
@@ -137,12 +137,12 @@ export default function Login({ onLogin }) {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="operator or admin@station.local"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] text-sm text-white placeholder-[#475569] focus:outline-none focus:border-[#60A5FA] transition-colors"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#475569] focus:outline-none focus:border-blue-500 dark:focus:border-[#60A5FA] transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-[10px] font-semibold tracking-widest text-[#94A3B8] uppercase mb-1.5">
+              <label className="block text-[10px] font-semibold tracking-widest text-slate-500 dark:text-[#94A3B8] uppercase mb-1.5">
                 Password
               </label>
               <div className="relative">
@@ -152,12 +152,12 @@ export default function Login({ onLogin }) {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-white/[0.03] border border-white/[0.08] text-sm text-white placeholder-[#475569] focus:outline-none focus:border-[#60A5FA] transition-colors"
+                  className="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#475569] focus:outline-none focus:border-blue-500 dark:focus:border-[#60A5FA] transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#64748B] hover:text-slate-700 dark:hover:text-white transition-colors"
                 >
                   {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
@@ -165,7 +165,7 @@ export default function Login({ onLogin }) {
             </div>
 
             {error && (
-              <div className="p-2.5 rounded-xl bg-[#F87171]/10 border border-[#F87171]/25 flex items-center gap-2 text-[#F87171] text-xs">
+              <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-[#F87171]/10 border border-rose-300 dark:border-[#F87171]/25 flex items-center gap-2 text-rose-700 dark:text-[#F87171] text-xs">
                 <AlertTriangle size={14} className="flex-shrink-0" />
                 <p>{error}</p>
               </div>
@@ -174,29 +174,29 @@ export default function Login({ onLogin }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl bg-[#60A5FA] hover:bg-[#3B82F6] text-[#07111F] font-bold text-sm transition-all shadow-lg hover:shadow-[#60A5FA]/25 disabled:opacity-50"
+              className="w-full py-3 rounded-xl bg-blue-600 dark:bg-[#60A5FA] hover:bg-blue-700 dark:hover:bg-[#3B82F6] text-white dark:text-[#07111F] font-bold text-sm transition-all shadow-lg hover:shadow-blue-500/25 dark:hover:shadow-[#60A5FA]/25 disabled:opacity-50"
             >
               {loading ? 'Authenticating...' : mode === 'login' ? 'Sign In' : `Register ${role === 'admin' ? 'Administrator' : 'Operator'}`}
             </button>
           </form>
 
           {/* Quick Demo Access Buttons */}
-          <div className="pt-3 border-t border-white/[0.06] space-y-2">
-            <span className="text-[10px] text-[#64748B] uppercase font-semibold block text-center">
+          <div className="pt-3 border-t border-slate-100 dark:border-white/[0.06] space-y-2">
+            <span className="text-[10px] text-slate-400 dark:text-[#64748B] uppercase font-semibold block text-center">
               Quick Console Access
             </span>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => handleDemoLogin('operator')}
-                className="py-1.5 px-2.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] text-[11px] text-[#94A3B8] hover:text-white transition-colors"
+                className="py-1.5 px-2.5 rounded-lg bg-slate-50 dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.06] text-[11px] text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white transition-colors font-medium"
               >
                 Operator Mode
               </button>
               <button
                 type="button"
                 onClick={() => handleDemoLogin('admin')}
-                className="py-1.5 px-2.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] text-[11px] text-[#60A5FA] hover:text-white transition-colors"
+                className="py-1.5 px-2.5 rounded-lg bg-slate-50 dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.06] text-[11px] text-blue-600 dark:text-[#60A5FA] hover:text-blue-700 dark:hover:text-white transition-colors font-medium"
               >
                 Admin Mode
               </button>
@@ -204,7 +204,7 @@ export default function Login({ onLogin }) {
           </div>
         </div>
 
-        <p className="text-center text-[11px] text-[#64748B] mt-4">
+        <p className="text-center text-[11px] text-slate-400 dark:text-[#64748B] mt-4">
           Atmospheric Glass Sensor Platform · NITK Surathkal
         </p>
       </motion.div>

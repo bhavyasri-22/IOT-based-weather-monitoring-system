@@ -13,9 +13,12 @@ import {
   CloudSun,
   LogOut,
   ShieldCheck,
-  UserCheck
+  UserCheck,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { formatRelativeTime } from '../utils/weatherUtils';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Sidebar({
   isOpen,
@@ -27,6 +30,7 @@ export default function Sidebar({
   activeAlertCount = 0,
   lastUpdated,
 }) {
+  const { theme, toggleTheme, isDark } = useTheme();
   const isOnline = deviceStatus === 'online';
   const wsConnected = wsState === 'connected';
 
@@ -41,6 +45,7 @@ export default function Sidebar({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  // Remove Admin Config for user/operator role
   const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Overview', end: true },
     { to: '/live', icon: Radio, label: 'Live Monitor' },
@@ -48,7 +53,7 @@ export default function Sidebar({
     { to: '/devices', icon: Cpu, label: 'Sensors' },
     { to: '/alerts', icon: Bell, label: 'Alerts', badge: activeAlertCount > 0 ? activeAlertCount : null },
     { to: '/history', icon: Clock, label: 'History' },
-    { to: '/admin', icon: Settings, label: 'Settings' },
+    ...(user?.role === 'admin' ? [{ to: '/admin', icon: Settings, label: 'Admin Config' }] : []),
   ];
 
   return (
@@ -70,28 +75,30 @@ export default function Sidebar({
             initial={{ x: '-100%' }}
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
-            transition={{ duration: 0.35, ease: 'easeOut' }}
-            className="fixed top-0 left-0 bottom-0 z-50 w-[260px] max-w-[85vw] bg-[#091525]/95 border-r border-white/[0.08] backdrop-blur-2xl shadow-2xl flex flex-col justify-between"
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="fixed top-0 left-0 bottom-0 z-[70] w-[265px] max-w-[85vw] bg-white/95 dark:bg-[#091525]/95 border-r border-slate-200 dark:border-white/[0.08] backdrop-blur-2xl shadow-2xl flex flex-col justify-between text-slate-800 dark:text-white"
           >
             {/* Top Branding & Close Header */}
             <div>
-              <div className="flex items-center justify-between p-5 border-b border-white/[0.08]">
+              <div className="flex items-center justify-between p-5 border-b border-slate-200/80 dark:border-white/[0.08]">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-[#60A5FA]/15 border border-[#60A5FA]/30 flex items-center justify-center text-[#60A5FA]">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 dark:bg-[#60A5FA]/15 border border-blue-500/20 dark:border-[#60A5FA]/30 flex items-center justify-center text-blue-600 dark:text-[#60A5FA]">
                     <CloudSun size={18} />
                   </div>
                   <div>
-                    <h2 className="text-sm font-bold text-white tracking-widest uppercase">Atmos</h2>
-                    <p className="text-[10px] text-[#64748B] font-medium tracking-tight">Environmental Monitoring</p>
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-widest uppercase">Atmos</h2>
+                    <p className="text-[10px] text-slate-500 dark:text-[#64748B] font-medium tracking-tight">Environmental Monitoring</p>
                   </div>
                 </div>
 
                 <button
+                  type="button"
                   onClick={onClose}
-                  className="w-7 h-7 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-[#94A3B8] hover:text-white hover:bg-white/[0.08] transition-colors"
+                  className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center text-slate-500 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-all cursor-pointer shadow-sm"
                   aria-label="Close Sidebar"
+                  title="Close Menu (Esc)"
                 >
-                  <X size={14} />
+                  <X size={16} />
                 </button>
               </div>
 
@@ -113,8 +120,8 @@ export default function Sidebar({
                         className={({ isActive }) =>
                           `group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all relative ${
                             isActive
-                              ? 'bg-[#60A5FA]/10 text-white font-semibold border-l-2 border-l-[#60A5FA] border-t border-r border-b border-transparent shadow-sm'
-                              : 'text-[#94A3B8] hover:text-white hover:bg-white/[0.04]'
+                              ? 'bg-blue-50 dark:bg-[#60A5FA]/10 text-blue-600 dark:text-white font-semibold border-l-2 border-l-blue-600 dark:border-l-[#60A5FA] border-t border-r border-b border-transparent shadow-sm'
+                              : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04]'
                           }`
                         }
                       >
@@ -124,7 +131,7 @@ export default function Sidebar({
                               <Icon
                                 size={16}
                                 className={`transition-colors ${
-                                  isActive ? 'text-[#60A5FA]' : 'text-[#64748B] group-hover:text-[#94A3B8]'
+                                  isActive ? 'text-blue-600 dark:text-[#60A5FA]' : 'text-slate-400 dark:text-[#64748B] group-hover:text-slate-700 dark:group-hover:text-[#94A3B8]'
                                 }`}
                               />
                               <span>{item.label}</span>
@@ -145,9 +152,24 @@ export default function Sidebar({
             </div>
 
             {/* Sidebar Bottom Status & User */}
-            <div className="p-4 border-t border-white/[0.08] space-y-3">
+            <div className="p-4 border-t border-slate-200/80 dark:border-white/[0.08] space-y-3">
+              {/* Theme Toggle in Sidebar */}
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.08] transition-all text-xs font-medium"
+              >
+                <div className="flex items-center gap-2 text-slate-700 dark:text-[#E2E8F0]">
+                  {isDark ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-blue-500" />}
+                  <span>{isDark ? 'Light Theme' : 'Dark Theme'}</span>
+                </div>
+                <span className="text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider bg-slate-200 dark:bg-white/[0.06] text-slate-600 dark:text-[#94A3B8]">
+                  {theme}
+                </span>
+              </button>
+
               {/* System Connection Health Badge */}
-              <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04] space-y-1">
+              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.04] space-y-1">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <span
@@ -155,13 +177,13 @@ export default function Sidebar({
                         isOnline || wsConnected ? 'bg-[#34D399] shadow-[0_0_8px_#34D399]' : 'bg-[#F87171]'
                       }`}
                     />
-                    <span className="text-[11px] font-semibold text-white">
+                    <span className="text-[11px] font-semibold text-slate-800 dark:text-white">
                       {isOnline || wsConnected ? 'System Online' : 'System Offline'}
                     </span>
                   </div>
-                  <span className="text-[9px] font-mono text-[#60A5FA]">v2.4</span>
+                  <span className="text-[9px] font-mono text-blue-600 dark:text-[#60A5FA]">v2.4</span>
                 </div>
-                <p className="text-[10px] text-[#64748B] pl-3.5">
+                <p className="text-[10px] text-slate-500 dark:text-[#64748B] pl-3.5">
                   Last sync: {formatRelativeTime(lastUpdated)}
                 </p>
               </div>
@@ -169,14 +191,14 @@ export default function Sidebar({
               {/* User / Sign out */}
               <div className="flex items-center justify-between pt-1">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-7 h-7 rounded-lg bg-white/[0.06] flex items-center justify-center text-[#94A3B8] text-xs font-bold">
+                  <div className="w-7 h-7 rounded-lg bg-slate-200 dark:bg-white/[0.06] flex items-center justify-center text-slate-700 dark:text-[#94A3B8] text-xs font-bold">
                     {user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
                   </div>
                   <div className="truncate">
-                    <p className="text-xs font-semibold text-white truncate">
+                    <p className="text-xs font-semibold text-slate-800 dark:text-white truncate">
                       {user?.email ? user.email.split('@')[0] : 'Operator'}
                     </p>
-                    <p className="text-[10px] text-[#64748B] capitalize">{user?.role || 'operator'}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-[#64748B] capitalize">{user?.role || 'operator'}</p>
                   </div>
                 </div>
 
@@ -184,7 +206,7 @@ export default function Sidebar({
                   <button
                     onClick={onLogout}
                     title="Sign Out"
-                    className="p-1.5 rounded-lg bg-white/[0.04] hover:bg-[#F87171]/20 hover:text-[#F87171] text-[#64748B] transition-colors"
+                    className="p-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.04] hover:bg-rose-100 dark:hover:bg-[#F87171]/20 hover:text-rose-600 dark:hover:text-[#F87171] text-slate-500 dark:text-[#64748B] transition-colors"
                   >
                     <LogOut size={14} />
                   </button>

@@ -34,7 +34,7 @@ export default function RainfallVisualization({ telemetry }) {
   const intensity = rain != null ? `${rain.toFixed(1)} mm/h` : '—';
 
   return (
-    <div className="rounded-2xl p-5 sm:p-6 bg-[#101D2E]/80 border border-white/[0.08] backdrop-blur-xl shadow-xl flex flex-col justify-between space-y-4">
+    <div className="rounded-2xl p-5 sm:p-6 bg-white dark:bg-[#101D2E]/80 border border-slate-200/80 dark:border-white/[0.08] backdrop-blur-xl shadow-sm dark:shadow-xl flex flex-col justify-between space-y-4 transition-colors">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
@@ -43,8 +43,8 @@ export default function RainfallVisualization({ telemetry }) {
             <CloudRain size={16} />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-white tracking-tight">Rainfall & Precipitation</h3>
-            <p className="text-xs text-[#64748B]">FC-37 sensor · accumulation rate</p>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white tracking-tight">Rainfall & Precipitation</h3>
+            <p className="text-xs text-slate-500 dark:text-[#64748B]">FC-37 sensor · accumulation rate</p>
           </div>
         </div>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full border"
@@ -54,9 +54,9 @@ export default function RainfallVisualization({ telemetry }) {
       </div>
 
       {/* Animated rain visualization */}
-      <div className="relative w-full h-36 flex items-end justify-center rounded-xl overflow-hidden bg-[#0B1728]/50 border border-white/[0.04]">
+      <div className="relative w-full h-36 flex items-end justify-center rounded-xl overflow-hidden bg-slate-50 dark:bg-[#0B1728]/50 border border-slate-200/80 dark:border-white/[0.04]">
         {/* Cloud silhouette */}
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-20 h-8 bg-[#334155]/60 rounded-full blur-sm" />
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-20 h-8 bg-slate-300/60 dark:bg-[#334155]/60 rounded-full blur-sm" />
 
         {/* Rain drops (only animated when it's actually raining) */}
         {rain != null && rain > 0.5 && (
@@ -83,7 +83,7 @@ export default function RainfallVisualization({ telemetry }) {
         {/* Intensity readout */}
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-center">
           <span className="text-lg font-bold font-sans" style={{ color: cls.color }}>{intensity}</span>
-          <span className="block text-[10px] text-[#64748B]">Intensity</span>
+          <span className="block text-[10px] text-slate-500 dark:text-[#64748B]">Intensity</span>
         </div>
       </div>
 
@@ -95,8 +95,8 @@ export default function RainfallVisualization({ telemetry }) {
             <div key={t.label} className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full transition-all ${isActive ? 'scale-150 shadow-[0_0_6px]' : 'opacity-30'}`}
                 style={{ background: t.color, boxShadow: isActive ? `0 0 6px ${t.color}` : 'none' }} />
-              <span className={`text-xs flex-1 ${isActive ? 'text-white font-semibold' : 'text-[#64748B]'}`}>{t.label}</span>
-              <span className="text-[10px] text-[#64748B] font-mono">&lt;{t.max} mm/h</span>
+              <span className={`text-xs flex-1 ${isActive ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-[#64748B]'}`}>{t.label}</span>
+              <span className="text-[10px] text-slate-400 dark:text-[#64748B] font-mono">&lt;{t.max} mm/h</span>
             </div>
           );
         })}
@@ -108,20 +108,20 @@ export default function RainfallVisualization({ telemetry }) {
             <div key="extreme" className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full transition-all ${isActive ? 'scale-150 shadow-[0_0_6px]' : 'opacity-30'}`}
                 style={{ background: t.color, boxShadow: isActive ? `0 0 6px ${t.color}` : 'none' }} />
-              <span className={`text-xs flex-1 ${isActive ? 'text-white font-semibold' : 'text-[#64748B]'}`}>{t.label}</span>
-              <span className="text-[10px] text-[#64748B] font-mono">≥30 mm/h</span>
+              <span className={`text-xs flex-1 ${isActive ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-[#64748B]'}`}>{t.label}</span>
+              <span className="text-[10px] text-slate-400 dark:text-[#64748B] font-mono">≥30 mm/h</span>
             </div>
           );
         })()}
       </div>
 
       {/* Humidity companion */}
-      <div className="pt-2 border-t border-white/[0.04] flex items-center justify-between text-xs">
-        <div className="flex items-center gap-1.5 text-[#64748B]">
-          <Droplets size={13} className="text-[#38BDF8]" />
+      <div className="pt-2 border-t border-slate-100 dark:border-white/[0.04] flex items-center justify-between text-xs">
+        <div className="flex items-center gap-1.5 text-slate-500 dark:text-[#64748B]">
+          <Droplets size={13} className="text-sky-500 dark:text-[#38BDF8]" />
           <span>Relative Humidity</span>
         </div>
-        <span className="font-semibold font-mono text-white">{humid != null ? `${humid}%` : '—'}</span>
+        <span className="font-semibold font-mono text-slate-900 dark:text-white">{humid != null ? `${humid}%` : '—'}</span>
       </div>
     </div>
   );

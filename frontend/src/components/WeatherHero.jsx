@@ -10,8 +10,9 @@ import {
   Cloud,
   CloudRain,
   Sparkles,
+  Clock,
 } from 'lucide-react';
-import { calculateHeatIndex, deriveWeatherCondition } from '../utils/weatherUtils';
+import { calculateHeatIndex, deriveWeatherCondition, formatRelativeTime } from '../utils/weatherUtils';
 
 /**
  * WeatherHero – all values sourced exclusively from backend telemetry prop.
@@ -50,29 +51,36 @@ export default function WeatherHero({ telemetry, lastUpdated, deviceStatus }) {
   const fmt = (val, suffix = '') => val != null ? `${val}${suffix}` : '—';
 
   return (
-    <div className="relative overflow-hidden rounded-2xl p-6 sm:p-8 bg-[#101D2E]/70 border border-white/[0.08] backdrop-blur-2xl shadow-2xl">
+    <div className="relative overflow-hidden rounded-2xl p-6 sm:p-8 bg-white dark:bg-[#101D2E]/70 border border-slate-200/80 dark:border-white/[0.08] backdrop-blur-2xl shadow-sm dark:shadow-2xl transition-colors text-slate-800 dark:text-white">
       {/* Ambient glows */}
-      <div className="absolute -top-24 -left-24 w-96 h-96 bg-[#60A5FA]/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-[#38BDF8]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-400/10 dark:bg-[#60A5FA]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-cyan-400/10 dark:bg-[#38BDF8]/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         {/* ── LEFT: Location + Temp + Sub-metrics */}
         <div className="lg:col-span-7 xl:col-span-8 flex flex-col justify-between space-y-6">
 
-          {/* Location + condition badge */}
+          {/* Location + condition badge + timestamp */}
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-[#60A5FA]/10 border border-[#60A5FA]/25 flex items-center justify-center">
-                <MapPin size={16} className="text-[#60A5FA]" />
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-blue-500/10 dark:bg-[#60A5FA]/10 border border-blue-500/25 dark:border-[#60A5FA]/25 flex items-center justify-center">
+                <MapPin size={17} className="text-blue-600 dark:text-[#60A5FA]" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl sm:text-2xl font-semibold text-white tracking-tight">NITK Surathkal</h2>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-white/[0.06] text-[#94A3B8] border border-white/[0.08] font-mono">
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">NITK Surathkal</h2>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-[#94A3B8] border border-slate-200 dark:border-white/[0.08] font-mono">
                     13.01°N 74.79°E
                   </span>
                 </div>
-                <p className="text-xs text-[#64748B] font-medium">Coastal Sensor Station 01 · Karnataka, India</p>
+                <div className="flex flex-wrap items-center gap-2 mt-0.5 text-xs text-slate-500 dark:text-[#64748B]">
+                  <span>Coastal Sensor Station 01 · Karnataka, India</span>
+                  <span>·</span>
+                  <span className="inline-flex items-center gap-1 font-mono text-blue-600 dark:text-[#60A5FA] font-medium bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-100 dark:border-blue-500/20">
+                    <Clock size={11} />
+                    {lastUpdated ? `${new Date(lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })} (${formatRelativeTime(lastUpdated)})` : 'Live Sync'}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -136,42 +144,42 @@ export default function WeatherHero({ telemetry, lastUpdated, deviceStatus }) {
             <div>
               {temp != null ? (
                 <div className="flex items-baseline">
-                  <span className="text-5xl sm:text-6xl md:text-7xl font-semibold tracking-tight text-white font-sans">
+                  <span className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight text-slate-900 dark:text-white font-sans">
                     {temp}
                   </span>
-                  <span className="text-3xl sm:text-4xl text-[#60A5FA] font-light ml-1">°C</span>
+                  <span className="text-3xl sm:text-4xl text-blue-600 dark:text-[#60A5FA] font-light ml-1">°C</span>
                 </div>
               ) : (
-                <div className="text-4xl font-semibold text-[#64748B]">Sensor offline</div>
+                <div className="text-4xl font-semibold text-slate-400 dark:text-[#64748B]">Sensor offline</div>
               )}
               <div className="flex items-center gap-2 mt-1">
                 {feelsLike != null ? (
-                  <span className="text-sm font-medium text-[#94A3B8]">
-                    Feels like <span className="text-[#FBBF24] font-semibold">{feelsLike}°C</span>
+                  <span className="text-sm font-medium text-slate-600 dark:text-[#94A3B8]">
+                    Feels like <span className="text-amber-500 font-bold">{feelsLike}°C</span>
                   </span>
                 ) : (
-                  <span className="text-sm text-[#64748B]">Heat index: —</span>
+                  <span className="text-sm text-slate-400 dark:text-[#64748B]">Heat index: —</span>
                 )}
-                {description && <><span className="text-xs text-[#64748B]">·</span><span className="text-xs text-[#64748B]">{description}</span></>}
+                {description && <><span className="text-xs text-slate-400 dark:text-[#64748B]">·</span><span className="text-xs text-slate-500 dark:text-[#64748B]">{description}</span></>}
               </div>
             </div>
           </div>
 
           {/* Sub-metrics row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-white/[0.06]">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-slate-200/80 dark:border-white/[0.06]">
             {[
-              { label: 'Humidity',   value: fmt(humidity, '%'),      icon: Droplets, color: '#38BDF8' },
-              { label: 'Wind',       value: fmt(windSpeed, ' km/h'), icon: Wind,     color: '#60A5FA' },
-              { label: 'Pressure',   value: fmt(pressure, ' hPa'),   icon: Gauge,    color: '#FBBF24' },
-              { label: 'Visibility', value: fmt(visibilityKm, ' km'),icon: Eye,      color: '#34D399' },
+              { label: 'Humidity',   value: fmt(humidity, '%'),      icon: Droplets, color: '#0EA5E9' },
+              { label: 'Wind',       value: fmt(windSpeed, ' km/h'), icon: Wind,     color: '#3B82F6' },
+              { label: 'Pressure',   value: fmt(pressure, ' hPa'),   icon: Gauge,    color: '#F59E0B' },
+              { label: 'Visibility', value: fmt(visibilityKm, ' km'),icon: Eye,      color: '#10B981' },
             ].map(({ label, value, icon: Icon, color }) => (
-              <div key={label} className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+              <div key={label} className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.04]">
                 <div className="p-2 rounded-lg" style={{ backgroundColor: `${color}15`, color }}>
                   <Icon size={16} />
                 </div>
                 <div>
-                  <p className="text-[11px] text-[#64748B] font-medium">{label}</p>
-                  <p className="text-sm font-semibold text-[#F1F5F9]">{value}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-[#64748B] font-medium">{label}</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-[#F1F5F9]">{value}</p>
                 </div>
               </div>
             ))}
@@ -179,10 +187,10 @@ export default function WeatherHero({ telemetry, lastUpdated, deviceStatus }) {
         </div>
 
         {/* ── RIGHT: Concentric Atmospheric Radar */}
-        <div className="lg:col-span-5 xl:col-span-4 flex flex-col items-center justify-center p-4 rounded-2xl bg-gradient-to-b from-white/[0.03] to-transparent border border-white/[0.06] relative">
+        <div className="lg:col-span-5 xl:col-span-4 flex flex-col items-center justify-center p-4 rounded-2xl bg-slate-50/50 dark:bg-gradient-to-b dark:from-white/[0.03] dark:to-transparent border border-slate-200/80 dark:border-white/[0.06] relative">
           <div className="w-full flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">Atmospheric Balance</span>
-            <span className="text-[10px] text-[#60A5FA] font-mono px-2 py-0.5 rounded bg-[#60A5FA]/10 border border-[#60A5FA]/20">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-[#94A3B8]">Atmospheric Balance</span>
+            <span className="text-[10px] text-blue-600 dark:text-[#60A5FA] font-mono px-2 py-0.5 rounded bg-blue-50 dark:bg-[#60A5FA]/10 border border-blue-200 dark:border-[#60A5FA]/20">
               RADAR ACTIVE
             </span>
           </div>
@@ -192,36 +200,36 @@ export default function WeatherHero({ telemetry, lastUpdated, deviceStatus }) {
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
-              className="absolute inset-0 rounded-full border border-dashed border-[#60A5FA]/20"
+              className="absolute inset-0 rounded-full border border-dashed border-blue-500/20 dark:border-[#60A5FA]/20"
             >
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-[#60A5FA] shadow-[0_0_8px_#60A5FA]" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-blue-500 dark:bg-[#60A5FA] shadow-[0_0_8px_#3B82F6]" />
             </motion.div>
 
             <motion.div
               animate={{ rotate: -360 }}
               transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
-              className="absolute inset-4 rounded-full border border-[#38BDF8]/25"
+              className="absolute inset-4 rounded-full border border-cyan-500/25 dark:border-[#38BDF8]/25"
             >
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#38BDF8] shadow-[0_0_8px_#38BDF8]" />
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-cyan-500 dark:bg-[#38BDF8] shadow-[0_0_8px_#06B6D4]" />
             </motion.div>
 
             <motion.div
               animate={{ scale: [0.95, 1.05, 0.95] }}
               transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-              className="absolute inset-9 rounded-full border border-[#FBBF24]/30 bg-[#FBBF24]/5"
+              className="absolute inset-9 rounded-full border border-amber-500/30 dark:border-[#FBBF24]/30 bg-amber-500/5 dark:bg-[#FBBF24]/5"
             >
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#FBBF24] shadow-[0_0_6px_#FBBF24]" />
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-[#FBBF24] shadow-[0_0_6px_#F59E0B]" />
             </motion.div>
 
             {/* Center core */}
-            <div className="relative z-10 w-20 h-20 rounded-full bg-[#0B1728]/90 border border-white/10 flex flex-col items-center justify-center text-center shadow-xl backdrop-blur-md">
-              <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">AQI</span>
+            <div className="relative z-10 w-20 h-20 rounded-full bg-white dark:bg-[#0B1728]/90 border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center text-center shadow-xl backdrop-blur-md">
+              <span className="text-[10px] font-bold text-slate-400 dark:text-[#64748B] uppercase tracking-wider">AQI</span>
               <span className="text-xl font-bold leading-tight" style={{
-                color: aqi == null ? '#64748B' : aqi <= 50 ? '#34D399' : aqi <= 100 ? '#60A5FA' : aqi <= 150 ? '#FBBF24' : '#F87171'
+                color: aqi == null ? '#64748B' : aqi <= 50 ? '#10B981' : aqi <= 100 ? '#3B82F6' : aqi <= 150 ? '#F59E0B' : '#EF4444'
               }}>
                 {aqi != null ? aqi : '—'}
               </span>
-              <span className="text-[9px] font-semibold text-[#94A3B8]">
+              <span className="text-[9px] font-semibold text-slate-500 dark:text-[#94A3B8]">
                 {aqi == null ? 'N/A' : aqi <= 50 ? 'GOOD' : aqi <= 100 ? 'MODERATE' : aqi <= 150 ? 'SENSITIVE' : 'POOR'}
               </span>
             </div>

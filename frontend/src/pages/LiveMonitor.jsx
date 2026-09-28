@@ -77,10 +77,10 @@ export default function LiveMonitor({
       </div>
 
       {/* Metrics Row */}
-      <QuickMetricCards telemetry={telemetry} />
+      <QuickMetricCards telemetry={telemetry} activeAlerts={activeAlerts} />
 
       {/* Hardware Transducers Grid */}
-      <LiveSensorNetwork telemetry={telemetry} lastUpdated={lastUpdated} deviceStatus={deviceStatus} />
+      <LiveSensorNetwork telemetry={telemetry} lastUpdated={lastUpdated} deviceStatus={deviceStatus} activeAlerts={activeAlerts} />
 
       {/* Raw Payload Inspector & Observability Feeds */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
