@@ -108,9 +108,18 @@ void publishTelemetry() {
 
   doc["light_lux"] = nullptr; // BH1750 missing -> null
 
-  // FC-37 Rain Data (Valid ADC range 0 - 4095)
+  // FC-37 Rain Data (4095 = Dry = 0.0 mm/h, < 3800 = Water detected)
   int rainRaw = analogRead(RAIN_AO_PIN);
-  doc["rain_intensity"] = rainRaw;
+  float rainRate = 0.0;
+  if (rainRaw < 3800) {
+    // Map wetness: 3800 (light drops) -> 2 mm/h up to 1000 (heavy downpour) -> 80 mm/h
+    rainRate = (float)map(rainRaw, 3800, 1000, 2, 80);
+    if (rainRate < 0.0) rainRate = 0.0;
+    if (rainRate > 100.0) rainRate = 100.0;
+  } else {
+    rainRate = 0.0; // Completely dry
+  }
+  doc["rain_intensity"] = serialized(String(rainRate, 1));
 
   doc["gas_aqi"]    = nullptr; // MQ-135 pending resistors -> null
   doc["wind_speed"] = nullptr; // Anemometer missing -> null
