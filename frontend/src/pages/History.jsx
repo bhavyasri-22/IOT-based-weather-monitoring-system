@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import { telemetryApi } from '../api/client';
 import { Download, Clock, Calendar, Thermometer, Droplets, Gauge, Wind, Sparkles, Sun, CloudRain } from 'lucide-react';
+import { sanitizeRain } from '../utils/weatherUtils';
 
 const METRICS = [
   { key: 'temperature', label: 'Temperature', unit: '°C', color: '#FBBF24', icon: Thermometer },
@@ -41,11 +42,15 @@ export default function History({ deviceId = 'ESP32_SURATHKAL_01' }) {
       if (Array.isArray(readings) && readings.length > 0) {
         const points = readings
           .filter((r) => r.value != null || r[metric] != null)
-          .map((r) => ({
-            timestamp: r.timestamp,
-            time: new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            value: Number(Number(r.value ?? r[metric]).toFixed(2)),
-          }));
+          .map((r) => {
+            let val = r.value ?? r[metric];
+            if (metric === 'rain_intensity') val = sanitizeRain(val);
+            return {
+              timestamp: r.timestamp,
+              time: new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              value: Number(Number(val).toFixed(2)),
+            };
+          });
         setData(points);
       } else {
         generateFallback();

@@ -11,6 +11,35 @@ const mongoose = require('mongoose');
  * Centralized Ingestion Service for MQTT Telemetry and Heartbeats (SRS F.6, F.7, F.11)
  */
 class IngestionService {
+  constructor() {
+    this.inMemoryLatest = new Map();
+    this.inMemoryHistory = [];
+  }
+
+  /**
+   * Returns latest in-memory reading for a device or overall
+   */
+  getLatestReading(deviceId) {
+    if (deviceId && this.inMemoryLatest.has(deviceId)) {
+      return this.inMemoryLatest.get(deviceId);
+    }
+    if (this.inMemoryLatest.size > 0) {
+      return Array.from(this.inMemoryLatest.values())[0];
+    }
+    return this.inMemoryHistory.length > 0 ? this.inMemoryHistory[this.inMemoryHistory.length - 1] : null;
+  }
+
+  /**
+   * Returns historical in-memory readings
+   */
+  getHistoryReadings(deviceId, limit = 100) {
+    let list = this.inMemoryHistory;
+    if (deviceId) {
+      list = list.filter((r) => r.device_id === deviceId);
+    }
+    return list.slice(-limit).reverse();
+  }
+
   /**
    * Processes incoming weather telemetry message
    * @param {Buffer|string|Object} rawPayload 
@@ -41,6 +70,13 @@ class IngestionService {
     };
 
     let savedReading = docToSave;
+
+    // Save in-memory cache
+    this.inMemoryLatest.set(telemetryData.device_id, docToSave);
+    this.inMemoryHistory.push(docToSave);
+    if (this.inMemoryHistory.length > 500) {
+      this.inMemoryHistory.shift();
+    }
 
     // Persist to MongoDB if connection is ready (SRS F.7)
     if (mongoose.connection.readyState === 1) {

@@ -8,9 +8,8 @@
     "dev": "nodemon src/index.js",
     "test": "node src/tests/test_phase4.js"
   },
-
   "dependencies": {
-    "aedes": "^0.51.0",
+    "aedes": "^0.51.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
@@ -20,7 +19,6 @@
     "ws": "^8.17.0"
   },
   "devDependencies": {
-    "aedes": "^1.1.1",
     "nodemon": "^3.1.2"
   }
 }

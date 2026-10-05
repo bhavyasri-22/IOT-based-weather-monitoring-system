@@ -1,16 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import WeatherHero from '../components/WeatherHero';
-import QuickMetricCards from '../components/QuickMetricCards';
-import LiveSensorNetwork from '../components/LiveSensorNetwork';
-import MultiMetricAnalytics from '../components/MultiMetricAnalytics';
-import TempHumidityCorrelation from '../components/TempHumidityCorrelation';
-import WindCompass from '../components/WindCompass';
-import AQIIndicator from '../components/AQIIndicator';
-import LightIntensityChart from '../components/LightIntensityChart';
-import RainfallVisualization from '../components/RainfallVisualization';
-import LiveActivityFeed from '../components/LiveActivityFeed';
-import AlertsPanel from '../components/AlertsPanel';
+import WeatherOverviewCard from '../components/WeatherOverviewCard';
+import SensorConditionsGrid from '../components/SensorConditionsGrid';
+import RainStatusCard from '../components/RainStatusCard';
+import WeatherTrendChart from '../components/WeatherTrendChart';
+import RecentReadingsTable from '../components/RecentReadingsTable';
+import ActiveAlertsBanner from '../components/ActiveAlertsBanner';
 
 export default function Dashboard({
   telemetry,
@@ -20,67 +15,72 @@ export default function Dashboard({
   lastUpdated,
   activeAlerts,
   onResolveAlert,
-  activityFeed,
 }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
-      className="space-y-6 pb-12 max-w-[1600px] mx-auto"
+      className="space-y-6 pb-12 max-w-[1440px] mx-auto"
     >
-      {/* 1. Hero Weather Section + Concentric Atmospheric Radar */}
-      <WeatherHero
+      {/* 0. Project & Course Attribution Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: -6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, delay: 0.05 }}
+        className="rounded-3xl px-6 py-4 bg-white dark:bg-[#0E1A29]/80 border border-slate-200/80 dark:border-white/[0.08] shadow-sm text-center space-y-1"
+      >
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-0.5 text-sm font-semibold text-slate-800 dark:text-slate-200">
+          <span>C Thanmai Sai</span>
+          <span className="text-slate-300 dark:text-white/20 hidden sm:inline">·</span>
+          <span>Mili Dholaria</span>
+          <span className="text-slate-300 dark:text-white/20 hidden sm:inline">·</span>
+          <span>Thota Bhavya Sri</span>
+        </div>
+        <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+          under <span className="font-semibold text-slate-700 dark:text-slate-300">IT 303 Course</span> · supervised by{' '}
+          <span className="font-semibold text-slate-700 dark:text-slate-300">Prof. Jaidhar C D</span>
+        </p>
+      </motion.div>
+
+      {/* 1. Active Environmental Alerts (if any) */}
+      <ActiveAlertsBanner
+        activeAlerts={activeAlerts}
+        onResolve={onResolveAlert}
+      />
+
+      {/* 2. Main Weather Overview (Large Primary Focal Card) */}
+      <WeatherOverviewCard
         telemetry={telemetry}
         lastUpdated={lastUpdated}
         deviceStatus={deviceStatus}
       />
 
-      {/* 2. Quick Metric Cards (6 Compact Metrics with Sparklines) */}
-      <QuickMetricCards
+      {/* 3. Sensor Conditions Grid (Consolidated Real Hardware Telemetry) */}
+      <SensorConditionsGrid
         telemetry={telemetry}
-        activeAlerts={activeAlerts}
       />
 
-      {/* 3. Live Sensor Network (5 Physical Hardware Sensors) */}
-      <LiveSensorNetwork
-        telemetry={telemetry}
-        lastUpdated={lastUpdated}
-        deviceStatus={deviceStatus}
-        activeAlerts={activeAlerts}
-      />
-
-      {/* 4. Multi-Metric Time Series & Temp vs Humidity Correlation */}
+      {/* 4. Rain Status & Recent Readings Log (Structured 2-Column Section) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-7 xl:col-span-8">
-          <MultiMetricAnalytics
+        <div className="lg:col-span-5">
+          <RainStatusCard
+            telemetry={telemetry}
+          />
+        </div>
+        <div className="lg:col-span-7">
+          <RecentReadingsTable
             deviceId={deviceId}
             telemetry={telemetry}
           />
         </div>
-        <div className="lg:col-span-5 xl:col-span-4">
-          <TempHumidityCorrelation
-            telemetry={telemetry}
-          />
-        </div>
       </div>
 
-      {/* 5. Environmental Transducer Visualizations Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        <WindCompass telemetry={telemetry} />
-        <AQIIndicator telemetry={telemetry} />
-        <LightIntensityChart telemetry={telemetry} />
-        <RainfallVisualization telemetry={telemetry} />
-      </div>
-
-      {/* 6. Live Activity Stream & Active Environmental Alerts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <LiveActivityFeed events={activityFeed} />
-        <AlertsPanel
-          activeAlerts={activeAlerts}
-          onResolve={onResolveAlert}
-        />
-      </div>
+      {/* 5. Prominent Environmental & Rainfall Trend Chart */}
+      <WeatherTrendChart
+        deviceId={deviceId}
+        telemetry={telemetry}
+      />
     </motion.div>
   );
 }

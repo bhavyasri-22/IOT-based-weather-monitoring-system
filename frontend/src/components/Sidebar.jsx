@@ -82,8 +82,8 @@ export default function Sidebar({
             <div>
               <div className="flex items-center justify-between p-5 border-b border-slate-200/80 dark:border-white/[0.08]">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 dark:bg-[#60A5FA]/15 border border-blue-500/20 dark:border-[#60A5FA]/30 flex items-center justify-center text-blue-600 dark:text-[#60A5FA]">
-                    <CloudSun size={18} />
+                  <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0 shadow-sm border border-slate-200/80 dark:border-white/[0.1]">
+                    <img src="/favicon.png" alt="Logo" className="w-full h-full object-cover" />
                   </div>
                   <div>
                     <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-widest uppercase">Atmos</h2>

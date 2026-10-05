@@ -31,6 +31,8 @@ function Sparkline({ data = [], color = '#60A5FA' }) {
   );
 }
 
+import { sanitizeRain } from '../utils/weatherUtils';
+
 export default function QuickMetricCards({ telemetry, activeAlerts = [] }) {
   const T = telemetry || {};
 
@@ -40,14 +42,16 @@ export default function QuickMetricCards({ telemetry, activeAlerts = [] }) {
   const pres  = T.pressure       != null ? Math.round(T.pressure)              : null;
   const wind  = T.wind_speed     != null ? Number(T.wind_speed).toFixed(1)     : null;
   const aqi   = T.gas_aqi        != null ? Math.round(T.gas_aqi)               : null;
-  const rain  = T.rain_intensity != null ? Number(T.rain_intensity).toFixed(1) : null;
+  const cleanRainNum = sanitizeRain(T.rain_intensity);
+  const rain  = cleanRainNum != null ? cleanRainNum.toFixed(1) : null;
   const dir   = T.wind_direction != null ? T.wind_direction                    : null;
 
   // Helper to check if any active alert matches a parameter
   const hasActiveAlert = (paramKey) => {
     return Array.isArray(activeAlerts) && activeAlerts.some(
       (a) => (a.parameter === paramKey || a.parameter?.toLowerCase() === paramKey.toLowerCase()) && 
-             (a.status === 'active' || !a.resolved)
+             (a.status === 'active' || !a.resolved) &&
+             !(paramKey === 'rain_intensity' && (a.trigger_value >= 100 || (a.message && a.message.includes('4095'))))
     );
   };
 

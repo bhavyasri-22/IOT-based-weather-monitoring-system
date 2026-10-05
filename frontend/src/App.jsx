@@ -8,6 +8,7 @@ import {
 
 import Sidebar from './components/Sidebar';
 import TopHeader from './components/TopHeader';
+import Footer from './components/Footer';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import LiveMonitor from './pages/LiveMonitor';
@@ -202,6 +203,9 @@ export default function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
+
+          {/* Universal Rich Footer */}
+          <Footer />
         </div>
       </Router>
     </ThemeProvider>

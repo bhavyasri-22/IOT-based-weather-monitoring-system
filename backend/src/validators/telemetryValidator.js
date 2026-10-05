@@ -59,6 +59,19 @@ function validateTelemetryPayload(rawInput) {
     return val;
   };
 
+  // Helper to sanitize rain intensity if raw ESP32 ADC values leak through
+  let cleanRain = payload.rain_intensity;
+  if (cleanRain !== null && cleanRain !== undefined && typeof cleanRain === 'number') {
+    if (cleanRain >= 3800) {
+      // Raw 12-bit ADC value on dry FC-37 sensor is 4095 (~3800-4095) -> 0.0 mm/h
+      cleanRain = 0.0;
+    } else if (cleanRain > 100) {
+      // Map wet ADC (1000..3800) to 80..0 mm/h
+      cleanRain = Math.max(0, Math.min(100, ((3800 - cleanRain) / (3800 - 1000)) * 80));
+      cleanRain = Number(cleanRain.toFixed(1));
+    }
+  }
+
   const sanitized = {
     device_id: payload.device_id ? payload.device_id.trim() : null,
     timestamp: isNaN(timestamp.getTime()) ? new Date() : timestamp,
@@ -66,8 +79,8 @@ function validateTelemetryPayload(rawInput) {
     humidity: validateNumericOrNull('humidity', payload.humidity, 0, 100),
     pressure: validateNumericOrNull('pressure', payload.pressure, 300, 1200),
     light_lux: validateNumericOrNull('light_lux', payload.light_lux, 0, 200000),
-    rain_intensity: validateNumericOrNull('rain_intensity', payload.rain_intensity, 0, 4095),
-    gas_aqi: validateNumericOrNull('gas_aqi', payload.gas_aqi, 0, 4095),
+    rain_intensity: validateNumericOrNull('rain_intensity', cleanRain, 0, 150),
+    gas_aqi: validateNumericOrNull('gas_aqi', payload.gas_aqi, 0, 500),
     wind_speed: validateNumericOrNull('wind_speed', payload.wind_speed, 0, 200)
   };
 

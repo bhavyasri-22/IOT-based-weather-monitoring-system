@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { 
-  Menu, 
-  X, 
-  MapPin, 
-  Bell, 
-  Clock, 
-  Radio, 
-  ShieldCheck, 
-  UserCheck, 
-  ChevronRight, 
-  Check, 
+import {
+  Menu,
+  X,
+  MapPin,
+  Bell,
+  Clock,
+  Radio,
+  ShieldCheck,
+  UserCheck,
+  ChevronRight,
+  Check,
   AlertTriangle,
   LogOut,
   Sun,
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { formatRelativeTime } from '../utils/weatherUtils';
 import { useTheme } from '../context/ThemeContext';
+import useUserLocation from '../hooks/useUserLocation';
 
 const PAGE_META = {
   '/': { title: 'Weather Overview', subtitle: 'Real-time environmental conditions' },
@@ -44,10 +45,18 @@ export default function TopHeader({
 }) {
   const { pathname } = useLocation();
   const { theme, toggleTheme, isDark } = useTheme();
+  const userLoc = useUserLocation();
   const meta = PAGE_META[pathname] || { title: 'Weather Overview', subtitle: 'Real-time environmental conditions' };
 
   const isOnline = deviceStatus === 'online';
   const isWsConnected = wsState === 'connected';
+
+  // Filter out any bogus 4095 flood alerts
+  const validAlerts = (activeAlerts || []).filter(
+    (a) => (a.status === 'active' || !a.resolved) &&
+      !(a.parameter === 'rain_intensity' && (a.trigger_value >= 100 || (a.message && a.message.includes('4095'))))
+  );
+  const validAlertCount = validAlerts.length;
 
   // Live wall clock
   const [clockTime, setClockTime] = useState(() => new Date().toLocaleTimeString());
@@ -88,7 +97,7 @@ export default function TopHeader({
 
         <div>
           <h1 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white tracking-tight leading-tight">
-            {meta.title}
+            IOT – Weather Monitoring System
           </h1>
           <p className="text-[11px] text-slate-500 dark:text-[#64748B] hidden sm:block leading-tight">
             {meta.subtitle}
@@ -96,12 +105,14 @@ export default function TopHeader({
         </div>
       </div>
 
-      {/* Right side: Location Selector + Live Status + Theme Toggle + Clock + Notification Bell + Profile */}
+      {/* Right side: Location + Live Status + Theme Toggle + Clock + Notification Bell + Profile */}
       <div className="flex items-center gap-2 sm:gap-2.5">
         {/* Location Selector Indicator */}
         <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06]">
           <MapPin size={13} className="text-blue-500 dark:text-[#60A5FA]" />
-          <span className="text-xs font-semibold text-slate-800 dark:text-[#F1F5F9]">NITK Surathkal</span>
+          <span className="text-xs font-semibold text-slate-800 dark:text-[#F1F5F9]">
+            {userLoc.city || 'Detecting Location...'}
+          </span>
         </div>
 
         {/* Live Status Indicator */}
@@ -146,18 +157,17 @@ export default function TopHeader({
           <button
             type="button"
             onClick={() => setShowNotifications((prev) => !prev)}
-            className={`relative w-9 h-9 rounded-xl border flex items-center justify-center transition-all cursor-pointer shadow-sm ${
-              showNotifications || activeAlertCount > 0
+            className={`relative w-9 h-9 rounded-xl border flex items-center justify-center transition-all cursor-pointer shadow-sm ${showNotifications || validAlertCount > 0
                 ? 'bg-blue-50 dark:bg-[#60A5FA]/15 border-blue-200 dark:border-[#60A5FA]/30 text-blue-600 dark:text-[#60A5FA]'
                 : 'bg-slate-100 dark:bg-white/[0.03] border-slate-200 dark:border-white/[0.06] text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/[0.06]'
-            }`}
+              }`}
             title="System Alerts & Notifications"
             aria-label="View notifications"
           >
-            <Bell size={16} className={activeAlertCount > 0 ? 'text-[#EF4444] dark:text-[#F87171] animate-bounce-subtle' : ''} />
-            {activeAlertCount > 0 && (
+            <Bell size={16} className={validAlertCount > 0 ? 'text-[#EF4444] dark:text-[#F87171] animate-bounce-subtle' : ''} />
+            {validAlertCount > 0 && (
               <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#EF4444] dark:bg-[#F87171] flex items-center justify-center text-[9px] font-bold text-white shadow-md">
-                {activeAlertCount}
+                {validAlertCount}
               </span>
             )}
           </button>
@@ -172,7 +182,7 @@ export default function TopHeader({
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-100 dark:bg-[#F87171]/20 text-rose-600 dark:text-[#F87171] font-bold border border-rose-200 dark:border-[#F87171]/30">
-                    {activeAlertCount} active
+                    {validAlertCount} active
                   </span>
                   {/* Dedicated Close / Wrong (X) Button */}
                   <button
@@ -187,7 +197,7 @@ export default function TopHeader({
                 </div>
               </div>
 
-              {activeAlerts.length === 0 ? (
+              {validAlerts.length === 0 ? (
                 <div className="py-6 text-center">
                   <Check size={20} className="text-[#10B981] dark:text-[#34D399] mx-auto mb-1.5" />
                   <p className="text-xs font-semibold text-slate-900 dark:text-white">All Systems Normal</p>
@@ -195,7 +205,7 @@ export default function TopHeader({
                 </div>
               ) : (
                 <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                  {activeAlerts.map((a) => (
+                  {validAlerts.map((a) => (
                     <div
                       key={a._id || a.id}
                       className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06] text-xs flex items-start gap-2.5"

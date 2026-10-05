@@ -37,9 +37,9 @@ export const authApi = {
 // Telemetry
 export const telemetryApi = {
   latest: (deviceId) =>
-    request(`/telemetry/latest${deviceId ? `?device_id=${deviceId}` : ''}`),
+    request(`/telemetry/latest${deviceId ? `?device_id=${deviceId}&deviceId=${deviceId}` : ''}`),
   history: (deviceId, metric, range = '1h', limit = 100) =>
-    request(`/telemetry/history?device_id=${deviceId}&metric=${metric}&range=${range}&limit=${limit}`),
+    request(`/telemetry/history?device_id=${deviceId}&deviceId=${deviceId}&metric=${metric}&range=${range}&limit=${limit}`),
 };
 
 // Devices

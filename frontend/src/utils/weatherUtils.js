@@ -29,12 +29,24 @@ export function calculateHeatIndex(tempC, humidity) {
 }
 
 /**
+ * Sanitizes rainfall intensity (converts raw ESP32 ADC readings to realistic mm/h values)
+ */
+export function sanitizeRain(val) {
+  if (val == null) return null;
+  const num = typeof val === 'number' ? val : parseFloat(val);
+  if (isNaN(num)) return null;
+  if (num >= 3800) return 0.0; // Raw ESP32 ADC dry baseline is ~4095
+  if (num > 100) return Math.max(0, Math.min(100, ((3800 - num) / (3800 - 1000)) * 80));
+  return num;
+}
+
+/**
  * Derives comprehensive weather condition name and icon type
  */
 export function deriveWeatherCondition(telemetry) {
   if (!telemetry) return { condition: 'Awaiting data…', icon: 'unknown', description: 'No telemetry received yet' };
 
-  const rain = telemetry.rain_intensity != null ? telemetry.rain_intensity : null;
+  const rain = sanitizeRain(telemetry.rain_intensity);
   const humidity = telemetry.humidity != null ? telemetry.humidity : null;
   const lux = telemetry.light_lux != null ? telemetry.light_lux : null;
   const wind = telemetry.wind_speed != null ? telemetry.wind_speed : null;

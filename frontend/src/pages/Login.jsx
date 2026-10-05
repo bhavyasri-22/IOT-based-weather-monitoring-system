@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CloudSun, Eye, EyeOff, AlertTriangle, ShieldCheck, UserCheck, Sparkles, Lock } from 'lucide-react';
+import { CloudSun, Eye, EyeOff, AlertCircle, Lock, Mail, User, ArrowRight, Loader2 } from 'lucide-react';
 import { authApi } from '../api/client';
 
 export default function Login({ onLogin }) {
   const [mode, setMode] = useState('login'); // 'login' | 'register'
-  const [role, setRole] = useState('operator'); // 'operator' | 'admin'
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
@@ -16,196 +16,180 @@ export default function Login({ onLogin }) {
     e.preventDefault();
     setError('');
     setLoading(true);
+
     try {
       let res;
       if (mode === 'login') {
-        res = await authApi.login(email, password);
+        const identifier = (email || username).trim();
+        res = await authApi.login(identifier, password);
       } else {
-        res = await authApi.register(email, password, role);
+        res = await authApi.register(username.trim(), password, 'admin', email.trim());
       }
 
       const token = res?.token || res?.data?.token;
-      const user = res?.user || res?.data?.user || { email, role };
+      const user = res?.user || res?.data?.user;
 
-      if (token) {
+      if (token && user) {
         localStorage.setItem('auth_token', token);
         localStorage.setItem('auth_user', JSON.stringify(user));
         onLogin(user);
       } else {
-        setError('Authentication failed. No access token provided.');
+        setError('Authentication failed. Server did not return a valid JWT token.');
       }
     } catch (err) {
-      setError(err.message || 'Authentication failed.');
+      setError(err.message || 'Authentication failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDemoLogin = (demoRole) => {
-    const user = {
-      username: demoRole === 'admin' ? 'admin' : 'operator',
-      email: `${demoRole}@station.local`,
-      role: demoRole,
-    };
-    localStorage.setItem('auth_token', 'demo_token_' + Date.now());
-    localStorage.setItem('auth_user', JSON.stringify(user));
-    onLogin(user);
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#F8FAFC] dark:bg-[#07111F] transition-colors">
-      {/* Ambient background glow */}
-      <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-blue-400/15 dark:bg-[#60A5FA]/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/3 w-96 h-96 bg-sky-400/10 dark:bg-[#38BDF8]/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-slate-50 dark:bg-[#07111F] transition-colors">
+      {/* Subtle atmospheric ambient glow */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-sky-400/10 dark:bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 dark:bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.96, y: 10 }}
+        initial={{ opacity: 0, scale: 0.98, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.3 }}
         className="w-full max-w-md relative z-10"
       >
-        {/* Logo & Branding */}
+        {/* Header Branding */}
         <div className="flex flex-col items-center mb-6 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-blue-500/10 dark:bg-[#60A5FA]/15 border border-blue-500/30 dark:border-[#60A5FA]/30 flex items-center justify-center mb-3 text-blue-600 dark:text-[#60A5FA] shadow-xl">
-            <CloudSun size={28} />
+          <div className="w-16 h-16 rounded-2xl overflow-hidden mb-3 shadow-lg shadow-sky-500/15 flex items-center justify-center border border-slate-200/80 dark:border-white/[0.1]">
+            <img src="/favicon.png" alt="Weather Logo" className="w-full h-full object-cover" />
           </div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-widest uppercase font-sans">ATMOS</h1>
-          <p className="text-xs text-slate-500 dark:text-[#94A3B8] mt-0.5">IoT Environmental Monitoring Console</p>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+            IOT – Weather Monitoring System
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Real-Time Environmental Sensor Station
+          </p>
         </div>
 
-        {/* Card Container */}
-        <div className="rounded-2xl p-6 sm:p-7 bg-white dark:bg-[#101D2E]/80 border border-slate-200/80 dark:border-white/[0.08] backdrop-blur-2xl shadow-lg dark:shadow-2xl space-y-5 transition-colors">
-          {/* Mode Switcher */}
-          <div className="flex gap-1 p-1 rounded-xl bg-slate-100 dark:bg-[#0B1728]/80 border border-slate-200 dark:border-white/[0.06]">
-            {['login', 'register'].map((m) => (
-              <button
-                key={m}
-                onClick={() => { setMode(m); setError(''); }}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg tracking-wider uppercase transition-all ${
-                  mode === m
-                    ? 'bg-white dark:bg-white/[0.1] text-blue-700 dark:text-white shadow-sm border border-slate-200 dark:border-white/[0.12]'
-                    : 'text-slate-500 dark:text-[#64748B] hover:text-slate-800 dark:hover:text-[#94A3B8]'
-                }`}
-              >
-                {m}
-              </button>
-            ))}
+        {/* Form Card */}
+        <div className="rounded-3xl p-6 sm:p-8 bg-white dark:bg-[#0F1B2B] border border-slate-200/90 dark:border-white/[0.08] shadow-xl shadow-slate-200/50 dark:shadow-2xl space-y-6">
+          {/* Sign In / Register Tab Toggle */}
+          <div className="grid grid-cols-2 p-1 rounded-2xl bg-slate-100 dark:bg-[#08121E] border border-slate-200/60 dark:border-white/[0.06]">
+            <button
+              type="button"
+              onClick={() => { setMode('login'); setError(''); }}
+              className={`py-2 text-xs font-semibold rounded-xl transition-all ${
+                mode === 'login'
+                  ? 'bg-white dark:bg-[#152538] text-sky-600 dark:text-sky-400 shadow-sm border border-slate-200/70 dark:border-white/[0.08]'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => { setMode('register'); setError(''); }}
+              className={`py-2 text-xs font-semibold rounded-xl transition-all ${
+                mode === 'register'
+                  ? 'bg-white dark:bg-[#152538] text-sky-600 dark:text-sky-400 shadow-sm border border-slate-200/70 dark:border-white/[0.08]'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              Create Account
+            </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'register' && (
               <div>
-                <label className="block text-[10px] font-semibold tracking-widest text-slate-500 dark:text-[#94A3B8] uppercase mb-1.5">
-                  Account Role
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Username
                 </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setRole('operator')}
-                    className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                      role === 'operator'
-                        ? 'bg-emerald-50 dark:bg-[#34D399]/15 border-emerald-300 dark:border-[#34D399]/40 text-emerald-700 dark:text-[#34D399]'
-                        : 'bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/[0.06] text-slate-500 dark:text-[#64748B]'
-                    }`}
-                  >
-                    <UserCheck size={14} />
-                    <span>Operator</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRole('admin')}
-                    className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                      role === 'admin'
-                        ? 'bg-blue-50 dark:bg-[#60A5FA]/15 border-blue-300 dark:border-[#60A5FA]/40 text-blue-700 dark:text-[#60A5FA]'
-                        : 'bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/[0.06] text-slate-500 dark:text-[#64748B]'
-                    }`}
-                  >
-                    <ShieldCheck size={14} />
-                    <span>Admin</span>
-                  </button>
+                <div className="relative">
+                  <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    placeholder="Enter your username"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#08121E] border border-slate-200 dark:border-white/[0.08] text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
+                  />
                 </div>
               </div>
             )}
 
             <div>
-              <label className="block text-[10px] font-semibold tracking-widest text-slate-500 dark:text-[#94A3B8] uppercase mb-1.5">
-                Username or Email
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                {mode === 'login' ? 'Username or Email' : 'Email Address'}
               </label>
-              <input
-                type="text"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="operator or admin@station.local"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#475569] focus:outline-none focus:border-blue-500 dark:focus:border-[#60A5FA] transition-colors"
-              />
+              <div className="relative">
+                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                <input
+                  type={mode === 'register' ? 'email' : 'text'}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder={mode === 'login' ? 'admin or name@station.local' : 'name@example.com'}
+                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#08121E] border border-slate-200 dark:border-white/[0.08] text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
+                />
+              </div>
             </div>
 
             <div>
-              <label className="block text-[10px] font-semibold tracking-widest text-slate-500 dark:text-[#94A3B8] uppercase mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 Password
               </label>
               <div className="relative">
+                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                 <input
                   type={showPass ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#475569] focus:outline-none focus:border-blue-500 dark:focus:border-[#60A5FA] transition-colors"
+                  className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50 dark:bg-[#08121E] border border-slate-200 dark:border-white/[0.08] text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#64748B] hover:text-slate-700 dark:hover:text-white transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                 >
-                  {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
 
             {error && (
-              <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-[#F87171]/10 border border-rose-300 dark:border-[#F87171]/25 flex items-center gap-2 text-rose-700 dark:text-[#F87171] text-xs">
-                <AlertTriangle size={14} className="flex-shrink-0" />
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/25 flex items-start gap-2.5 text-rose-700 dark:text-rose-400 text-xs"
+              >
+                <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
                 <p>{error}</p>
-              </div>
+              </motion.div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl bg-blue-600 dark:bg-[#60A5FA] hover:bg-blue-700 dark:hover:bg-[#3B82F6] text-white dark:text-[#07111F] font-bold text-sm transition-all shadow-lg hover:shadow-blue-500/25 dark:hover:shadow-[#60A5FA]/25 disabled:opacity-50"
+              className="w-full py-3 px-4 rounded-xl bg-sky-500 hover:bg-sky-600 active:bg-sky-700 text-white font-semibold text-sm transition-all shadow-md shadow-sky-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? 'Authenticating...' : mode === 'login' ? 'Sign In' : `Register ${role === 'admin' ? 'Administrator' : 'Operator'}`}
+              {loading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Processing...</span>
+                </>
+              ) : (
+                <>
+                  <span>{mode === 'login' ? 'Sign In to Dashboard' : 'Create Account'}</span>
+                  <ArrowRight size={16} />
+                </>
+              )}
             </button>
           </form>
-
-          {/* Quick Demo Access Buttons */}
-          <div className="pt-3 border-t border-slate-100 dark:border-white/[0.06] space-y-2">
-            <span className="text-[10px] text-slate-400 dark:text-[#64748B] uppercase font-semibold block text-center">
-              Quick Console Access
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('operator')}
-                className="py-1.5 px-2.5 rounded-lg bg-slate-50 dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.06] text-[11px] text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white transition-colors font-medium"
-              >
-                Operator Mode
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('admin')}
-                className="py-1.5 px-2.5 rounded-lg bg-slate-50 dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.06] text-[11px] text-blue-600 dark:text-[#60A5FA] hover:text-blue-700 dark:hover:text-white transition-colors font-medium"
-              >
-                Admin Mode
-              </button>
-            </div>
-          </div>
         </div>
 
-        <p className="text-center text-[11px] text-slate-400 dark:text-[#64748B] mt-4">
-          Atmospheric Glass Sensor Platform · NITK Surathkal
+        <p className="text-center text-xs text-slate-400 dark:text-slate-500 mt-5">
+          Secured with JWT authentication & MongoDB Atlas storage
         </p>
       </motion.div>
     </div>

@@ -13,6 +13,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { calculateHeatIndex, deriveWeatherCondition, formatRelativeTime } from '../utils/weatherUtils';
+import useUserLocation from '../hooks/useUserLocation';
 
 /**
  * WeatherHero – all values sourced exclusively from backend telemetry prop.
@@ -21,6 +22,7 @@ import { calculateHeatIndex, deriveWeatherCondition, formatRelativeTime } from '
 export default function WeatherHero({ telemetry, lastUpdated, deviceStatus }) {
   const T = telemetry || {};
   const noData = !telemetry;
+  const userLoc = useUserLocation();
 
   // ── Raw values (null-safe)
   const temp      = T.temperature  != null ? Number(T.temperature).toFixed(1)  : null;
@@ -56,9 +58,9 @@ export default function WeatherHero({ telemetry, lastUpdated, deviceStatus }) {
       <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-400/10 dark:bg-[#60A5FA]/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-cyan-400/10 dark:bg-[#38BDF8]/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-        {/* ── LEFT: Location + Temp + Sub-metrics */}
-        <div className="lg:col-span-7 xl:col-span-8 flex flex-col justify-between space-y-6">
+      <div className="relative z-10">
+        {/* ── Location + Temp + Sub-metrics */}
+        <div className="flex flex-col justify-between space-y-6">
 
           {/* Location + condition badge + timestamp */}
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -68,13 +70,17 @@ export default function WeatherHero({ telemetry, lastUpdated, deviceStatus }) {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">NITK Surathkal</h2>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-[#94A3B8] border border-slate-200 dark:border-white/[0.08] font-mono">
-                    13.01°N 74.79°E
-                  </span>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                    {userLoc.city || 'Detecting Location...'}
+                  </h2>
+                  {userLoc.coordsFormatted && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-[#94A3B8] border border-slate-200 dark:border-white/[0.08] font-mono">
+                      {userLoc.coordsFormatted}
+                    </span>
+                  )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 mt-0.5 text-xs text-slate-500 dark:text-[#64748B]">
-                  <span>Coastal Sensor Station 01 · Karnataka, India</span>
+                  <span>{userLoc.fullAddress || 'Environmental Station'}</span>
                   <span>·</span>
                   <span className="inline-flex items-center gap-1 font-mono text-blue-600 dark:text-[#60A5FA] font-medium bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-100 dark:border-blue-500/20">
                     <Clock size={11} />
@@ -183,74 +189,6 @@ export default function WeatherHero({ telemetry, lastUpdated, deviceStatus }) {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* ── RIGHT: Concentric Atmospheric Radar */}
-        <div className="lg:col-span-5 xl:col-span-4 flex flex-col items-center justify-center p-4 rounded-2xl bg-slate-50/50 dark:bg-gradient-to-b dark:from-white/[0.03] dark:to-transparent border border-slate-200/80 dark:border-white/[0.06] relative">
-          <div className="w-full flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-[#94A3B8]">Atmospheric Balance</span>
-            <span className="text-[10px] text-blue-600 dark:text-[#60A5FA] font-mono px-2 py-0.5 rounded bg-blue-50 dark:bg-[#60A5FA]/10 border border-blue-200 dark:border-[#60A5FA]/20">
-              RADAR ACTIVE
-            </span>
-          </div>
-
-          {/* Rotating concentric rings */}
-          <div className="relative w-52 h-52 flex items-center justify-center my-2">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
-              className="absolute inset-0 rounded-full border border-dashed border-blue-500/20 dark:border-[#60A5FA]/20"
-            >
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-blue-500 dark:bg-[#60A5FA] shadow-[0_0_8px_#3B82F6]" />
-            </motion.div>
-
-            <motion.div
-              animate={{ rotate: -360 }}
-              transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
-              className="absolute inset-4 rounded-full border border-cyan-500/25 dark:border-[#38BDF8]/25"
-            >
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-cyan-500 dark:bg-[#38BDF8] shadow-[0_0_8px_#06B6D4]" />
-            </motion.div>
-
-            <motion.div
-              animate={{ scale: [0.95, 1.05, 0.95] }}
-              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-              className="absolute inset-9 rounded-full border border-amber-500/30 dark:border-[#FBBF24]/30 bg-amber-500/5 dark:bg-[#FBBF24]/5"
-            >
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-[#FBBF24] shadow-[0_0_6px_#F59E0B]" />
-            </motion.div>
-
-            {/* Center core */}
-            <div className="relative z-10 w-20 h-20 rounded-full bg-white dark:bg-[#0B1728]/90 border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center text-center shadow-xl backdrop-blur-md">
-              <span className="text-[10px] font-bold text-slate-400 dark:text-[#64748B] uppercase tracking-wider">AQI</span>
-              <span className="text-xl font-bold leading-tight" style={{
-                color: aqi == null ? '#64748B' : aqi <= 50 ? '#10B981' : aqi <= 100 ? '#3B82F6' : aqi <= 150 ? '#F59E0B' : '#EF4444'
-              }}>
-                {aqi != null ? aqi : '—'}
-              </span>
-              <span className="text-[9px] font-semibold text-slate-500 dark:text-[#94A3B8]">
-                {aqi == null ? 'N/A' : aqi <= 50 ? 'GOOD' : aqi <= 100 ? 'MODERATE' : aqi <= 150 ? 'SENSITIVE' : 'POOR'}
-              </span>
-            </div>
-          </div>
-
-          {/* Micro legend */}
-          <div className="w-full grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-white/[0.06] text-center text-[10px]">
-            <div>
-              <span className="text-[#64748B] block">Thermal</span>
-              <span className="text-[#FBBF24] font-semibold">{fmt(temp, '°C')}</span>
-            </div>
-            <div>
-              <span className="text-[#64748B] block">Moisture</span>
-              <span className="text-[#38BDF8] font-semibold">{fmt(humidity, '%')}</span>
-            </div>
-            <div>
-              <span className="text-[#64748B] block">Air Index</span>
-              <span className="font-semibold" style={{
-                color: aqi == null ? '#64748B' : aqi <= 50 ? '#34D399' : '#F87171'
-              }}>{aqi != null ? `${aqi} AQI` : '—'}</span>
-            </div>
           </div>
         </div>
       </div>

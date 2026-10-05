@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { CloudRain, Droplets } from 'lucide-react';
+import { sanitizeRain } from '../utils/weatherUtils';
 
 const RAIN_THRESHOLDS = [
   { label: 'Dry',        max: 0.5,  color: '#34D399', bg: '#34D39915', bar: '#34D399' },
@@ -20,8 +21,8 @@ function classifyRain(value) {
 
 export default function RainfallVisualization({ telemetry }) {
   const T = telemetry || {};
-  const rain  = T.rain_intensity != null ? Number(T.rain_intensity) : null;
-  const humid = T.humidity       != null ? Math.round(T.humidity)   : null;
+  const rain  = sanitizeRain(T.rain_intensity);
+  const humid = T.humidity != null ? Math.round(T.humidity) : null;
 
   const cls = classifyRain(rain);
 

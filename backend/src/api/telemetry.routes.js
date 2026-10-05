@@ -1,57 +1,73 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const SensorReading = require('../models/SensorReading');
 const ingestionService = require('../ingestion/ingestionService');
 const { requireDeviceApiKey } = require('../middlewares/apiKeyAuth');
+
+function sanitizeReading(doc) {
+  if (!doc) return doc;
+  const obj = typeof doc.toObject === 'function' ? doc.toObject() : { ...doc };
+  if (obj.rain_intensity !== null && obj.rain_intensity !== undefined && typeof obj.rain_intensity === 'number') {
+    if (obj.rain_intensity >= 3800) {
+      obj.rain_intensity = 0.0;
+    } else if (obj.rain_intensity > 100) {
+      obj.rain_intensity = Math.max(0, Math.min(100, ((3800 - obj.rain_intensity) / (3800 - 1000)) * 80));
+      obj.rain_intensity = Number(obj.rain_intensity.toFixed(1));
+    }
+  }
+  return obj;
+}
 
 /**
  * GET /api/telemetry/latest
  * Returns latest telemetry reading across devices (or aggregated latest per device)
  */
 router.get('/latest', async (req, res) => {
+  const targetId = req.query.deviceId || req.query.device_id;
+
   try {
-    const { deviceId } = req.query;
-    
-    if (deviceId) {
-      const latest = await SensorReading.findOne({ device_id: deviceId }).sort({ timestamp: -1 });
-      if (!latest) {
-        return res.status(404).json({
-          success: false,
-          data: null,
-          error: `No telemetry found for device '${deviceId}'`
+    if (mongoose.connection.readyState === 1) {
+      if (targetId) {
+        const latest = await SensorReading.findOne({ device_id: targetId }).sort({ timestamp: -1 });
+        if (latest) {
+          return res.json({
+            success: true,
+            data: sanitizeReading(latest),
+            error: null
+          });
+        }
+      }
+
+      // Fallback: get the most recent reading across all recorded devices
+      const latestAny = await SensorReading.findOne().sort({ timestamp: -1 });
+      if (latestAny) {
+        return res.json({
+          success: true,
+          data: sanitizeReading(latestAny),
+          error: null
         });
       }
-      return res.json({
-        success: true,
-        data: latest,
-        error: null
-      });
     }
+  } catch (err) {
+    console.warn(`[Telemetry Route] DB read warning: ${err.message}`);
+  }
 
-    // Aggregate latest reading per unique device
-    const latestPerDevice = await SensorReading.aggregate([
-      { $sort: { timestamp: -1 } },
-      {
-        $group: {
-          _id: '$device_id',
-          latestReading: { $first: '$$ROOT' }
-        }
-      },
-      { $replaceRoot: { newRoot: '$latestReading' } }
-    ]);
-
-    res.json({
+  // Fallback to in-memory cache
+  const inMem = ingestionService.getLatestReading(targetId);
+  if (inMem) {
+    return res.json({
       success: true,
-      data: latestPerDevice,
+      data: sanitizeReading(inMem),
       error: null
     });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      data: null,
-      error: `Failed to fetch latest telemetry: ${err.message}`
-    });
   }
+
+  res.json({
+    success: true,
+    data: null,
+    error: null
+  });
 });
 
 /**
@@ -59,27 +75,37 @@ router.get('/latest', async (req, res) => {
  * Returns latest telemetry reading for a specific device node
  */
 router.get('/latest/:deviceId', async (req, res) => {
+  const devId = req.params.deviceId;
+
   try {
-    const latest = await SensorReading.findOne({ device_id: req.params.deviceId }).sort({ timestamp: -1 });
-    if (!latest) {
-      return res.status(404).json({
-        success: false,
-        data: null,
-        error: `No telemetry found for device '${req.params.deviceId}'`
-      });
+    if (mongoose.connection.readyState === 1) {
+      const latest = await SensorReading.findOne({ device_id: devId }).sort({ timestamp: -1 });
+      if (latest) {
+        return res.json({
+          success: true,
+          data: sanitizeReading(latest),
+          error: null
+        });
+      }
     }
-    res.json({
+  } catch (err) {
+    console.warn(`[Telemetry Route] DB read warning: ${err.message}`);
+  }
+
+  const inMem = ingestionService.getLatestReading(devId);
+  if (inMem) {
+    return res.json({
       success: true,
-      data: latest,
+      data: sanitizeReading(inMem),
       error: null
     });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      data: null,
-      error: `Failed to fetch latest telemetry for device: ${err.message}`
-    });
   }
+
+  res.status(404).json({
+    success: false,
+    data: null,
+    error: `No telemetry found for device '${devId}'`
+  });
 });
 
 /**
@@ -87,38 +113,44 @@ router.get('/latest/:deviceId', async (req, res) => {
  * Query historical telemetry filtered by deviceId, start date, and end date
  */
 router.get('/history', async (req, res) => {
+  const { deviceId, start, end, limit = 100 } = req.query;
+
   try {
-    const { deviceId, start, end, limit = 100 } = req.query;
-    const filter = {};
+    if (mongoose.connection.readyState === 1) {
+      const filter = {};
+      if (deviceId) filter.device_id = deviceId;
+      if (start || end) {
+        filter.timestamp = {};
+        if (start) filter.timestamp.$gte = new Date(start);
+        if (end) filter.timestamp.$lte = new Date(end);
+      }
 
-    if (deviceId) {
-      filter.device_id = deviceId;
+      const maxLimit = Math.min(parseInt(limit, 10) || 100, 1000);
+      const readings = await SensorReading.find(filter)
+        .sort({ timestamp: -1 })
+        .limit(maxLimit);
+
+      if (readings && readings.length > 0) {
+        return res.json({
+          success: true,
+          data: readings.map(sanitizeReading),
+          count: readings.length,
+          error: null
+        });
+      }
     }
-
-    if (start || end) {
-      filter.timestamp = {};
-      if (start) filter.timestamp.$gte = new Date(start);
-      if (end) filter.timestamp.$lte = new Date(end);
-    }
-
-    const maxLimit = Math.min(parseInt(limit, 10) || 100, 1000);
-    const readings = await SensorReading.find(filter)
-      .sort({ timestamp: -1 })
-      .limit(maxLimit);
-
-    res.json({
-      success: true,
-      data: readings,
-      count: readings.length,
-      error: null
-    });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      data: null,
-      error: `Failed to fetch telemetry history: ${err.message}`
-    });
+    console.warn(`[Telemetry Route] DB history read warning: ${err.message}`);
   }
+
+  // Fallback to in-memory history
+  const inMemHistory = ingestionService.getHistoryReadings(deviceId, parseInt(limit, 10) || 100);
+  res.json({
+    success: true,
+    data: inMemHistory.map(sanitizeReading),
+    count: inMemHistory.length,
+    error: null
+  });
 });
 
 /**

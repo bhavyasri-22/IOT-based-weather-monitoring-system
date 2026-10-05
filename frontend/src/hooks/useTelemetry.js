@@ -17,11 +17,13 @@ export default function useTelemetry(deviceId) {
 
   const fetchLatest = useCallback(async () => {
     try {
-      const data = await telemetryApi.latest(deviceId);
-      // latest endpoint returns { data: {...} } or the reading directly
-      const reading = data?.data || data;
-      setLatest(reading);
-      setLastUpdated(new Date());
+      const res = await telemetryApi.latest(deviceId);
+      const raw = res?.data !== undefined ? res.data : res;
+      const reading = Array.isArray(raw) ? (raw.length > 0 ? raw[0] : null) : raw;
+      if (reading && typeof reading === 'object' && !Array.isArray(reading)) {
+        setLatest(reading);
+        setLastUpdated(reading.timestamp || reading.createdAt || new Date());
+      }
       setError(null);
     } catch (err) {
       setError(err.message);

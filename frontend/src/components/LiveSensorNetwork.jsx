@@ -12,7 +12,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import SensorDetailsModal from './SensorDetailsModal';
-import { formatRelativeTime } from '../utils/weatherUtils';
+import { formatRelativeTime, sanitizeRain } from '../utils/weatherUtils';
 
 export default function LiveSensorNetwork({ telemetry, lastUpdated, deviceStatus, activeAlerts = [] }) {
   const [selectedSensor, setSelectedSensor] = useState(null);
@@ -22,7 +22,8 @@ export default function LiveSensorNetwork({ telemetry, lastUpdated, deviceStatus
   const humidity = T.humidity != null ? Math.round(T.humidity) : 74;
   const pressure = T.pressure != null ? Math.round(T.pressure) : 1008;
   const lux = T.light_lux != null ? Math.round(T.light_lux) : 742;
-  const rain = T.rain_intensity != null ? Number(T.rain_intensity).toFixed(1) : '0.0';
+  const cleanRainNum = sanitizeRain(T.rain_intensity);
+  const rain = cleanRainNum != null ? cleanRainNum.toFixed(1) : '0.0';
   const aqi = T.gas_aqi != null ? Math.round(T.gas_aqi) : 42;
   const gasRaw = T.gas_raw != null ? Math.round(T.gas_raw) : 142;
   const wind = T.wind_speed != null ? Number(T.wind_speed).toFixed(1) : '12.0';

@@ -98,6 +98,24 @@ async function seedDefaultThresholds() {
         { upsert: true, new: true }
       );
     }
+    // Clean up any legacy/bogus alerts created from raw 4095 ADC dry readings
+    await AlertLog.updateMany(
+      {
+        parameter: 'rain_intensity',
+        status: 'active',
+        $or: [
+          { trigger_value: { $gte: 100 } },
+          { message: { $regex: /4095/ } }
+        ]
+      },
+      {
+        $set: {
+          status: 'resolved',
+          resolved_at: new Date(),
+          notes: 'Auto-resolved: Corrected from raw ADC dry baseline'
+        }
+      }
+    );
   } catch (err) {
     console.error(`[Threshold Engine] Error seeding default thresholds: ${err.message}`);
   }
@@ -130,6 +148,12 @@ async function evaluateTelemetryAlerts(deviceId, telemetryData) {
     let val = telemetryData[paramKey];
     if (val === undefined && telemetryData.derived) {
       val = telemetryData.derived[paramKey];
+    }
+
+    // Sanitize raw ADC value if it leaked into rain_intensity
+    if (paramKey === 'rain_intensity' && typeof val === 'number') {
+      if (val >= 3800) val = 0.0;
+      else if (val > 100) val = Math.max(0, Math.min(100, ((3800 - val) / (3800 - 1000)) * 80));
     }
 
     // ----------------------------------------------------
