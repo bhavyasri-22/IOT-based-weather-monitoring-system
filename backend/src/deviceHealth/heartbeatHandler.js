@@ -11,7 +11,7 @@ const mongoose = require('mongoose');
  */
 async function handleHeartbeat(heartbeatData) {
   const { device_id, heartbeat_timestamp, status } = heartbeatData;
-  const timestamp = heartbeat_timestamp ? new Date(heartbeat_timestamp) : new Date();
+  const now = new Date();
   const currentStatus = status || 'online';
 
   if (mongoose.connection.readyState === 1) {
@@ -24,12 +24,12 @@ async function handleHeartbeat(heartbeatData) {
         {
           $set: {
             status: currentStatus,
-            last_seen: timestamp,
-            last_seen_timestamp: timestamp,
-            last_heartbeat: timestamp
+            last_seen: now,
+            last_seen_timestamp: now,
+            last_heartbeat: now
           },
           $setOnInsert: {
-            first_seen: timestamp,
+            first_seen: now,
             firmware_version: '1.0.0'
           }
         },

@@ -5,6 +5,9 @@
 .env.*
 !.env.example
 !.env.sample
+secrets.h
+*.secret.h
+!secrets.h.example
 *.pem
 *.key
 *.crt

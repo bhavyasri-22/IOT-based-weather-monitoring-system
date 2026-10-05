@@ -51,17 +51,18 @@ class IngestionService {
         const prevDevice = await DeviceHealth.findOne({ device_id: telemetryData.device_id });
         const wasOffline = prevDevice && prevDevice.status === 'offline';
 
+        const now = new Date();
         await DeviceHealth.findOneAndUpdate(
           { device_id: telemetryData.device_id },
           {
             $set: {
               status: 'online',
-              last_seen: telemetryData.timestamp,
-              last_seen_timestamp: telemetryData.timestamp,
-              last_telemetry: telemetryData.timestamp
+              last_seen: now,
+              last_seen_timestamp: now,
+              last_telemetry: now
             },
             $setOnInsert: {
-              first_seen: telemetryData.timestamp,
+              first_seen: now,
               firmware_version: '1.0.0'
             }
           },

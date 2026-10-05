@@ -55,7 +55,7 @@ export default function App() {
   }, []);
 
   // Primary device context
-  const [deviceId, setDeviceId] = useState('ESP32_SURATHKAL_01');
+  const [deviceId, setDeviceId] = useState(import.meta.env.VITE_DEFAULT_DEVICE_ID || 'ESP32-NODE-01');
   const [deviceStatus, setDeviceStatus] = useState('online');
 
   // Activity feed

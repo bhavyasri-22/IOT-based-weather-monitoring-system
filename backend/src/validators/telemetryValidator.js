@@ -66,8 +66,8 @@ function validateTelemetryPayload(rawInput) {
     humidity: validateNumericOrNull('humidity', payload.humidity, 0, 100),
     pressure: validateNumericOrNull('pressure', payload.pressure, 300, 1200),
     light_lux: validateNumericOrNull('light_lux', payload.light_lux, 0, 200000),
-    rain_intensity: validateNumericOrNull('rain_intensity', payload.rain_intensity, 0, 1000),
-    gas_aqi: validateNumericOrNull('gas_aqi', payload.gas_aqi, 0, 1000),
+    rain_intensity: validateNumericOrNull('rain_intensity', payload.rain_intensity, 0, 4095),
+    gas_aqi: validateNumericOrNull('gas_aqi', payload.gas_aqi, 0, 4095),
     wind_speed: validateNumericOrNull('wind_speed', payload.wind_speed, 0, 200)
   };
 
