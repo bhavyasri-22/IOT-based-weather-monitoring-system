@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:5001';
+const WS_BASE = import.meta.env.VITE_WS_URL || 'ws://localhost:5001';
+const WS_URL = WS_BASE.endsWith('/ws') ? WS_BASE : `${WS_BASE}/ws`;
 const RECONNECT_DELAY_MS = 3000;
 const MAX_RECONNECT_ATTEMPTS = 10;
 

@@ -52,9 +52,9 @@ async function handleHeartbeat(heartbeatData) {
   return {
     device_id,
     status: currentStatus,
-    last_seen: timestamp,
-    last_seen_timestamp: timestamp,
-    last_heartbeat: timestamp
+    last_seen: now,
+    last_seen_timestamp: now,
+    last_heartbeat: now
   };
 }
 

@@ -19,7 +19,7 @@ class WebSocketGateway {
 
     console.log('[WebSocket Gateway] Initializing WebSocket Server...');
 
-    this.wss = new WebSocket.Server({ server });
+    this.wss = new WebSocket.Server({ server, path: '/ws' });
 
     this.wss.on('connection', (ws, req) => {
       ws.isAlive = true;
