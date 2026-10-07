@@ -2,6 +2,7 @@ require('dotenv').config();
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose');
 const Aedes = require('aedes');
 const WebSocket = require('ws');
 const connectDB = require('./config/db');
@@ -17,20 +18,30 @@ const { notFoundHandler, globalErrorHandler } = require('./middlewares/errorHand
 
 const app = express();
 const PORT = process.env.PORT || 5001;
+const HOST = process.env.HOST || '0.0.0.0';
 
-// Middleware setup
+// ── CORS Configuration (Supports multi-origin production deployments) ────────
+const corsOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
+  : '*';
+
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
-    : '*',
+  origin: corsOrigins === '*' ? '*' : (origin, callback) => {
+    if (!origin || corsOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS origin '${origin}' not allowed by policy`));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
   credentials: true
 };
+
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// API Routes
+// ── API Routes ───────────────────────────────────────────────────────────────
 app.use('/api/auth', authRouter);
 app.use('/api/devices', devicesRouter);
 app.use('/api/telemetry', telemetryRouter);
@@ -38,32 +49,37 @@ app.use('/api/alerts', alertsRouter);
 app.use('/api/config', configRouter);
 app.use('/api/thresholds', configRouter);
 
-// Health Check Endpoint (SRS F.9)
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'online',
+// ── Health Check Endpoints (SRS F.9 & Production Monitoring) ─────────────────
+function getHealthPayload() {
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  const mqttStatus = mqttSubscriber.getStatus();
+
+  const isHealthy = dbStatus === 'connected' || mqttStatus.status === 'connected';
+
+  return {
+    status: isHealthy ? 'ok' : 'degraded',
     service: 'Weather Ingestion Backend Service',
+    environment: process.env.NODE_ENV || 'development',
+    database: dbStatus,
+    mqtt: mqttStatus.status,
+    websocket_clients: wsGateway.clients ? wsGateway.clients.size : 0,
+    uptime_seconds: Math.floor(process.uptime()),
     timestamp: new Date().toISOString()
-  });
-});
+  };
+}
 
-// Backward-compatible alias for /api/system/health
-app.get('/api/system/health', (req, res) => {
-  res.json({
-    status: 'online',
-    service: 'Weather Monitoring System',
-    timestamp: new Date().toISOString()
-  });
-});
+app.get('/health', (req, res) => res.json(getHealthPayload()));
+app.get('/api/health', (req, res) => res.json(getHealthPayload()));
+app.get('/api/system/health', (req, res) => res.json(getHealthPayload()));
 
-// Catch-all 404 & Centralized Error Handler Middlewares
+// ── Centralized 404 & Error Handler Middlewares ──────────────────────────────
 app.use(notFoundHandler);
 app.use(globalErrorHandler);
 
 // Create HTTP server wrapping Express app
 const server = http.createServer(app);
 
-// ── Embedded MQTT Broker (Aedes over WebSocket) for cloud deployment ──
+// ── Embedded MQTT Broker (Optional single-host / testing fallback) ────────────
 let aedesInstance = null;
 if (process.env.ENABLE_EMBEDDED_BROKER === 'true') {
   aedesInstance = typeof Aedes === 'function' ? Aedes() : new Aedes();
@@ -81,21 +97,22 @@ if (process.env.ENABLE_EMBEDDED_BROKER === 'true') {
   console.log('[Embedded MQTT] Aedes broker attached to HTTP server on /mqtt');
 }
 
-// Initialize Database, MQTT Consumer Pipeline, WebSocket Gateway & Scheduled Background Jobs
+// ── Server Bootstrap Pipeline ────────────────────────────────────────────────
 async function startServer() {
   await connectDB();
   
-  // Attach WebSocket Server to HTTP server (SRS F.10)
+  // Attach WebSocket Server to HTTP server on path /ws (SRS F.10)
   wsGateway.init(server);
 
+  // Initialize MQTT Subscriber Pipeline (SRS F.3)
   mqttSubscriber.init();
   
   // Start scheduled background job for device offline detection (SRS F.11)
   startOfflineDetectionJob();
 
   return new Promise((resolve) => {
-    server.listen(PORT, () => {
-      console.log(`[Backend Ingestion Server] Server running on port ${PORT}`);
+    server.listen(PORT, HOST, () => {
+      console.log(`[Backend Ingestion Server] 🚀 Server running at http://${HOST}:${PORT}`);
       resolve(server);
     });
   });

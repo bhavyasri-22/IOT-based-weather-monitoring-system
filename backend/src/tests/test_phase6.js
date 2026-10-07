@@ -167,11 +167,20 @@ async function runPhase6Tests() {
     // ----------------------------------------------------
     // TEST 3: Per-Device API Key Authentication
     // ----------------------------------------------------
+    // ----------------------------------------------------
+    // TEST 3: Per-Device API Key Authentication (Admin Protected)
+    // ----------------------------------------------------
     logTestStep(3, 'Test Per-Device Custom API Key Authentication');
 
-    // Set custom API key for node
+    // 3a. Unauthenticated key update should fail with 401
+    const unauthKeyRes = await apiRequest('/api/devices/ESP32-CUSTOM-NODE/key', 'PUT', { apiKey: 'secret' });
+    assert.strictEqual(unauthKeyRes.status, 401, 'Unauthenticated key update must return HTTP 401');
+
+    // 3b. Authenticated admin key update
     const customKey = 'custom_device_secret_9999';
-    const setKeyRes = await apiRequest('/api/devices/ESP32-CUSTOM-NODE/key', 'PUT', { apiKey: customKey });
+    const setKeyRes = await apiRequest('/api/devices/ESP32-CUSTOM-NODE/key', 'PUT', { apiKey: customKey }, {
+      Authorization: `Bearer ${userToken}`
+    });
     assert.strictEqual(setKeyRes.status, 200);
 
     const customTelemetry = {
@@ -236,7 +245,7 @@ async function runPhase6Tests() {
     console.log('✅ TEST 5 PASSED: Device status and health summary APIs verified.');
 
     // ----------------------------------------------------
-    // TEST 6: Alerts & Threshold Config APIs
+    // TEST 6: Alerts & Threshold Config APIs (RBAC Verified)
     // ----------------------------------------------------
     logTestStep(6, 'Verify Alert & Threshold Config APIs (/api/alerts, /api/config/thresholds)');
 
@@ -250,9 +259,19 @@ async function runPhase6Tests() {
     assert.strictEqual(thresholdsRes.status, 200);
     assert.ok(thresholdsRes.data.data.length >= 7);
 
+    // 6a. Unauthenticated threshold modification must be rejected with 401
+    const unauthThresholdRes = await apiRequest('/api/config/thresholds/wind_speed', 'PUT', {
+      warning_max: 18.0,
+      critical_max: 28.0
+    });
+    assert.strictEqual(unauthThresholdRes.status, 401, 'Unauthenticated threshold update must return 401');
+
+    // 6b. Authenticated admin threshold modification succeeds
     const updateThresholdRes = await apiRequest('/api/config/thresholds/wind_speed', 'PUT', {
       warning_max: 18.0,
       critical_max: 28.0
+    }, {
+      Authorization: `Bearer ${userToken}`
     });
     assert.strictEqual(updateThresholdRes.status, 200);
     assert.strictEqual(updateThresholdRes.data.data.warning_max, 18.0);

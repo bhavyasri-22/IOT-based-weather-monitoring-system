@@ -45,7 +45,7 @@ export default function WeatherOverviewCard({ telemetry, lastUpdated, deviceStat
   const lowTemp = tempNum != null ? (tempNum - 3.4).toFixed(1) : null;
 
   return (
-    <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-sky-500/10 via-blue-500/5 to-slate-100/50 dark:from-[#0E2A47]/80 dark:via-[#0D1E33]/90 dark:to-[#091524] border border-sky-200/60 dark:border-sky-500/20 backdrop-blur-xl shadow-lg shadow-sky-500/5 dark:shadow-2xl text-slate-800 dark:text-white transition-all">
+    <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-white/90 dark:bg-[#0E1A29]/80 border border-sky-200/70 dark:border-sky-500/20 backdrop-blur-xl shadow-md shadow-sky-500/5 dark:shadow-2xl text-slate-800 dark:text-white transition-all">
       {/* Ambient background soft glow */}
       <div className="absolute -top-24 -right-24 w-80 h-80 bg-sky-400/20 dark:bg-sky-500/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-blue-500/15 dark:bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
@@ -146,7 +146,7 @@ export default function WeatherOverviewCard({ telemetry, lastUpdated, deviceStat
 
           {/* Right Column: Key Compact Environmental Summaries */}
           <div className="md:col-span-5 grid grid-cols-2 gap-3">
-            <div className="p-3.5 rounded-2xl bg-white/70 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/[0.06] shadow-sm">
+            <div className="p-3.5 rounded-2xl bg-white/90 dark:bg-white/[0.04] border border-sky-100 dark:border-white/[0.06] shadow-sm">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-400 block mb-1">
                 Feels Like
               </span>
@@ -156,7 +156,7 @@ export default function WeatherOverviewCard({ telemetry, lastUpdated, deviceStat
               <span className="text-[10px] text-slate-500 dark:text-slate-400">Heat index comfort</span>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-white/70 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/[0.06] shadow-sm">
+            <div className="p-3.5 rounded-2xl bg-white/90 dark:bg-white/[0.04] border border-sky-100 dark:border-white/[0.06] shadow-sm">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-400 block mb-1">
                 Day Range
               </span>
@@ -168,7 +168,7 @@ export default function WeatherOverviewCard({ telemetry, lastUpdated, deviceStat
               <span className="text-[10px] text-slate-500 dark:text-slate-400">Estimated min / max</span>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-white/70 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/[0.06] shadow-sm">
+            <div className="p-3.5 rounded-2xl bg-white/90 dark:bg-white/[0.04] border border-sky-100 dark:border-white/[0.06] shadow-sm">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-400 block mb-1">
                 Surface Rain
               </span>
@@ -180,7 +180,7 @@ export default function WeatherOverviewCard({ telemetry, lastUpdated, deviceStat
               </span>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-white/70 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/[0.06] shadow-sm">
+            <div className="p-3.5 rounded-2xl bg-white/90 dark:bg-white/[0.04] border border-sky-100 dark:border-white/[0.06] shadow-sm">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-400 block mb-1">
                 Pressure
               </span>

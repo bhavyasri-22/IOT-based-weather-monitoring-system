@@ -60,7 +60,7 @@ function AlertItem({ alert, onResolve }) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className={`text-[9px] font-bold tracking-widest ${styles.text} px-1.5 py-0.2 rounded bg-black/20 uppercase`}>
+          <span className={`text-[9px] font-bold tracking-widest ${styles.text} px-1.5 py-0.2 rounded bg-sky-950/10 uppercase`}>
             {styles.label}
           </span>
           <span className="text-[10px] text-[#94A3B8] font-semibold">{alert.parameter?.toUpperCase()}</span>

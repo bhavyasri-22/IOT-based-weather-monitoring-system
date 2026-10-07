@@ -1,37 +1,42 @@
 # 🌦️ IoT-Based Real-Time Weather Monitoring System
 
-A production-grade, full-stack IoT weather monitoring and early-warning platform built with **ESP32**, **MQTT**, **Node.js/Express**, **MongoDB**, and **React + Vite**.
+A production-ready, full-stack IoT weather monitoring and early-warning platform built with **ESP32**, **MQTT over TLS**, **Node.js/Express**, **MongoDB Atlas**, and **React + Vite**.
+
+Developed for **IT303 – Internet of Things** at **NIT Karnataka** under the guidance of **Prof. Jaidhar C D**.
 
 ---
 
 ## 🏗️ System Architecture
 
+The ESP32 and backend **do NOT need to be on the same Wi-Fi network**. The system communicates across the public Internet via Cloud MQTT:
+
 ```
-[ ESP32 Sensors (BME280, Rain FC-37) ]
-                 │ (Wi-Fi / MQTT 1883)
-                 ▼
-     [ Standalone MQTT Broker (Aedes) ]
-                 │
-                 ▼
-[ Node.js Backend & Ingestion Engine ]
-   ├── Ingestion & Validation Pipeline
-   ├── Real-Time Threshold & Alert Engine
-   ├── Heat Index & Metric Calculators
-   ├── Device Health & Heartbeat Tracker (F.11)
-   ├── MongoDB Atlas / Local Persistence
-   └── WebSocket Gateway (Port 5001)
-                 │
-                 ▼ (REST API & WebSockets)
-     [ React Dashboard (Vite + Tailwind) ]
+                      INTERNET
+                         │
+        ┌────────────────┴────────────────┐
+        │                                 │
+        ▼                                 ▼
+   [ ESP32 Node ]                  [ Web Browser ]
+ (Any Wi-Fi / Hotspot)                    │
+        │                                 │
+        │ MQTT over TLS (Port 8883)       │ HTTPS / WSS
+        ▼                                 ▼
+[ Cloud MQTT Broker ]            [ Deployed Frontend ]
+(HiveMQ Cloud / EMQX)           (Vercel / Netlify)
+        │                                 │
+        │ MQTT over TLS                   │ REST / WebSocket
+        ▼                                 ▼
+   [ Cloud Backend Ingestion Engine (Render / Railway / VPS) ]
+                         │
+                         ▼
+               [ MongoDB Atlas Cluster ]
 ```
 
 ---
 
-## 🚀 Quick Start Guide
+## 🚀 Quick Start (Local Development)
 
-### 1. Clone & Setup Configuration Files
-Clone the repository and create the required local configuration files from the templates:
-
+### 1. Setup Environment Files
 ```bash
 # Backend Environment Setup
 cp backend/.env.example backend/.env
@@ -39,63 +44,93 @@ cp backend/.env.example backend/.env
 # Frontend Environment Setup
 cp frontend/.env.example frontend/.env
 
-# ESP32 Firmware Secrets Setup
+# ESP32 Firmware Configuration
 cp firmware/esp32/src/secrets.h.example firmware/esp32/src/secrets.h
 ```
 
-### 2. Configure Your Network & Secrets
-1. Open `firmware/esp32/src/secrets.h` and enter your **Wi-Fi SSID**, **Password**, and your computer's **Local IP Address**.
-2. Make sure MongoDB is running locally (`mongodb://127.0.0.1:27017`) or update `MONGODB_URI` in `backend/.env`.
+### 2. Start Services Locally
 
----
+Open **3 separate terminal tabs**:
 
-## 💻 Running the Services
-
-Open **3 separate terminal tabs** and start each service:
-
-### Terminal 1: MQTT Broker
+#### Terminal 1: Local MQTT Broker
 ```bash
 cd broker
 npm install
 npm start
 ```
-*Broker listens on port `1883`.*
 
-### Terminal 2: Backend Server
+#### Terminal 2: Backend Ingestion Server
 ```bash
 cd backend
 npm install
 npm run dev
 ```
-*Backend API and WebSocket server run on `http://localhost:5001`.*
+*API and WebSocket server run on `http://localhost:5001`.*
 
-### Terminal 3: Frontend Dashboard
+#### Terminal 3: Frontend Dashboard
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-*Access the dashboard at `http://localhost:5173`.*
+*Dashboard runs on `http://localhost:5173`.*
+
+---
+
+## 🌐 Production Cloud Deployment
+
+For the complete guide on deploying the backend (Render/Railway), frontend (Vercel/Netlify), MongoDB Atlas, and Cloud MQTT over TLS, see **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
+
+### Production Environment Variables Summary
+
+#### Backend (`backend/.env` or hosting dashboard):
+```env
+NODE_ENV=production
+PORT=5001
+HOST=0.0.0.0
+MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/weather_db?retryWrites=true&w=majority
+MQTT_BROKER_URL=mqtts://<user>:<pass>@<cluster>.hivemq.cloud:8883
+JWT_SECRET=your_cryptographically_secure_jwt_secret
+DEVICE_API_KEY=your_secure_device_api_key
+CORS_ORIGIN=https://your-frontend-domain.vercel.app
+```
+
+#### Frontend (`frontend/.env` or hosting dashboard):
+```env
+VITE_API_BASE_URL=https://your-backend-api.onrender.com/api
+VITE_WS_URL=wss://your-backend-api.onrender.com
+VITE_DEFAULT_DEVICE_ID=ESP32-NODE-01
+```
+
+#### ESP32 (`firmware/esp32/src/secrets.h`):
+```cpp
+static const char* WIFI_SSID             = "Your_WiFi_Name";
+static const char* WIFI_PASS             = "Your_WiFi_Password";
+static const char* MQTT_SERVER           = "your-cluster.hivemq.cloud";
+static const int   MQTT_PORT             = 8883;
+static const bool  MQTT_USE_TLS          = true;
+static const char* MQTT_USER             = "esp32_weather_node";
+static const char* MQTT_PASS             = "YourNodePassword123";
+static const char* DEVICE_ID             = "ESP32-NODE-01";
+```
 
 ---
 
 ## 🔌 Hardware Wiring Guide (ESP32)
 
-| Sensor | Sensor Pin | ESP32 Pin | Note |
+| Sensor | Sensor Pin | ESP32 Pin | Purpose |
 | :--- | :--- | :--- | :--- |
-| **BME280** (Temp, Hum, Pressure) | `VCC` | `3.3V` | Use 3.3V rail |
+| **BME280** | `VCC` | `3.3V` | 3.3V Power |
 | | `GND` | `GND` | Ground |
 | | `SCL` | `GPIO 22` | I2C Clock |
 | | `SDA` | `GPIO 21` | I2C Data |
-| **FC-37 Rain Drop Sensor** | `VCC` | `3.3V` | |
-| | `GND` | `GND` | |
-| | `AO` (Analog) | `GPIO 34` | ADC1 (Input Only) |
+| **FC-37 Rain Sensor** | `VCC` | `3.3V` | 3.3V Power |
+| | `GND` | `GND` | Ground |
+| | `AO` | `GPIO 34` | ADC1 Channel 6 |
 
 ---
 
-## 🧪 Testing & Verification
-
-Run automated backend validation and integration test suites:
+## 🧪 Testing & Validation
 
 ```bash
 cd backend
@@ -104,8 +139,3 @@ node src/tests/test_phase5.js   # Threshold alert engine & resolution tests
 node src/tests/test_phase6.js   # REST API & authentication tests
 node src/tests/test_phase7.js   # WebSocket live streaming tests
 ```
-
----
-
-## 🔐 Security & Confidentiality
-All sensitive information (Wi-Fi passwords, JWT secrets, database connection URIs) is completely decoupled from version control and managed via `.env` and `secrets.h` files ignored by `.gitignore`.

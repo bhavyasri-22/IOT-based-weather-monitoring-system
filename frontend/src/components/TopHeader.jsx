@@ -21,13 +21,13 @@ import { useTheme } from '../context/ThemeContext';
 import useUserLocation from '../hooks/useUserLocation';
 
 const PAGE_META = {
-  '/': { title: 'Weather Overview', subtitle: 'Real-time environmental conditions' },
-  '/live': { title: 'Live Sensor Monitor', subtitle: 'High-frequency telemetry streams' },
-  '/analytics': { title: 'Environmental Analytics', subtitle: 'Multi-sensor historical trend intelligence' },
-  '/history': { title: 'Historical Archive', subtitle: 'Time-series data logs and exports' },
-  '/devices': { title: 'Sensors & Hardware', subtitle: 'Node diagnostics, pinouts, and calibration' },
-  '/alerts': { title: 'Environmental Alerts', subtitle: 'Active system breaches and audit logs' },
-  '/admin': { title: 'System Configuration', subtitle: 'Alert threshold limits and node parameters' },
+  '/dashboard':            { title: 'Weather Overview',        subtitle: 'Real-time environmental conditions' },
+  '/dashboard/live':       { title: 'Live Sensor Monitor',     subtitle: 'High-frequency telemetry streams' },
+  '/dashboard/analytics':  { title: 'Environmental Analytics', subtitle: 'Multi-sensor historical trend intelligence' },
+  '/dashboard/history':    { title: 'Historical Archive',      subtitle: 'Time-series data logs and exports' },
+  '/dashboard/devices':    { title: 'Sensors & Hardware',      subtitle: 'Node diagnostics, pinouts, and calibration' },
+  '/dashboard/alerts':     { title: 'Environmental Alerts',    subtitle: 'Active system breaches and audit logs' },
+  '/dashboard/admin':      { title: 'System Configuration',    subtitle: 'Alert threshold limits and node parameters' },
 };
 
 export default function TopHeader({
@@ -239,7 +239,7 @@ export default function TopHeader({
 
               <div className="pt-2 border-t border-slate-200 dark:border-white/[0.06] flex items-center justify-between text-xs">
                 <Link
-                  to="/alerts"
+                  to="/dashboard/alerts"
                   onClick={() => setShowNotifications(false)}
                   className="text-blue-600 dark:text-[#60A5FA] hover:underline flex items-center gap-1 font-semibold"
                 >

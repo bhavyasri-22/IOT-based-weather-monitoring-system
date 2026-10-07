@@ -139,7 +139,7 @@ export default function WeatherTrendChart({ deviceId, telemetry }) {
   }, [data]);
 
   return (
-    <div className="rounded-3xl p-5 sm:p-6 bg-white dark:bg-[#0E1A29]/80 border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-all space-y-4">
+    <div className="rounded-3xl p-5 sm:p-6 bg-white dark:bg-[#0E1A29]/80 border border-sky-100/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-all space-y-4">
       {/* Header with Title & Metric Toggle Buttons */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>

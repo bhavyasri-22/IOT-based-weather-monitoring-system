@@ -1,5 +1,61 @@
-# Docker Compose configuration for Mosquitto MQTT broker, MongoDB, Backend service, and Frontend UI
 version: '3.8'
 
+# ── Local Development Docker Compose ──────────────────────────────────────────
+# Runs local Mosquitto MQTT broker, MongoDB, Backend, and Frontend for offline dev
 services:
-  # Broker, MongoDB, Backend, Frontend services will be configured here
+  mqtt-broker:
+    image: eclipse-mosquitto:2
+    container_name: weather-mqtt-broker
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./broker/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+
+  mongodb:
+    image: mongo:7
+    container_name: weather-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: weather-backend
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - NODE_ENV=development
+      - PORT=5001
+      - HOST=0.0.0.0
+      - MONGODB_URI=mongodb://mongodb:27017/weather_db
+      - MQTT_BROKER_URL=mqtt://mqtt-broker:1883
+      - JWT_SECRET=dev_jwt_secret_key_change_in_prod_2026
+      - DEVICE_API_KEY=dev_device_api_key
+      - CORS_ORIGIN=*
+    depends_on:
+      - mongodb
+      - mqtt-broker
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=http://localhost:5001/api
+        - VITE_WS_URL=ws://localhost:5001
+        - VITE_DEFAULT_DEVICE_ID=ESP32-NODE-01
+    container_name: weather-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:

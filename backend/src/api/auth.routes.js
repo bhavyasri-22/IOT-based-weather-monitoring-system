@@ -23,7 +23,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({
         success: false,
         data: null,
-        error: 'Validation Error: Username or Email must be at least 3 characters long'
+        error: 'Validation Error: Username must be at least 3 characters long'
       });
     }
 
@@ -39,20 +39,10 @@ router.post('/register', async (req, res) => {
     const trimmedEmail = email ? email.trim().toLowerCase() : '';
 
     if (mongoose.connection.readyState !== 1) {
-      const mockUser = {
-        _id: 'mock_user_' + Date.now(),
-        username: trimmedUsername,
-        email: trimmedEmail,
-        role: role === 'admin' ? 'admin' : 'operator'
-      };
-      const token = generateToken(mockUser);
-      return res.status(201).json({
-        success: true,
-        data: {
-          user: mockUser,
-          token
-        },
-        error: null
+      return res.status(503).json({
+        success: false,
+        data: null,
+        error: 'Registration unavailable: Database connection is offline.'
       });
     }
 
@@ -66,11 +56,11 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({
         success: false,
         data: null,
-        error: `An account with this username or email is already registered`
+        error: 'An account with this username or email is already registered'
       });
     }
 
-    // Check if this is the very first user (if so, automatically make them admin)
+    // First user is automatically admin; others default to operator unless specified admin
     const userCount = await User.countDocuments();
     const assignedRole = userCount === 0 ? 'admin' : (role === 'admin' ? 'admin' : 'operator');
 
@@ -108,7 +98,7 @@ router.post('/register', async (req, res) => {
 
 /**
  * POST /api/auth/login
- * Authenticates user credentials and issues a JWT token
+ * Authenticates user credentials and issues a signed JWT token
  */
 router.post('/login', async (req, res) => {
   try {
@@ -124,20 +114,10 @@ router.post('/login', async (req, res) => {
     }
 
     if (mongoose.connection.readyState !== 1) {
-      const mockUser = {
-        _id: 'mock_operator_id',
-        username: identifier,
-        email: identifier.includes('@') ? identifier : `${identifier}@station.local`,
-        role: identifier.toLowerCase().includes('admin') ? 'admin' : 'operator'
-      };
-      const token = generateToken(mockUser);
-      return res.json({
-        success: true,
-        data: {
-          user: mockUser,
-          token
-        },
-        error: null
+      return res.status(503).json({
+        success: false,
+        data: null,
+        error: 'Authentication service temporarily unavailable: Database is offline.'
       });
     }
 
@@ -147,6 +127,7 @@ router.post('/login', async (req, res) => {
         { email: identifier.toLowerCase() }
       ]
     });
+
     if (!user || !user.validatePassword(password)) {
       return res.status(401).json({
         success: false,
@@ -185,6 +166,19 @@ router.post('/login', async (req, res) => {
  */
 router.get('/me', authenticateJWT, async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      // Return decoded token identity if DB is in fallback
+      return res.json({
+        success: true,
+        data: {
+          id: req.user.userId,
+          username: req.user.username,
+          role: req.user.role
+        },
+        error: null
+      });
+    }
+
     const user = await User.findById(req.user.userId).select('-password_hash -salt');
     if (!user) {
       return res.status(404).json({
@@ -214,6 +208,15 @@ router.get('/me', authenticateJWT, async (req, res) => {
  */
 router.get('/users', authenticateJWT, requireRole(['admin']), async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.json({
+        success: true,
+        data: [],
+        count: 0,
+        error: null
+      });
+    }
+
     const users = await User.find().select('-password_hash -salt').sort({ createdAt: -1 });
     res.json({
       success: true,

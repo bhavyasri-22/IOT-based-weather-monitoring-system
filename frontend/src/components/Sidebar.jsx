@@ -47,13 +47,13 @@ export default function Sidebar({
 
   // Remove Admin Config for user/operator role
   const navItems = [
-    { to: '/', icon: LayoutDashboard, label: 'Overview', end: true },
-    { to: '/live', icon: Radio, label: 'Live Monitor' },
-    { to: '/analytics', icon: BarChart3, label: 'Analytics' },
-    { to: '/devices', icon: Cpu, label: 'Sensors' },
-    { to: '/alerts', icon: Bell, label: 'Alerts', badge: activeAlertCount > 0 ? activeAlertCount : null },
-    { to: '/history', icon: Clock, label: 'History' },
-    ...(user?.role === 'admin' ? [{ to: '/admin', icon: Settings, label: 'Admin Config' }] : []),
+    { to: '/dashboard',           icon: LayoutDashboard, label: 'Overview',   end: true },
+    { to: '/dashboard/live',      icon: Radio,           label: 'Live Monitor' },
+    { to: '/dashboard/analytics', icon: BarChart3,       label: 'Analytics' },
+    { to: '/dashboard/devices',   icon: Cpu,             label: 'Sensors' },
+    { to: '/dashboard/alerts',    icon: Bell,            label: 'Alerts', badge: activeAlertCount > 0 ? activeAlertCount : null },
+    { to: '/dashboard/history',   icon: Clock,           label: 'History' },
+    ...(user?.role === 'admin' ? [{ to: '/dashboard/admin', icon: Settings, label: 'Admin Config' }] : []),
   ];
 
   return (
@@ -67,7 +67,7 @@ export default function Sidebar({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             onClick={onClose}
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-[#0D3563]/40 backdrop-blur-sm"
           />
 
           {/* Off-Canvas Navigation Drawer */}

@@ -152,7 +152,7 @@ export default function SensorConditionsGrid({ telemetry }) {
           return (
             <div
               key={s.id}
-              className="rounded-2xl p-4 bg-white dark:bg-[#0E1A29]/80 border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+              className="rounded-2xl p-4 bg-white dark:bg-[#0E1A29]/80 border border-sky-100/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
             >
               <div className="flex items-center justify-between gap-2 mb-2">
                 <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate">

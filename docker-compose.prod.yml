@@ -1,0 +1,47 @@
+version: '3.8'
+
+# ── Cloud / Production Docker Compose ─────────────────────────────────────────
+# Uses external MongoDB Atlas and Cloud MQTT Broker (e.g. HiveMQ Cloud / EMQX)
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: weather-backend-prod
+    restart: always
+    ports:
+      - "${PORT:-5001}:5001"
+    environment:
+      - NODE_ENV=production
+      - PORT=5001
+      - HOST=0.0.0.0
+      - MONGODB_URI=${MONGODB_URI}
+      - MQTT_BROKER_URL=${MQTT_BROKER_URL}
+      - MQTT_USERNAME=${MQTT_USERNAME}
+      - MQTT_PASSWORD=${MQTT_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - DEVICE_API_KEY=${DEVICE_API_KEY}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+      - DEVICE_OFFLINE_TIMEOUT_MS=${DEVICE_OFFLINE_TIMEOUT_MS:-120000}
+      - DEVICE_HEALTH_CHECK_INTERVAL_MS=${DEVICE_HEALTH_CHECK_INTERVAL_MS:-10000}
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:5001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL}
+        - VITE_WS_URL=${VITE_WS_URL}
+        - VITE_DEFAULT_DEVICE_ID=${VITE_DEFAULT_DEVICE_ID:-ESP32-NODE-01}
+    container_name: weather-frontend-prod
+    restart: always
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    depends_on:
+      - backend

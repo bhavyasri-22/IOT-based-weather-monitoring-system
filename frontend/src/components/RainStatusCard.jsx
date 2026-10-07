@@ -58,7 +58,7 @@ export default function RainStatusCard({ telemetry }) {
   const barPct = Math.min(100, Math.max(0, (rainVal / 30) * 100));
 
   return (
-    <div className="rounded-3xl p-5 sm:p-6 bg-white dark:bg-[#0E1A29]/80 border border-slate-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+    <div className="rounded-3xl p-5 sm:p-6 bg-white dark:bg-[#0E1A29]/80 border border-sky-100/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
       <div>
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
@@ -82,7 +82,7 @@ export default function RainStatusCard({ telemetry }) {
         </div>
 
         {/* Current State Highlight */}
-        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/70 dark:border-white/[0.04] space-y-3">
+          <div className="p-4 rounded-2xl bg-sky-50/70 dark:bg-white/[0.02] border border-sky-100 dark:border-white/[0.04] space-y-3">
           <div className="flex items-baseline justify-between">
             <div>
               <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white font-sans tabular-nums">

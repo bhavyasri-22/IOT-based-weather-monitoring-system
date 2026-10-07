@@ -136,9 +136,9 @@ router.post('/', authenticateJWT, requireRole(['admin']), async (req, res) => {
 
 /**
  * PUT /api/devices/:deviceId/key
- * Sets or updates a specific per-device API key
+ * Sets or updates a specific per-device API key (Admin Only)
  */
-router.put('/:deviceId/key', async (req, res) => {
+router.put('/:deviceId/key', authenticateJWT, requireRole(['admin']), async (req, res) => {
   try {
     const { apiKey } = req.body;
     if (!apiKey || typeof apiKey !== 'string' || apiKey.trim() === '') {

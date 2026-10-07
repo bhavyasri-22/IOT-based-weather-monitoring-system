@@ -4,63 +4,38 @@ import {
   Routes,
   Route,
   Navigate,
+  useNavigate,
 } from 'react-router-dom';
 
-import Sidebar from './components/Sidebar';
-import TopHeader from './components/TopHeader';
-import Footer from './components/Footer';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import LiveMonitor from './pages/LiveMonitor';
-import Analytics from './pages/Analytics';
-import History from './pages/History';
-import AlertsPage from './pages/AlertsPage';
-import DevicesPage from './pages/DevicesPage';
-import AdminConfig from './pages/AdminConfig';
+import LandingPage    from './pages/LandingPage';
+import Login          from './pages/Login';
+import Dashboard      from './pages/Dashboard';
+import LiveMonitor    from './pages/LiveMonitor';
+import Analytics      from './pages/Analytics';
+import History        from './pages/History';
+import AlertsPage     from './pages/AlertsPage';
+import DevicesPage    from './pages/DevicesPage';
+import AdminConfig    from './pages/AdminConfig';
+import Sidebar        from './components/Sidebar';
+import TopHeader      from './components/TopHeader';
+import Footer         from './components/Footer';
 import { ThemeProvider } from './context/ThemeContext';
 
-import useWebSocket from './hooks/useWebSocket';
-import useTelemetry from './hooks/useTelemetry';
-import useAlerts from './hooks/useAlerts';
+import useWebSocket  from './hooks/useWebSocket';
+import useTelemetry  from './hooks/useTelemetry';
+import useAlerts     from './hooks/useAlerts';
 import { devicesApi, authApi } from './api/client';
 
 const ACTIVITY_MAX = 50;
 let _eid = 0;
 function nextId() { return ++_eid; }
 
-export default function App() {
-  const [user, setUser] = useState(() => {
-    try {
-      const stored = localStorage.getItem('auth_user');
-      if (stored) return JSON.parse(stored);
-    } catch {}
-    const token = localStorage.getItem('auth_token');
-    return token ? { email: 'operator@station.local', role: 'operator' } : null;
-  });
-
-  // Off-canvas sidebar state
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  // Verify and refresh user role on startup
-  useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      authApi.me().then((res) => {
-        const u = res?.data || res;
-        if (u && u.role) {
-          setUser(u);
-          localStorage.setItem('auth_user', JSON.stringify(u));
-        }
-      }).catch(() => {});
-    }
-  }, []);
-
-  // Primary device context
-  const [deviceId, setDeviceId] = useState(import.meta.env.VITE_DEFAULT_DEVICE_ID || 'ESP32-NODE-01');
+// ─── Protected dashboard shell ────────────────────────────────
+function DashboardShell({ user, onLogout }) {
+  const [deviceId, setDeviceId]       = useState(import.meta.env.VITE_DEFAULT_DEVICE_ID || 'ESP32-NODE-01');
   const [deviceStatus, setDeviceStatus] = useState('online');
-
-  // Activity feed
   const [activityFeed, setActivityFeed] = useState([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const pushActivity = useCallback((type, title, subtitle = '') => {
     setActivityFeed((prev) => [
@@ -69,31 +44,25 @@ export default function App() {
     ]);
   }, []);
 
-  // Telemetry hook
   const {
     latest: telemetry,
     lastUpdated,
     updateFromWebSocket: updateTelemetry,
   } = useTelemetry(deviceId);
 
-  // Alerts hook
-  const {
-    activeAlerts,
-    addAlert,
-    resolveAlert,
-    manualResolve,
-  } = useAlerts();
+  const { activeAlerts, addAlert, resolveAlert, manualResolve } = useAlerts();
 
-  // WebSocket event handler
   const handleWsEvent = useCallback((msg) => {
     const { event, data } = msg;
     switch (event) {
       case 'telemetry:new':
         updateTelemetry(data);
-        pushActivity('telemetry', 'Telemetry ingested', `${data.device_id || 'Node'} · ${data.temperature != null ? `${Number(data.temperature).toFixed(1)}°C` : ''}`);
-        if (data.device_id && deviceId === data.device_id) {
-          setDeviceStatus('online');
-        }
+        pushActivity(
+          'telemetry',
+          'Telemetry ingested',
+          `${data.device_id || 'Node'} · ${data.temperature != null ? `${Number(data.temperature).toFixed(1)}°C` : ''}`
+        );
+        if (data.device_id && deviceId === data.device_id) setDeviceStatus('online');
         break;
       case 'alert:new':
         addAlert(data);
@@ -104,24 +73,19 @@ export default function App() {
         pushActivity('alert_resolved', `Alert resolved: ${data.parameter}`, data.device_id);
         break;
       case 'device:status':
-        if (data.device_id === deviceId) {
-          setDeviceStatus(data.status);
-        }
+        if (data.device_id === deviceId) setDeviceStatus(data.status);
         pushActivity('device', `Device ${data.status}: ${data.device_id}`, '');
         break;
       case 'connection:established':
         pushActivity('heartbeat', 'WebSocket synchronized', 'Real-time telemetry channel established');
         break;
-      default:
-        break;
+      default: break;
     }
   }, [deviceId, updateTelemetry, addAlert, resolveAlert, pushActivity]);
 
-  const { connectionState: wsState } = useWebSocket(user ? handleWsEvent : null);
+  const { connectionState: wsState } = useWebSocket(handleWsEvent);
 
-  // Fetch primary device on login
   useEffect(() => {
-    if (!user) return;
     devicesApi.list().then((data) => {
       const nodes = data?.data || data || [];
       if (Array.isArray(nodes) && nodes.length > 0) {
@@ -130,83 +94,147 @@ export default function App() {
         setDeviceStatus(primary.status || 'online');
       }
     }).catch(() => {});
-  }, [user]);
+  }, []);
 
-  const handleLogin = useCallback((u) => setUser(u), []);
+  const sharedProps = {
+    telemetry, deviceId, deviceStatus, wsState,
+    lastUpdated, activeAlerts, onResolveAlert: manualResolve,
+    activityFeed, user,
+  };
 
-  const handleLogout = () => {
+  return (
+    <div
+      className="min-h-screen w-full flex flex-col"
+      style={{
+        background: 'linear-gradient(160deg, #F5FAFF 0%, #EAF4FF 50%, #E0EFFF 100%)',
+        color: '#123B5D',
+      }}
+    >
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        deviceStatus={deviceStatus}
+        wsState={wsState}
+        user={user}
+        onLogout={onLogout}
+        activeAlertCount={activeAlerts.length}
+        lastUpdated={lastUpdated}
+      />
+
+      <TopHeader
+        onToggleSidebar={() => setIsSidebarOpen((p) => !p)}
+        isSidebarOpen={isSidebarOpen}
+        deviceId={deviceId}
+        deviceStatus={deviceStatus}
+        wsState={wsState}
+        lastUpdated={lastUpdated}
+        activeAlertCount={activeAlerts.length}
+        activeAlerts={activeAlerts}
+        onResolveAlert={manualResolve}
+        user={user}
+        onLogout={onLogout}
+      />
+
+      <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6">
+        <Routes>
+          <Route path="/"         element={<Dashboard   {...sharedProps} />} />
+          <Route path="/live"     element={<LiveMonitor  {...sharedProps} />} />
+          <Route path="/analytics" element={<Analytics   {...sharedProps} />} />
+          <Route path="/devices"  element={<DevicesPage user={user} />} />
+          <Route path="/alerts"   element={<AlertsPage  user={user} onResolve={manualResolve} />} />
+          <Route path="/history"  element={<History      deviceId={deviceId} />} />
+          <Route
+            path="/admin"
+            element={user?.role === 'admin' ? <AdminConfig user={user} /> : <Navigate to="/" replace />}
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+
+      <Footer />
+    </div>
+  );
+}
+
+// ─── Root app with routing ────────────────────────────────────
+export default function App() {
+  const [user, setUser] = useState(() => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return null;
+    try {
+      const stored = localStorage.getItem('auth_user');
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    return null;
+  });
+
+  // Verify JWT session on startup
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      authApi.me()
+        .then((res) => {
+          const u = res?.data || res;
+          if (u && (u.username || u.role)) {
+            setUser(u);
+            localStorage.setItem('auth_user', JSON.stringify(u));
+          }
+        })
+        .catch((err) => {
+          if (err.status === 401) {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_user');
+            setUser(null);
+          }
+        });
+    }
+
+    const handleAuthExpired = () => {
+      setUser(null);
+    };
+
+    window.addEventListener('auth:expired', handleAuthExpired);
+    return () => window.removeEventListener('auth:expired', handleAuthExpired);
+  }, []);
+
+  const handleLogin = useCallback((u) => {
+    setUser(u);
+  }, []);
+
+  const handleLogout = useCallback(() => {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
     setUser(null);
-  };
-
-  if (!user) {
-    return <Login onLogin={handleLogin} />;
-  }
-
-  const sharedProps = {
-    telemetry,
-    deviceId,
-    deviceStatus,
-    wsState,
-    lastUpdated,
-    activeAlerts,
-    onResolveAlert: manualResolve,
-    activityFeed,
-    user,
-  };
+  }, []);
 
   return (
     <ThemeProvider>
       <Router>
-        <div className="min-h-screen w-full flex flex-col bg-[#F8FAFC] dark:bg-[#07111F] text-slate-800 dark:text-[#F1F5F9] transition-colors duration-300 relative selection:bg-[#60A5FA]/20 selection:text-white">
-          {/* Off-Canvas Navigation Drawer */}
-          <Sidebar
-            isOpen={isSidebarOpen}
-            onClose={() => setIsSidebarOpen(false)}
-            deviceStatus={deviceStatus}
-            wsState={wsState}
-            user={user}
-            onLogout={handleLogout}
-            activeAlertCount={activeAlerts.length}
-            lastUpdated={lastUpdated}
+        <Routes>
+          {/* Public routes */}
+          <Route path="/"     element={<LandingPage />} />
+          <Route
+            path="/auth"
+            element={
+              user
+                ? <Navigate to="/dashboard" replace />
+                : <Login onLogin={handleLogin} />
+            }
           />
 
-          {/* Top Header with Hamburger ☰ trigger */}
-          <TopHeader
-            onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
-            isSidebarOpen={isSidebarOpen}
-            deviceId={deviceId}
-            deviceStatus={deviceStatus}
-            wsState={wsState}
-            lastUpdated={lastUpdated}
-            activeAlertCount={activeAlerts.length}
-            activeAlerts={activeAlerts}
-            onResolveAlert={manualResolve}
-            user={user}
-            onLogout={handleLogout}
+          {/* Protected dashboard routes — redirect to /auth if not logged in */}
+          <Route
+            path="/dashboard/*"
+            element={
+              user
+                ? <DashboardShell user={user} onLogout={handleLogout} />
+                : <Navigate to="/auth" replace />
+            }
           />
 
-          {/* Full-Width Main Viewport */}
-          <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6">
-            <Routes>
-              <Route path="/" element={<Dashboard {...sharedProps} />} />
-              <Route path="/live" element={<LiveMonitor {...sharedProps} />} />
-              <Route path="/analytics" element={<Analytics {...sharedProps} />} />
-              <Route path="/devices" element={<DevicesPage user={user} />} />
-              <Route path="/alerts" element={<AlertsPage user={user} onResolve={manualResolve} />} />
-              <Route path="/history" element={<History deviceId={deviceId} />} />
-              <Route
-                path="/admin"
-                element={user?.role === 'admin' ? <AdminConfig user={user} /> : <Navigate to="/" replace />}
-              />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
-
-          {/* Universal Rich Footer */}
-          <Footer />
-        </div>
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </Router>
     </ThemeProvider>
   );

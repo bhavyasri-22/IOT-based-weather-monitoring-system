@@ -28,9 +28,9 @@ router.get('/thresholds', async (req, res) => {
 
 /**
  * PUT /api/config/thresholds/:parameter
- * Updates threshold rule limits for a specific weather parameter
+ * Updates threshold rule limits for a specific weather parameter (Admin Only)
  */
-router.put('/thresholds/:parameter', async (req, res) => {
+router.put('/thresholds/:parameter', authenticateJWT, requireRole(['admin']), async (req, res) => {
   try {
     const { parameter } = req.params;
     const { warning_min, warning_max, critical_min, critical_max, is_enabled, metric_name, unit, description } = req.body;
