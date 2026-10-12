@@ -19,7 +19,8 @@ import AdminConfig    from './pages/AdminConfig';
 import Sidebar        from './components/Sidebar';
 import TopHeader      from './components/TopHeader';
 import Footer         from './components/Footer';
-import { ThemeProvider } from './context/ThemeContext';
+import BackToTop from './components/BackToTop';
+import RoleSelection from './pages/RoleSelection';
 
 import useWebSocket  from './hooks/useWebSocket';
 import useTelemetry  from './hooks/useTelemetry';
@@ -98,7 +99,7 @@ function DashboardShell({ user, onLogout }) {
 
   const sharedProps = {
     telemetry, deviceId, deviceStatus, wsState,
-    lastUpdated, activeAlerts, onResolveAlert: manualResolve,
+    lastUpdated, activeAlerts, onResolveAlert: user?.role === 'admin' ? manualResolve : undefined,
     activityFeed, user,
   };
 
@@ -145,7 +146,7 @@ function DashboardShell({ user, onLogout }) {
           <Route path="/history"  element={<History      deviceId={deviceId} />} />
           <Route
             path="/admin"
-            element={user?.role === 'admin' ? <AdminConfig user={user} /> : <Navigate to="/" replace />}
+            element={user?.role === 'admin' ? <AdminConfig user={user} /> : <Navigate to="/auth?role=admin" replace />}
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
@@ -208,8 +209,7 @@ export default function App() {
   }, []);
 
   return (
-    <ThemeProvider>
-      <Router>
+    <Router>
         <Routes>
           {/* Public routes */}
           <Route path="/"     element={<LandingPage />} />
@@ -221,21 +221,18 @@ export default function App() {
                 : <Login onLogin={handleLogin} />
             }
           />
+          <Route path="/choose-access" element={<RoleSelection />} />
 
-          {/* Protected dashboard routes — redirect to /auth if not logged in */}
+          {/* The public dashboard is read-only. Admin-only controls still require a verified session. */}
           <Route
             path="/dashboard/*"
-            element={
-              user
-                ? <DashboardShell user={user} onLogout={handleLogout} />
-                : <Navigate to="/auth" replace />
-            }
+            element={<DashboardShell user={user} onLogout={handleLogout} />}
           />
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </Router>
-    </ThemeProvider>
+      <BackToTop />
+    </Router>
   );
 }

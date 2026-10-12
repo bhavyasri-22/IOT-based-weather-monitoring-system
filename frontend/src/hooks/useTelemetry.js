@@ -22,7 +22,7 @@ export default function useTelemetry(deviceId) {
       const reading = Array.isArray(raw) ? (raw.length > 0 ? raw[0] : null) : raw;
       if (reading && typeof reading === 'object' && !Array.isArray(reading)) {
         setLatest(reading);
-        setLastUpdated(reading.timestamp || reading.createdAt || new Date());
+        setLastUpdated(reading.timestamp || reading.createdAt || null);
       }
       setError(null);
     } catch (err) {
@@ -54,7 +54,7 @@ export default function useTelemetry(deviceId) {
   // Expose imperative update method for WebSocket events
   const updateFromWebSocket = useCallback((wsData) => {
     setLatest(wsData);
-    setLastUpdated(new Date());
+    setLastUpdated(wsData?.timestamp || wsData?.createdAt || null);
   }, []);
 
   return {

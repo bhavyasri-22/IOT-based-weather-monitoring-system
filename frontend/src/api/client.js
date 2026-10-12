@@ -94,6 +94,8 @@ export const authApi = {
     }),
   me: () => request('/auth/me'),
   users: () => request('/auth/users'),
+  requestPasswordReset: (email) => request('/auth/password-reset/request', { method: 'POST', body: JSON.stringify({ email }) }),
+  confirmPasswordReset: (token, password) => request('/auth/password-reset/confirm', { method: 'POST', body: JSON.stringify({ token, password }) }),
 };
 
 // ── Telemetry Endpoints ────────────────────────────────────────

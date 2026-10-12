@@ -120,15 +120,7 @@ export default function AdminConfig({ user }) {
         }).catch(() => {});
       }
     } catch {
-      // Default set of thresholds
-      setThresholds([
-        { parameter: 'temperature', warning_min: 10, warning_max: 35, critical_min: 0, critical_max: 42 },
-        { parameter: 'humidity', warning_min: 30, warning_max: 80, critical_min: 15, critical_max: 95 },
-        { parameter: 'pressure', warning_min: 990, warning_max: 1025, critical_min: 960, critical_max: 1040 },
-        { parameter: 'wind_speed', warning_min: null, warning_max: 30, critical_min: null, critical_max: 50 },
-        { parameter: 'gas_aqi', warning_min: null, warning_max: 100, critical_min: null, critical_max: 200 },
-        { parameter: 'rain_intensity', warning_min: null, warning_max: 10, critical_min: null, critical_max: 25 },
-      ]);
+      setThresholds([]);
     } finally {
       setLoading(false);
     }

@@ -3,6 +3,8 @@ const router = express.Router();
 const User = require('../models/User');
 const { generateToken, authenticateJWT, requireRole } = require('../auth/jwt');
 const mongoose = require('mongoose');
+const crypto = require('crypto');
+const { assessPassword } = require('../auth/passwordPolicy');
 
 /**
  * POST /api/auth/register
@@ -27,11 +29,13 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    if (!password || typeof password !== 'string' || password.length < 4) {
+    const passwordAssessment = assessPassword(password);
+    if (!passwordAssessment.valid) {
       return res.status(400).json({
         success: false,
         data: null,
-        error: 'Validation Error: Password must be at least 4 characters long'
+        error: passwordAssessment.errors.join(' '),
+        password_strength: passwordAssessment.strength
       });
     }
 
@@ -60,9 +64,9 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    // First user is automatically admin; others default to operator unless specified admin
-    const userCount = await User.countDocuments();
-    const assignedRole = userCount === 0 ? 'admin' : (role === 'admin' ? 'admin' : 'operator');
+    // Public registration is always read-only/operator access.  Admin roles can
+    // only be provisioned through a controlled database/deployment process.
+    const assignedRole = 'operator';
 
     const user = new User({
       username: trimmedUsername,
@@ -93,6 +97,69 @@ router.post('/register', async (req, res) => {
       data: null,
       error: `Failed to register user: ${err.message}`
     });
+  }
+});
+
+router.get('/password-policy', (req, res) => {
+  res.json({ success: true, data: { minLength: 12, required: ['uppercase', 'lowercase', 'number', 'symbol'] }, error: null });
+});
+
+/**
+ * Requests a single-use, time-limited reset token.  The response is deliberately
+ * identical whether or not the address exists to prevent account enumeration.
+ * A deployment should deliver the generated token through its configured mailer.
+ */
+router.post('/password-reset/request', async (req, res) => {
+  const message = 'If an account matches that email, password reset instructions have been sent.';
+  try {
+    const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+    if (!email || !email.includes('@') || mongoose.connection.readyState !== 1) {
+      return res.json({ success: true, data: { message }, error: null });
+    }
+    const user = await User.findOne({ email });
+    if (user) {
+      const token = user.setPasswordResetToken();
+      const deliveryUrl = process.env.PASSWORD_RESET_DELIVERY_WEBHOOK_URL;
+      // A deployment-owned mail service receives the raw token over a server to
+      // server request. Tokens are never returned to clients or written to logs.
+      if (deliveryUrl && typeof fetch === 'function') {
+        const resetUrl = `${process.env.PASSWORD_RESET_URL || 'http://localhost:5173/auth'}?token=${encodeURIComponent(token)}`;
+        const delivery = await fetch(deliveryUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: user.email, resetUrl })
+        });
+        if (delivery.ok) await user.save();
+        else user.clearPasswordResetToken();
+      } else {
+        user.clearPasswordResetToken();
+      }
+    }
+    return res.json({ success: true, data: { message }, error: null });
+  } catch {
+    return res.json({ success: true, data: { message }, error: null });
+  }
+});
+
+router.post('/password-reset/confirm', async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    const assessment = assessPassword(password);
+    if (!token || typeof token !== 'string' || !assessment.valid) {
+      return res.status(400).json({ success: false, data: null, error: assessment.errors.join(' ') || 'A valid reset token is required.' });
+    }
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ success: false, data: null, error: 'Password reset is temporarily unavailable.' });
+    }
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await User.findOne({ password_reset_token_hash: tokenHash, password_reset_expires_at: { $gt: new Date() } });
+    if (!user) return res.status(400).json({ success: false, data: null, error: 'This password reset link is invalid or has expired.' });
+    user.setPassword(password);
+    user.clearPasswordResetToken();
+    await user.save();
+    return res.json({ success: true, data: { message: 'Password updated. You can now sign in.' }, error: null });
+  } catch {
+    return res.status(500).json({ success: false, data: null, error: 'Password reset could not be completed.' });
   }
 });
 

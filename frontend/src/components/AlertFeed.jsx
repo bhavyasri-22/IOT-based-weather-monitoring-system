@@ -136,7 +136,7 @@ export default function AlertFeed({ activeAlerts = [], onResolve, compact = fals
       ) : (
         <div className="flex flex-col gap-2.5 max-h-[380px] overflow-y-auto pr-1">
           {displayed.map((alert) => (
-            <AlertItem key={alert._id || alert.id || Math.random()} alert={alert} onResolve={onResolve} />
+            <AlertItem key={alert._id || alert.id} alert={alert} onResolve={onResolve} />
           ))}
         </div>
       )}

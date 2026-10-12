@@ -21,12 +21,12 @@ export default function LiveSensorNetwork({ telemetry, lastUpdated, deviceStatus
   const temp = T.temperature != null ? Number(T.temperature).toFixed(1) : '28.4';
   const humidity = T.humidity != null ? Math.round(T.humidity) : 74;
   const pressure = T.pressure != null ? Math.round(T.pressure) : 1008;
-  const lux = T.light_lux != null ? Math.round(T.light_lux) : 742;
+  const lux = null;
   const cleanRainNum = sanitizeRain(T.rain_intensity);
   const rain = cleanRainNum != null ? cleanRainNum.toFixed(1) : '0.0';
-  const aqi = T.gas_aqi != null ? Math.round(T.gas_aqi) : 42;
+  const aqi = T.gas_aqi != null ? Math.round(T.gas_aqi) : null;
   const gasRaw = T.gas_raw != null ? Math.round(T.gas_raw) : 142;
-  const wind = T.wind_speed != null ? Number(T.wind_speed).toFixed(1) : '12.0';
+  const wind = null;
 
   const timeAgo = formatRelativeTime(lastUpdated);
 

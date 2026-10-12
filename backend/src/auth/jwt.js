@@ -12,7 +12,7 @@ function generateToken(user) {
   const payload = {
     userId: user._id,
     username: user.username,
-    role: user.role || 'admin'
+    role: user.role || 'operator'
   };
   return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 }
@@ -48,7 +48,7 @@ function authenticateJWT(req, res, next) {
     return res.status(401).json({
       success: false,
       data: null,
-      error: `Invalid or expired authentication token: ${err.message}`
+      error: 'Invalid or expired authentication token.'
     });
   }
 }
@@ -59,7 +59,7 @@ function authenticateJWT(req, res, next) {
  */
 function requireRole(allowedRoles) {
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
-  return (req, res, next) => {
+  return async (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -68,14 +68,27 @@ function requireRole(allowedRoles) {
       });
     }
 
-    const userRole = (req.user.role || 'operator').toLowerCase();
+    // Authorize against the database role, never only the role embedded in a client token.
+    // Administrative changes fail closed while the database is unavailable.
+    let userRole = (req.user.role || 'operator').toLowerCase();
+    try {
+      const User = require('../models/User');
+      const user = await User.findById(req.user.userId).select('role');
+      if (!user) {
+        return res.status(401).json({ success: false, data: null, error: 'Authentication account no longer exists.' });
+      }
+      userRole = user.role;
+      req.user.role = user.role;
+    } catch (err) {
+      return res.status(503).json({ success: false, data: null, error: 'Authorization service is temporarily unavailable.' });
+    }
     const isAuthorized = roles.some((r) => r.toLowerCase() === userRole);
 
     if (!isAuthorized) {
       return res.status(403).json({
         success: false,
         data: null,
-        error: `Forbidden: Action requires '${roles.join(' or ')}' role. Current role: '${userRole}'.`
+        error: 'You do not have permission to perform this action.'
       });
     }
 

@@ -22,10 +22,8 @@ import { formatRelativeTime } from '../utils/weatherUtils';
 
 const SENSORS_LIST = [
   { name: 'BME280', type: 'Temp / Humidity / Pressure', pin: 'I2C (SDA 21 / SCL 22)' },
-  { name: 'BH1750', type: 'Ambient Light (Lux)', pin: 'I2C (0x23)' },
   { name: 'Rain Sensor (FC-37)', type: 'Precipitation', pin: 'GPIO 34 (ADC1_CH6)' },
-  { name: 'MQ135', type: 'Air Quality & Gas Index', pin: 'GPIO 35 (ADC1_CH7)' },
-  { name: 'Cup Anemometer', type: 'Wind Velocity Counter', pin: 'GPIO 14 (Interrupt)' },
+  { name: 'MQ135', type: 'Raw gas reading (calibration required)', pin: 'GPIO 35 (ADC1_CH7)' },
 ];
 
 export default function DevicesPage({ user }) {
@@ -37,6 +35,7 @@ export default function DevicesPage({ user }) {
   const [newDeviceId, setNewDeviceId] = useState('');
   const [newLocation, setNewLocation] = useState('');
   const [addError, setAddError] = useState('');
+  const [loadError, setLoadError] = useState('');
 
   const fetchDevices = useCallback(async () => {
     setLoading(true);
@@ -48,18 +47,11 @@ export default function DevicesPage({ user }) {
       const nodeList = statusData?.data || statusData || [];
       setNodes(Array.isArray(nodeList) ? nodeList : []);
       setHealth(healthData?.data || healthData);
-    } catch {
-      // Fallback node
-      setNodes([
-        {
-          device_id: 'ESP32_SURATHKAL_01',
-          location: 'Coastal Sensor Station 01 (NITK)',
-          status: 'online',
-          last_seen: new Date(),
-          firmware_version: '2.4.1',
-        },
-      ]);
-      setHealth({ total_devices: 1, online_devices: 1, offline_devices: 0 });
+      setLoadError('');
+    } catch (err) {
+      setNodes([]);
+      setHealth(null);
+      setLoadError(err.message || 'Unable to load device health.');
     } finally {
       setLoading(false);
     }
@@ -164,6 +156,7 @@ export default function DevicesPage({ user }) {
       </div>
 
       {/* KPI Cards */}
+      {loadError && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{loadError}</p>}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div
           className="p-5 rounded-3xl border shadow-sm"

@@ -109,38 +109,21 @@ export default function MultiMetricAnalytics({ deviceId, telemetry }) {
 
           return {
             time: timeStr,
-            value: r.value != null ? Number(Number(r.value).toFixed(2)) : 0,
+            value: r[activeMetric] != null ? Number(Number(r[activeMetric]).toFixed(2)) : (r.value != null ? Number(Number(r.value).toFixed(2)) : null),
             rawTimestamp: r.timestamp,
             fullTimestamp: `${d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}, ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`,
           };
         });
-        setData(formatted);
+        setData(formatted.filter((point) => Number.isFinite(point.value)));
       } else {
-        generateSynthesizedSeries(activeMetric, activeRange);
+        setData([]);
       }
     } catch (e) {
-      generateSynthesizedSeries(activeMetric, activeRange);
+      setData([]);
     } finally {
       setLoading(false);
     }
   }, [deviceId, activeMetric, activeRange]);
-
-  function generateSynthesizedSeries(metric, range) {
-    const points = range === '1H' ? 12 : range === '6H' ? 24 : 24;
-    const base = metric === 'temperature' ? 28.4 : metric === 'humidity' ? 74 : metric === 'pressure' ? 1008 : metric === 'wind_speed' ? 12 : metric === 'gas_aqi' ? 42 : 2.4;
-    const items = [];
-    for (let i = points; i >= 0; i--) {
-      const d = new Date(Date.now() - i * (range === '1H' ? 5 * 60000 : range === '6H' ? 15 * 60000 : 60 * 60000));
-      const variation = (Math.sin(i * 0.5) * (base * 0.08) + (Math.random() - 0.5) * (base * 0.04));
-      items.push({
-        time: d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        value: Number((base + variation).toFixed(1)),
-        rawTimestamp: d.toISOString(),
-        fullTimestamp: `${d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}, ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`,
-      });
-    }
-    setData(items);
-  }
 
   useEffect(() => {
     loadHistoricalData();
@@ -355,4 +338,3 @@ export default function MultiMetricAnalytics({ deviceId, telemetry }) {
     </div>
   );
 }
-

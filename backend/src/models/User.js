@@ -29,7 +29,15 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: ['admin', 'operator'],
-      default: 'admin'
+      default: 'operator'
+    },
+    password_reset_token_hash: {
+      type: String,
+      default: null
+    },
+    password_reset_expires_at: {
+      type: Date,
+      default: null
     }
   },
   {
@@ -75,6 +83,18 @@ userSchema.methods.validatePassword = function (password) {
   // Backward compatibility fallback for legacy hashes with 1,000 iterations
   const hash1k = crypto.pbkdf2Sync(password, this.salt, 1000, 64, 'sha512').toString('hex');
   return this.password_hash === hash1k;
+};
+
+userSchema.methods.setPasswordResetToken = function () {
+  const token = crypto.randomBytes(32).toString('hex');
+  this.password_reset_token_hash = crypto.createHash('sha256').update(token).digest('hex');
+  this.password_reset_expires_at = new Date(Date.now() + 15 * 60 * 1000);
+  return token;
+};
+
+userSchema.methods.clearPasswordResetToken = function () {
+  this.password_reset_token_hash = null;
+  this.password_reset_expires_at = null;
 };
 
 module.exports = mongoose.model('User', userSchema);

@@ -15,35 +15,7 @@ import { formatRelativeTime } from '../utils/weatherUtils';
 export default function AlertsPanel({ activeAlerts = [], onResolve }) {
   const [filter, setFilter] = useState('all'); // 'all' | 'critical' | 'warning' | 'resolved'
 
-  // Representative alert list if no live alerts in state
-  const mockAlerts = [
-    {
-      id: 'mock-1',
-      parameter: 'humidity',
-      severity: 'warning',
-      message: 'High humidity detected (86% > 80% threshold)',
-      triggered_at: new Date(Date.now() - 10 * 60000),
-      resolved: false,
-    },
-    {
-      id: 'mock-2',
-      parameter: 'temperature',
-      severity: 'normal',
-      message: 'Temperature stabilized to normal range (28.1°C)',
-      triggered_at: new Date(Date.now() - 24 * 60000),
-      resolved: true,
-    },
-    {
-      id: 'mock-3',
-      parameter: 'rainfall',
-      severity: 'critical',
-      message: 'Rain rate threshold exceeded (18.0 mm/h > 15.0 mm/h)',
-      triggered_at: new Date(Date.now() - 120 * 60000),
-      resolved: false,
-    },
-  ];
-
-  const sourceAlerts = activeAlerts.length > 0 ? activeAlerts : mockAlerts;
+  const sourceAlerts = Array.isArray(activeAlerts) ? activeAlerts : [];
 
   const filtered = sourceAlerts.filter((a) => {
     if (filter === 'all') return true;

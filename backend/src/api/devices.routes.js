@@ -9,7 +9,7 @@ const { authenticateJWT, requireRole } = require('../auth/jwt');
  */
 router.get('/status', async (req, res) => {
   try {
-    const devices = await DeviceHealth.find().sort({ last_seen: -1 });
+    const devices = await DeviceHealth.find().select('-api_key').sort({ last_seen: -1 });
     res.json({
       success: true,
       data: devices,
@@ -63,7 +63,7 @@ router.get('/health', async (req, res) => {
  */
 router.get('/:deviceId', async (req, res) => {
   try {
-    const device = await DeviceHealth.findOne({ device_id: req.params.deviceId });
+    const device = await DeviceHealth.findOne({ device_id: req.params.deviceId }).select('-api_key');
     if (!device) {
       return res.status(404).json({
         success: false,
@@ -157,7 +157,7 @@ router.put('/:deviceId/key', authenticateJWT, requireRole(['admin']), async (req
 
     res.json({
       success: true,
-      data: updated,
+      data: { device_id: updated.device_id, updated: true },
       error: null
     });
   } catch (err) {

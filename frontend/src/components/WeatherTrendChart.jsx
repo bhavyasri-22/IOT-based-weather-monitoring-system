@@ -79,23 +79,10 @@ export default function WeatherTrendChart({ deviceId, telemetry }) {
 
         setData(points);
       } else {
-        // Fallback smooth point with current live telemetry
-        if (telemetry) {
-          let currVal = telemetry[selectedMetric] ?? telemetry?.derived?.[selectedMetric];
-          if (selectedMetric === 'rain_intensity') currVal = sanitizeRain(currVal);
-          if (currVal != null) {
-            const now = Date.now();
-            setData([
-              { timestamp: new Date(now - 60000 * 15).toISOString(), value: Number(currVal) * 0.99 },
-              { timestamp: new Date(now - 60000 * 10).toISOString(), value: Number(currVal) * 1.01 },
-              { timestamp: new Date(now - 60000 * 5).toISOString(), value: Number(currVal) * 0.995 },
-              { timestamp: new Date(now).toISOString(), value: Number(currVal) },
-            ]);
-          }
-        }
+        setData([]);
       }
     } catch {
-      // Fallback
+      setData([]);
     } finally {
       setLoading(false);
     }

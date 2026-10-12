@@ -40,7 +40,9 @@ export default function QuickMetricCards({ telemetry, activeAlerts = [] }) {
   const temp  = T.temperature    != null ? Number(T.temperature).toFixed(1)    : null;
   const hum   = T.humidity       != null ? Math.round(T.humidity)              : null;
   const pres  = T.pressure       != null ? Math.round(T.pressure)              : null;
-  const wind  = T.wind_speed     != null ? Number(T.wind_speed).toFixed(1)     : null;
+  // No anemometer is configured for this installation. Never promote a stray
+  // payload field to an installed sensor reading.
+  const wind  = null;
   const aqi   = T.gas_aqi        != null ? Math.round(T.gas_aqi)               : null;
   const cleanRainNum = sanitizeRain(T.rain_intensity);
   const rain  = cleanRainNum != null ? cleanRainNum.toFixed(1) : null;
@@ -170,9 +172,8 @@ export default function QuickMetricCards({ telemetry, activeAlerts = [] }) {
   const aEval = evalAqi();
   const rEval = evalRain();
 
-  const mkSpark = (base) => base != null
-    ? [base * 0.94, base * 0.96, base * 0.97, base * 0.99, base, base * 1.01, base * 1.02, base]
-    : [];
+  // A trend must come from historical API data, not a derived decorative series.
+  const mkSpark = () => [];
 
   const cards = [
     {
@@ -225,10 +226,10 @@ export default function QuickMetricCards({ telemetry, activeAlerts = [] }) {
     },
     {
       id: 'aqi',
-      title: 'Air Quality',
-      value: aqi != null ? `AQI ${aqi}` : '—',
+      title: 'Raw Gas Reading',
+      value: aqi != null ? `${aqi}` : '—',
       status: aEval.status,
-      subText: aEval.sub,
+      subText: aqi != null ? 'MQ135 reading; not calibrated AQI' : 'Awaiting data',
       statusColor: aEval.color,
       isAlert: aEval.isAlert,
       themeColor: '#8B5CF6',

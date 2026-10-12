@@ -27,16 +27,8 @@ export default function SensorDetailsModal({ sensor, onClose, telemetry }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-  // Generate mock 24h trend for this sensor's main reading
-  const sparkData = [
-    { time: '00:00', val: sensor.avg * 0.92 },
-    { time: '04:00', val: sensor.min * 1.02 },
-    { time: '08:00', val: sensor.avg * 0.98 },
-    { time: '12:00', val: sensor.max * 0.99 },
-    { time: '16:00', val: sensor.avg * 1.05 },
-    { time: '20:00', val: sensor.avg * 0.96 },
-    { time: 'Now', val: sensor.currentNumeric },
-  ];
+  // This dialog does not query historical data, so it must not invent a trend.
+  const sparkData = [];
 
   return (
     <AnimatePresence>

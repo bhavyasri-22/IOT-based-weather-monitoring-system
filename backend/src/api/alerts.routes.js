@@ -63,27 +63,14 @@ const wsGateway = require('../ws/gateway');
  * PUT /api/alerts/:alertId/resolve
  * Manually resolves an active alert
  */
-router.put('/:alertId/resolve', async (req, res) => {
+router.put('/:alertId/resolve', authenticateJWT, requireRole(['admin']), async (req, res) => {
   try {
     let alert = null;
     try {
       alert = await AlertLog.findById(req.params.alertId);
     } catch {}
 
-    if (!alert) {
-      // If not found in DB (e.g. in-memory or mock), return mock resolved alert object
-      const fallbackResolved = {
-        _id: req.params.alertId,
-        status: 'resolved',
-        resolved_at: new Date()
-      };
-      wsGateway.broadcastAlertResolved(fallbackResolved);
-      return res.json({
-        success: true,
-        data: fallbackResolved,
-        error: null
-      });
-    }
+    if (!alert) return res.status(404).json({ success: false, data: null, error: 'Alert not found.' });
 
     alert.status = 'resolved';
     alert.resolved_at = new Date();

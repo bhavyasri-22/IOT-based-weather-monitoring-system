@@ -8,7 +8,7 @@ const { authenticateJWT, requireRole } = require('../auth/jwt');
  * GET /api/config/thresholds
  * Returns all configured system threshold rules (accessible to all authenticated operators & admins)
  */
-router.get('/thresholds', async (req, res) => {
+router.get('/thresholds', authenticateJWT, requireRole(['admin']), async (req, res) => {
   try {
     await seedDefaultThresholds();
     const thresholds = await Threshold.find().sort({ parameter: 1 });

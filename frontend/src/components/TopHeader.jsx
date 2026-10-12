@@ -12,12 +12,9 @@ import {
   ChevronRight,
   Check,
   AlertTriangle,
-  LogOut,
-  Sun,
-  Moon
+  LogOut
 } from 'lucide-react';
 import { formatRelativeTime } from '../utils/weatherUtils';
-import { useTheme } from '../context/ThemeContext';
 import useUserLocation from '../hooks/useUserLocation';
 
 const PAGE_META = {
@@ -44,7 +41,6 @@ export default function TopHeader({
   onLogout,
 }) {
   const { pathname } = useLocation();
-  const { theme, toggleTheme, isDark } = useTheme();
   const userLoc = useUserLocation();
   const meta = PAGE_META[pathname] || { title: 'Weather Overview', subtitle: 'Real-time environmental conditions' };
 
@@ -65,6 +61,12 @@ export default function TopHeader({
       setClockTime(new Date().toLocaleTimeString());
     }, 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const onEscape = (event) => { if (event.key === 'Escape') setShowNotifications(false); };
+    document.addEventListener('keydown', onEscape);
+    return () => document.removeEventListener('keydown', onEscape);
   }, []);
 
   // Notifications popup
@@ -137,20 +139,6 @@ export default function TopHeader({
           </div>
         </div>
 
-        {/* Theme Toggle Button (Dark / Light Mode) */}
-        <button
-          type="button"
-          onClick={toggleTheme}
-          className="w-9 h-9 rounded-xl border flex items-center justify-center transition-all bg-slate-100 dark:bg-white/[0.03] border-slate-200 dark:border-white/[0.06] text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/[0.08] cursor-pointer shadow-sm"
-          title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          aria-label="Toggle Dark/Light Mode"
-        >
-          {isDark ? (
-            <Sun size={16} className="text-amber-400 hover:rotate-45 transition-transform" />
-          ) : (
-            <Moon size={16} className="text-blue-600 hover:-rotate-12 transition-transform" />
-          )}
-        </button>
 
         {/* Notifications Bell Dropdown */}
         <div className="relative" ref={notifRef}>
@@ -222,7 +210,7 @@ export default function TopHeader({
                         </div>
                         <p className="text-[11px] text-slate-700 dark:text-[#E2E8F0] leading-snug">{a.message}</p>
                       </div>
-                      {onResolveAlert && (a._id || a.id) && (
+                      {user?.role === 'admin' && onResolveAlert && (a._id || a.id) && (
                         <button
                           type="button"
                           onClick={() => onResolveAlert(a._id || a.id)}
@@ -274,4 +262,3 @@ export default function TopHeader({
     </header>
   );
 }
-

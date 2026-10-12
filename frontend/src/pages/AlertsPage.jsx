@@ -19,6 +19,7 @@ export default function AlertsPage({ user, onResolve }) {
   const [search, setSearch] = useState('');
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const fetchAlerts = useCallback(async () => {
     setLoading(true);
@@ -26,38 +27,10 @@ export default function AlertsPage({ user, onResolve }) {
       const data = await alertsApi.list({ limit: 100 });
       const list = data?.data || data || [];
       setAlerts(Array.isArray(list) ? list : []);
-    } catch {
-      // Fallback sample alerts
-      setAlerts([
-        {
-          _id: 'a1',
-          parameter: 'humidity',
-          severity: 'warning',
-          message: 'High humidity detected (86% > 80% limit)',
-          trigger_value: 86,
-          status: 'active',
-          triggered_at: new Date(Date.now() - 10 * 60000),
-        },
-        {
-          _id: 'a2',
-          parameter: 'rain_intensity',
-          severity: 'critical',
-          message: 'Flash precipitation rate exceeded 18.0 mm/h',
-          trigger_value: 18.0,
-          status: 'active',
-          triggered_at: new Date(Date.now() - 45 * 60000),
-        },
-        {
-          _id: 'a3',
-          parameter: 'temperature',
-          severity: 'warning',
-          message: 'Ambient temperature reached 34.2°C',
-          trigger_value: 34.2,
-          status: 'resolved',
-          triggered_at: new Date(Date.now() - 180 * 60000),
-          resolved_at: new Date(Date.now() - 120 * 60000),
-        },
-      ]);
+      setError('');
+    } catch (err) {
+      setAlerts([]);
+      setError(err.message || 'Unable to load alerts.');
     } finally {
       setLoading(false);
     }
@@ -68,6 +41,7 @@ export default function AlertsPage({ user, onResolve }) {
   }, [fetchAlerts]);
 
   const handleResolveAlert = async (id) => {
+    if (user?.role !== 'admin') return;
     try {
       await alertsApi.resolve(id);
     } catch {}
@@ -181,6 +155,7 @@ export default function AlertsPage({ user, onResolve }) {
 
       {/* Alerts Table/List */}
       <div className="rounded-2xl bg-white dark:bg-[#101D2E]/80 border border-slate-200/80 dark:border-white/[0.08] backdrop-blur-xl shadow-sm dark:shadow-xl overflow-hidden transition-colors">
+        {error && <p className="m-4 rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}</p>}
         {filtered.length === 0 ? (
           <div className="py-16 text-center">
             <CheckCircle2 size={36} className="text-emerald-500 dark:text-[#34D399] mx-auto mb-2 opacity-80" />
@@ -250,7 +225,7 @@ export default function AlertsPage({ user, onResolve }) {
                       </div>
                     )}
 
-                    {!isResolved && (
+                    {!isResolved && user?.role === 'admin' && (
                       <button
                         type="button"
                         onClick={() => handleResolveAlert(alertKey)}

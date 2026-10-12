@@ -13,12 +13,9 @@ import {
   CloudSun,
   LogOut,
   ShieldCheck,
-  UserCheck,
-  Sun,
-  Moon
+  UserCheck
 } from 'lucide-react';
 import { formatRelativeTime } from '../utils/weatherUtils';
-import { useTheme } from '../context/ThemeContext';
 
 export default function Sidebar({
   isOpen,
@@ -30,7 +27,6 @@ export default function Sidebar({
   activeAlertCount = 0,
   lastUpdated,
 }) {
-  const { theme, toggleTheme, isDark } = useTheme();
   const isOnline = deviceStatus === 'online';
   const wsConnected = wsState === 'connected';
 
@@ -153,21 +149,6 @@ export default function Sidebar({
 
             {/* Sidebar Bottom Status & User */}
             <div className="p-4 border-t border-slate-200/80 dark:border-white/[0.08] space-y-3">
-              {/* Theme Toggle in Sidebar */}
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.08] transition-all text-xs font-medium"
-              >
-                <div className="flex items-center gap-2 text-slate-700 dark:text-[#E2E8F0]">
-                  {isDark ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-blue-500" />}
-                  <span>{isDark ? 'Light Theme' : 'Dark Theme'}</span>
-                </div>
-                <span className="text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider bg-slate-200 dark:bg-white/[0.06] text-slate-600 dark:text-[#94A3B8]">
-                  {theme}
-                </span>
-              </button>
-
               {/* System Connection Health Badge */}
               <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.04] space-y-1">
                 <div className="flex items-center justify-between">
