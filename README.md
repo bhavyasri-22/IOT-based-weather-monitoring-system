@@ -5,9 +5,8 @@
 [![Database](https://img.shields.io/badge/Database-MongoDB%20Atlas-success.svg)]()
 [![Frontend](https://img.shields.io/badge/Frontend-React%2018%20%7C%20Vite%20%7C%20TailwindCSS-61DAFB.svg)]()
 [![Protocol](https://img.shields.io/badge/Transport-MQTT%20over%20TLS%20(Port%208883)-orange.svg)]()
-[![Theme](https://img.shields.io/badge/Theme-100%25%20Light%20UI-yellow.svg)]()
 
-> A production-grade, end-to-end environmental intelligence and early-warning platform built with **ESP32**, **Cloud MQTT over TLS (Port 8883)**, **Node.js/Express**, **MongoDB Atlas**, and **React + Vite**. Designed to deliver microclimate atmospheric telemetry, sub-second live streaming, threshold-based automated alerting, and historical analytics over the public Internet.
+> An end-to-end IoT weather monitoring platform built with **ESP32**, **Cloud MQTT over TLS**, **Node.js/Express**, **MongoDB Atlas**, and **React + Vite**. Sensor telemetry is securely transmitted over the public Internet, ingested in real time, and streamed live to a web dashboard.
 
 Developed for **IT303 – Software Engineering** at **National Institute of Technology Karnataka (NITK), Surathkal**, under the guidance of **Prof. Jaidhar C. D.**
 
@@ -15,388 +14,369 @@ Developed for **IT303 – Software Engineering** at **National Institute of Tech
 
 ## 📌 Table of Contents
 
-- [Overview](#-overview)
 - [System Architecture](#-system-architecture)
 - [Key Features](#-key-features)
-- [Hardware Architecture & Wiring](#-hardware-architecture--wiring)
+- [Hardware & Sensors](#-hardware--sensors)
 - [Tech Stack](#-tech-stack)
 - [Repository Structure](#-repository-structure)
-- [Quick Start: Local Development](#-quick-start-local-development)
-  - [Prerequisites](#prerequisites)
-  - [1. Clone & Configure Environment](#1-clone--configure-environment)
-  - [2. Launch Local Services](#2-launch-local-services)
-  - [3. ESP32 Firmware Flashing](#3-esp32-firmware-flashing)
-- [Environment Variables Guide](#-environment-variables-guide)
-- [REST API & WebSocket Documentation](#-rest-api--websocket-documentation)
-- [Alerting & Threshold Engine](#-alerting--threshold-engine)
-- [Sensor Fault Detection & Graceful Degradation](#-sensor-fault-detection--graceful-degradation)
-- [Testing & Quality Assurance](#-testing--quality-assurance)
-- [Production Cloud Deployment](#-production-cloud-deployment)
-- [Academic Credits & Contributors](#-academic-credits--contributors)
-
----
-
-## 📖 Overview
-
-Traditional weather tracking setups often rely on local-only networks (LAN), require complex port forwarding, or lack real-time reactivity. The **IoT-Based Real-Time Weather Monitoring System** resolves these challenges by decoupling the physical microcontroller nodes from the ingestion server via **Cloud MQTT with TLS encryption**:
-
-1. **Independent Network Operation**: The ESP32 edge node can connect to *any* network (cellular hotspot, home Wi-Fi, campus network) without needing to be on the same LAN as the server or dashboard.
-2. **Sub-Second Live Streaming**: Atmospheric metrics are ingested by the cloud server and pushed to web clients via bidirectional WebSockets with under 20 ms latency.
-3. **Fault-Tolerant Sensor Network**: Automatically differentiates between active readings, out-of-range sensor breaches, and physically disconnected transducers (`Not Connected` status).
-4. **Clean, High-Contrast UI**: 100% light theme across all pages, interactive data visualizations, historical CSV exports, and smooth bottom-to-top page navigation.
+- [Local Development Setup](#-local-development-setup)
+- [Environment Variables](#-environment-variables)
+- [REST API Reference](#-rest-api-reference)
+- [Alert Thresholds](#-alert-thresholds)
+- [Sensor Status & Fault Handling](#-sensor-status--fault-handling)
+- [Testing](#-testing)
+- [Cloud Deployment](#-cloud-deployment)
+- [Academic Credits](#-academic-credits)
 
 ---
 
 ## 🏗️ System Architecture
 
 ```
-                                  PUBLIC INTERNET
-                                         │
-                   ┌─────────────────────┴─────────────────────┐
-                   │                                           │
-                   ▼                                           ▼
-          [ ESP32 Edge Node ]                        [ Client Web Browser ]
-      (Any Wi-Fi / 4G/5G Hotspot)                   (Desktop, Tablet, Mobile)
-                   │                                           │
-                   │ MQTT over TLS (Port 8883)                 │ HTTPS / WSS
-                   ▼                                           ▼
-       [ Cloud MQTT Broker ]                         [ Deployed Frontend ]
-             (EMQX Cloud)                                  (Vercel)
-                   │                                           │
-                   │ MQTT over TLS (Port 8883)                 │ REST API / WebSocket
-                   ▼                                           ▼
-      [ Cloud Backend Ingestion Engine (Node.js / Express / ws) ]
-      (Render / Railway / Self-Hosted VPS)
-                   │
-                   ▼
-       [ MongoDB Atlas Cloud Cluster ]
-       (Time-series Telemetry & Alerts)
+                              PUBLIC INTERNET
+                                     │
+              ┌──────────────────────┴──────────────────────┐
+              │                                             │
+              ▼                                             ▼
+     [ ESP32 Edge Node ]                        [ Client Web Browser ]
+  (Any Wi-Fi / 4G Hotspot)                   (Desktop, Tablet, Mobile)
+              │                                             │
+              │ MQTT over TLS (Port 8883)                   │ HTTPS / WSS
+              ▼                                             ▼
+   [ Cloud MQTT Broker ]                       [ Deployed Frontend ]
+ (HiveMQ Cloud / EMQX Cloud)                   (Vercel / Netlify)
+              │                                             │
+              │ MQTT over TLS                               │ REST / WebSocket
+              ▼                                             ▼
+   [ Node.js Backend – Ingestion Engine, REST API, WebSocket Server ]
+   (Render / Railway / VPS)
+              │
+              ▼
+   [ MongoDB Atlas ]
 ```
 
-### Data Pipeline Walkthrough:
-1. **Sensing & Calibration**: The ESP32 reads physical environmental transducers every 3 seconds. Raw ADC and I2C signals are calibrated and packaged into a JSON payload.
-2. **Secure Transport**: The telemetry packet is transmitted via **MQTTS (TLS v1.2/1.3)** over TCP port `8883` to the Cloud Broker.
-3. **Persistence & Broadcasting**: Validated telemetry is persisted to **MongoDB Atlas** while simultaneously being broadcast to all connected web clients through active **WebSockets (`telemetry:new`)**.
-4. **Real-Time Presentation**: React components update gauges, charts, and alert ribbons dynamically with zero page reloads.
+**Data flow:** ESP32 reads sensors every 5 seconds → packages a JSON payload → publishes to `weather/telemetry` via MQTTS → Backend ingestion service validates, derives Heat Index, persists to MongoDB → broadcasts `telemetry:new` via WebSocket to all connected browser clients in real time.
 
 ---
 
 ## ✨ Key Features
 
-### 📡 1. Real-Time Telemetry & Monitoring
-- **Live Environmental Metrics**: Ambient Temperature (°C), Relative Humidity (%), Atmospheric Pressure (hPa), Rain Intensity (mm/h), Surface Moisture, Ambient Light (Lux), and Wind Velocity (km/h).
-- **Calculated Microclimate Indicators**:
-  - **Heat Index ("Feels Like")**: Steadman/Rothfusz physiological apparent temperature calculation.
-  - **Precipitation State**: Distinct classification (`Dry`, `Drizzle`, `Moderate Rain`, `Heavy Downpour`).
-- **Live Frame Inspector**: Inspect raw JSON frames arriving over WebSockets with packet counter and timestamp inspection.
+### 📡 Real-Time Telemetry
+- Live sensor readings streamed to the browser via WebSocket with no page refresh.
+- Metrics displayed: Temperature (°C), Humidity (%), Pressure (hPa), Rain Intensity (mm/h).
+- **Heat Index** ("Feels Like") is computed on the backend from Temperature and Humidity using the NWS Rothfusz regression formula and stored alongside raw readings.
 
-### 🔔 2. Automated Multi-Tier Alert Engine
-- **Configurable Thresholds**: Warning and Critical triggers for extreme temperature, high moisture, pressure dips (storm warnings), and sudden rainfall.
-- **Auto-Resolution & Manual Acknowledgment**: Alerts automatically transition to resolved once readings return to safe hysteresis zones, or can be manually acknowledged by administrators.
-- **Audible / Visual Alarms**: High-visibility alerts banner and drawer with search and status filters.
+### 📊 Analytics & History
+- Time-series charts for historical sensor data with range filters: **1h, 6h, 24h, 7d**.
+- Min, Max, and Average statistics computed per timeframe.
+- One-click CSV export of historical data.
 
-### 📊 3. Analytics, Time-Series & Data Export
-- **Historical Analysis**: Time-series charts with timeframe selection (**1h**, **6h**, **24h**, **7d**).
-- **Statistical Aggregations**: Automatic computation of `Min`, `Max`, `Average`, and standard deviation.
-- **One-Click CSV Export**: Download timestamped historical telemetry datasets for laboratory reporting and statistical analysis.
+### 🔔 Automated Alert Engine
+- Threshold-based alerts for Temperature, Humidity, Pressure, Heat Index, and Rainfall.
+- Two severity levels: **Warning** and **Critical**.
+- Alerts auto-resolve when readings return within safe bounds. Administrators can also resolve alerts manually.
 
-### 🛡️ 4. Role-Based Access Control (RBAC) & Authentication
-- **Sign In / Sign Up Required**: The dashboard is fully protected. All users must register or log in at `/auth` before accessing any part of the platform. Unauthenticated access attempts to `/dashboard/*` are automatically redirected to the sign-in portal.
-- **User Role (Registered Users)**: Sign in or create a new account using the Sign Up tab. Authenticated users have read-only access to live telemetry, sensor conditions, interactive time-series analytics, and CSV dataset downloads.
-- **Admin Role (Station Administrators)**: Authenticate with provisioned administrative credentials. Administrators possess elevated permissions to acknowledge and resolve active alerts, modify warning/critical threshold limits, and manage connected sensor hardware nodes.
-- **Transport & Identity Security**: Enforced TLS 8883 encryption on MQTT, HTTPS/WSS on the web application, JWT token verification, and Bcrypt password hashing.
+### 🛡️ Authentication & Access Control
+- **All users must sign in or register** before accessing the dashboard. There is no guest or immediate access — unauthenticated routes redirect to `/auth`.
+- **User role:** Read-only access to live telemetry, analytics, and history.
+- **Admin role:** Full access including alert resolution and threshold configuration. Admin accounts are provisioned via seed scripts, not self-registration.
+- JWT-based authentication with Bcrypt password hashing.
+
+### 🔍 Sensor Fault Handling
+- Sensors not connected to the ESP32 (`light_lux`, `gas_aqi`, `wind_speed`) publish `null` values.
+- The dashboard renders these as **"Not Connected"** with `N/A` readings rather than displaying zero or "Operational".
+
+### 🎨 UI
+- 100% light theme across all pages — no dark mode.
+- "Back to top" button in the footer of every page and a floating scroll-back button.
 
 ---
 
-## 🔌 Hardware Architecture & Wiring
+## 🔌 Hardware & Sensors
 
-### Bill of Materials (BOM)
+### Wired (Active)
 
-| Component | Model / Spec | Interface | Primary Function |
+| Component | Model | Interface | Measures |
 | :--- | :--- | :--- | :--- |
-| **Microcontroller** | ESP32-WROOM-32 (30-pin DevKit) | Wi-Fi / SPI / I2C / ADC | Edge processing, calibration & MQTTS transmission |
-| **Thermo-Hygro-Barometer** | Bosch BME280 | I2C (`0x76` or `0x77`) | Ambient Temperature, Relative Humidity, Pressure |
-| **Rain / Precipitation Sensor** | FC-37 with LM393 Comparator | Analog ADC (0–3.3V) | Surface water accumulation & rainfall rate |
-| **Ambient Light Sensor** *(Optional)* | BH1750 | I2C (`0x23`) | Illuminance (Lux) |
-| **Air Quality Sensor** *(Optional)* | MQ-135 | Analog ADC | Hazardous gas & air quality proxy |
-| **Anemometer** *(Optional)* | 3-Cup Anemometer | Analog / Pulse | Wind speed velocity (km/h) |
+| **Microcontroller** | ESP32-WROOM-32 (30-pin DevKit) | — | Wi-Fi, MQTT transport |
+| **Thermo-Hygro-Barometer** | Bosch BME280 | I2C – SDA `GPIO 21`, SCL `GPIO 22` | Temperature, Humidity, Pressure |
+| **Rain Sensor** | FC-37 with LM393 | Analog ADC – `GPIO 34` | Rain intensity (mm/h) |
 
----
+### Slot Channels (Not Connected — send `null`)
 
-### ESP32 Pin Connections
+| Channel | Sensor | Why absent |
+| :--- | :--- | :--- |
+| `light_lux` | BH1750 | Hardware not available |
+| `gas_aqi` | MQ-135 | Hardware not available |
+| `wind_speed` | Cup Anemometer | Hardware not available |
 
-```
-        ┌────────────────────────────────────────────────────────┐
-        │                  ESP32 DevKit (30-Pin)                 │
-        │                                                        │
-        │   [3.3V] ───────┬─────────────────── BME280 VCC        │
-        │                 └─────────────────── FC-37 VCC         │
-        │                                                        │
-        │   [GND]  ───────┬─────────────────── BME280 GND        │
-        │                 └─────────────────── FC-37 GND         │
-        │                                                        │
-        │   [GPIO 22] ──────────────────────── BME280 SCL (Clock)│
-        │   [GPIO 21] ──────────────────────── BME280 SDA (Data) │
-        │                                                        │
-        │   [GPIO 34] ──────────────────────── FC-37 AO (Analog) │
-        └────────────────────────────────────────────────────────┘
-```
-
-> **Important Notes on Hardware Wiring:**
-> - The BME280 must be powered from the **3.3V rail** (5V may permanently damage the transducer).
-> - `GPIO 34` on the ESP32 belongs to **ADC1**, which remains fully functional while Wi-Fi is active (ADC2 pins cannot be read simultaneously with the Wi-Fi radio).
+> **Wiring notes:**
+> - BME280 must use the **3.3 V rail** (5 V will damage it).
+> - `GPIO 34` is on ADC1, which operates correctly while Wi-Fi is active. ADC2 pins conflict with the Wi-Fi radio.
+> - The FC-37 ADC raw value is mapped: `3800 → 0 mm/h` (dry) down to `1000 → 80 mm/h` (heavy rain).
 
 ---
 
 ## 💻 Tech Stack
 
-- **Edge Firmware**: C++ (Arduino Core / FreeRTOS), PlatformIO, PubSubClient, Adafruit BME280 Library, WiFiClientSecure.
-- **Message Broker**: Cloud MQTT (HiveMQ Cloud / EMQX) over TLS port `8883`, or local Aedes MQTT broker for offline testing.
-- **Backend Service**: Node.js (v18+), Express.js, `ws` (WebSocket server), `mqtt` client, Mongoose ODM, JSON Web Tokens (JWT), Bcrypt.
-- **Database**: MongoDB Atlas (Cloud Time-Series Database & Document Storage).
-- **Frontend Dashboard**: React 18, Vite, Tailwind CSS, Lucide React, Framer Motion, Recharts.
+| Layer | Technologies |
+| :--- | :--- |
+| **Firmware** | C++ (Arduino Core), PlatformIO, PubSubClient, ArduinoJson, Adafruit BME280 |
+| **MQTT Broker** | HiveMQ Cloud / EMQX (TLS port `8883`); Aedes (local dev, port `1883`) |
+| **Backend** | Node.js 18+, Express.js, `ws` (WebSocket), `mqtt` client, Mongoose, JWT, Bcrypt |
+| **Database** | MongoDB Atlas |
+| **Frontend** | React 18, Vite, Tailwind CSS, Recharts, Framer Motion, Lucide React |
+| **DevOps** | Docker, Docker Compose |
 
 ---
 
 ## 📁 Repository Structure
 
-```text
+```
 IOT-based-weather-monitoring-system/
-├── backend/                        # Node.js + Express Ingestion & API Server
-│   ├── src/
-│   │   ├── alerts/                 # Threshold evaluation & alert resolution engine
-│   │   ├── api/                    # Express REST route controllers (auth, telemetry, alerts, devices)
-│   │   ├── auth/                   # JWT generation, token verification, RBAC middleware
-│   │   ├── config/                 # Database connection & runtime configurations
-│   │   ├── deviceHealth/           # Node heartbeat tracking & offline watchdog
-│   │   ├── ingestion/              # Telemetry payload normalization & validation
-│   │   ├── middlewares/            # Rate limiting, error handling, CORS headers
-│   │   ├── models/                 # Mongoose schemas (Telemetry, Alert, Device, User)
-│   │   ├── mqtt/                   # MQTT subscriber, TLS client, reconnect handlers
-│   │   ├── tests/                  # Integration and verification test suites
-│   │   ├── utils/                  # Heat Index and Dew Point computational utilities
-│   │   ├── validators/             # Schema validation rules
-│   │   ├── ws/                     # WebSocket broadcasting server
-│   │   └── index.js                # Server entry point
-│   └── package.json
-├── broker/                         # Standalone local Aedes MQTT broker (for offline dev)
-│   ├── index.js
-│   └── package.json
-├── docs/                           # Documentation, user manual, and deployment manuals
-│   ├── DEPLOYMENT.md               # Complete Cloud Deployment Guide (HiveMQ, Render, Vercel)
-│   └── USER_MANUAL.md             # Comprehensive Academic & Operator User Manual
-├── firmware/                       # Embedded C++ Firmware for ESP32
+├── backend/
+│   └── src/
+│       ├── alerts/           # Threshold evaluation & alert engine
+│       ├── api/              # Express routes: auth, telemetry, alerts, devices, config
+│       ├── auth/             # JWT helpers, password policy, RBAC middleware
+│       ├── config/           # DB connection
+│       ├── deviceHealth/     # Heartbeat handler & offline watchdog
+│       ├── ingestion/        # Telemetry validation, Heat Index derivation, persistence
+│       ├── middlewares/      # API key auth, error handling, rate limiting
+│       ├── models/           # Mongoose schemas: SensorReading, AlertLog, DeviceHealth, Threshold, User
+│       ├── mqtt/             # MQTT subscriber & TLS client
+│       ├── scripts/          # Admin seed scripts
+│       ├── tests/            # Integration test suites
+│       ├── utils/            # Heat Index calculation (NWS Rothfusz)
+│       ├── validators/       # Payload schema validation
+│       ├── ws/               # WebSocket broadcast gateway
+│       └── index.js          # Server entry point
+├── broker/                   # Local Aedes MQTT broker (dev only)
+│   └── server.js
+├── docs/
+│   ├── DEPLOYMENT.md         # Cloud deployment guide
+│   └── USER_MANUAL.md        # Operator user manual
+├── firmware/
 │   └── esp32/
-│       ├── platformio.ini          # PlatformIO environment & library dependencies
+│       ├── platformio.ini    # PlatformIO config & library deps
 │       └── src/
-│           ├── main.cpp            # Main loop, BME280/rain sampling, MQTTS publisher
-│           └── secrets.h.example   # Wi-Fi and Cloud MQTT credential template
-├── frontend/                       # React 18 + Vite Web Dashboard
-│   ├── src/
-│   │   ├── api/                    # Axios REST client and endpoint methods
-│   │   ├── components/             # Reusable UI widgets (cards, charts, modal, header, footer)
-│   │   ├── hooks/                  # Custom React hooks (useTelemetry, useWebSocket, useAlerts)
-│   │   ├── pages/                  # Route views (LandingPage, LiveMonitor, Analytics, History, Alerts)
-│   │   ├── App.jsx                 # Main layout, shell routing, and navigation
-│   │   ├── index.css               # Global light theme utility styles
-│   │   └── main.jsx                # React DOM root entry
-│   ├── tailwind.config.js          # Tailwind CSS styling tokens (100% light theme)
-│   └── package.json
-├── docker-compose.yml              # Local containerized multi-container setup
-├── docker-compose.prod.yml         # Production container stack definition
-└── README.md                       # Master Project Documentation
+│           ├── main.cpp      # Sensor read loop, MQTTS publish, offline buffer
+│           └── secrets.h.example
+├── frontend/
+│   └── src/
+│       ├── api/              # Axios REST client
+│       ├── components/       # UI widgets (cards, charts, modals, header, sidebar, footer)
+│       ├── hooks/            # useTelemetry, useWebSocket, useAlerts
+│       ├── pages/            # LandingPage, Login, RoleSelection, Dashboard, LiveMonitor,
+│       │                     # Analytics, History, AlertsPage, DevicesPage, AdminConfig
+│       ├── App.jsx           # Routing, protected shell
+│       └── main.jsx
+├── docker-compose.yml
+├── docker-compose.prod.yml
+└── README.md
 ```
 
 ---
 
-## 🚀 Quick Start: Local Development
+## 🚀 Local Development Setup
 
 ### Prerequisites
-- **Node.js**: `v18.x` or higher installed ([nodejs.org](https://nodejs.org/))
-- **MongoDB**: Local MongoDB instance or free [MongoDB Atlas](https://www.mongodb.com/atlas) connection URI
-- **Arduino IDE**
+- **Node.js** v18+
+- **MongoDB** (local instance or Atlas URI)
+- **PlatformIO** (VS Code extension or CLI) for firmware flashing
 
----
-
-### 1. Clone & Configure Environment
-
-Clone the repository and copy the environment configuration templates:
+### Step 1 — Copy environment templates
 
 ```bash
 git clone https://github.com/your-username/IOT-based-weather-monitoring-system.git
 cd IOT-based-weather-monitoring-system
 
-# Configure backend environment
 cp backend/.env.example backend/.env
-
-# Configure frontend environment
 cp frontend/.env.example frontend/.env
-
-# Configure ESP32 firmware secrets
 cp firmware/esp32/src/secrets.h.example firmware/esp32/src/secrets.h
 ```
 
----
+### Step 2 — Start local services (3 terminals)
 
-### 2. Launch Local Services
-
-#### Terminal 1: Backend Ingestion & API Server
 ```bash
-cd backend
-npm install
-npm run dev
-```
-*Backend server runs at `http://localhost:5001` (REST API & WebSocket).*
+# Terminal 1: Local MQTT broker (port 1883)
+cd broker && npm install && npm start
 
-#### Terminal 2: Frontend Dashboard
-```bash
-cd frontend
-npm install
-npm run dev
+# Terminal 2: Backend API + WebSocket server (port 5001)
+cd backend && npm install && npm run dev
+
+# Terminal 3: Frontend dev server (port 5173)
+cd frontend && npm install && npm run dev
 ```
-*Frontend opens at `http://localhost:5173`.*
+
+### Step 3 — Flash ESP32 firmware
+
+1. Edit `firmware/esp32/src/secrets.h` with your Wi-Fi credentials and MQTT broker address.
+2. Open `firmware/esp32` in VS Code with the PlatformIO extension.
+3. Click **Build** then **Upload**.
+4. Open the Serial Monitor at `115200` baud to confirm sensor init and MQTT connection.
 
 ---
 
-### 3. ESP32 Firmware Flashing
-
-1. Open `firmware/esp32` in **Aurdino IDE**.
-2. Edit `firmware/esp32/src/secrets.h`:
-   ```cpp
-   static const char* WIFI_SSID             = "Your_WiFi_SSID";
-   static const char* WIFI_PASS             = "Your_WiFi_Password";
-   static const char* MQTT_SERVER           = "192.168.1.1xx"; // Or Cloud Broker URL
-   static const int   MQTT_PORT             = 1883;            // 8883 for TLS
-   static const bool  MQTT_USE_TLS          = false;           // true for TLS
-   static const char* MQTT_USER             = "";              // Cloud broker username
-   static const char* MQTT_PASS             = "";              // Cloud broker password
-   static const char* DEVICE_ID             = "ESP32-NODE-01";
-   ```
-3. Connect your ESP32 board via USB.
-4. Click **verify** (`Ctrl+Alt+B` or `Cmd+Shift+B`) and **upload**.
-5. Open the **Serial Monitor** at baud rate `115200` to confirm sensor initialization and MQTT connectivity.
-
----
-
-## ⚙️ Environment Variables Guide
+## ⚙️ Environment Variables
 
 ### Backend (`backend/.env`)
 
-| Variable | Description | Example / Default |
+| Variable | Description | Example |
 | :--- | :--- | :--- |
-| `PORT` | HTTP & WebSocket server port | `5001` |
-| `NODE_ENV` | Runtime environment | `development` or `production` |
-| `MONGODB_URI` | MongoDB Atlas or local connection string | `mongodb+srv://user:pass@cluster.mongodb.net/weather_db` |
-| `MQTT_BROKER_URL` | MQTT connection URI (`mqtt://` or `mqtts://`) | `mqtts://user:pass@cluster.hivemq.cloud:8883` |
-| `JWT_SECRET` | Secret key for signing admin access tokens | `your_secure_random_string` |
+| `PORT` | HTTP & WebSocket port | `5001` |
+| `NODE_ENV` | Runtime mode | `development` |
+| `MONGODB_URI` | MongoDB connection string | `mongodb+srv://user:pass@cluster.mongodb.net/weather_db` |
+| `MQTT_BROKER_URL` | MQTT connection URI | `mqtts://user:pass@cluster.hivemq.cloud:8883` |
+| `JWT_SECRET` | JWT signing secret | `your_random_secret` |
 | `JWT_EXPIRES_IN` | Token lifetime | `24h` |
-| `DEVICE_API_KEY` | Optional API key for direct HTTP ingestion | `your_device_key` |
-| `CORS_ORIGIN` | Allowed web origins | `http://localhost:5173` |
+| `DEVICE_API_KEY` | API key for HTTP ingestion fallback | `your_device_key` |
+| `CORS_ORIGIN` | Allowed frontend origin | `http://localhost:5173` |
 
 ### Frontend (`frontend/.env`)
 
-| Variable | Description | Example / Default |
+| Variable | Description | Example |
 | :--- | :--- | :--- |
-| `VITE_API_BASE_URL` | Base URL for REST API calls | `http://localhost:5001/api` |
-| `VITE_WS_URL` | Base WebSocket connection URI | `ws://localhost:5001` |
-| `VITE_DEFAULT_DEVICE_ID` | Primary weather station node ID | `ESP32-NODE-01` |
+| `VITE_API_BASE_URL` | Backend REST base URL | `http://localhost:5001/api` |
+| `VITE_WS_URL` | WebSocket server URL | `ws://localhost:5001` |
+| `VITE_DEFAULT_DEVICE_ID` | Primary ESP32 node ID | `ESP32-NODE-01` |
 
----
+### ESP32 (`firmware/esp32/src/secrets.h`)
 
-## 📡 REST API & WebSocket Documentation
-
-### Authentication Endpoints
-- `POST /api/auth/register` — Register a new administrator user.
-- `POST /api/auth/login` — Authenticate and receive a Bearer JWT.
-- `GET /api/auth/me` — Retrieve the profile and role of the authenticated session.
-- `POST /api/auth/logout` — Invalidate the client session.
-
-### Telemetry Endpoints
-- `GET /api/telemetry/latest?deviceId=ESP32-NODE-01` — Fetch the most recent reading.
-- `GET /api/telemetry/history?deviceId=ESP32-NODE-01&range=24h` — Retrieve timestamped data points (`1h`, `6h`, `24h`, `7d`).
-- `GET /api/telemetry/stats?deviceId=ESP32-NODE-01` — Returns `min`, `max`, and `avg` summary statistics.
-- `POST /api/telemetry/ingest` — HTTP fallback telemetry ingestion endpoint.
-
-### Alerts Endpoints
-- `GET /api/alerts?status=active` — Fetch all unresolved threshold alarms.
-- `PATCH /api/alerts/:id/resolve` — Mark an alert as acknowledged and resolved (*Admin only*).
-- `GET /api/alerts/history` — Retrieve historical alert audit records.
-
-### Device Management Endpoints
-- `GET /api/devices` — List all registered ESP32 nodes and their health states (`online`, `offline`, `degraded`).
-- `PATCH /api/config/thresholds` — Modify environmental warning and critical thresholds (*Admin only*).
-
----
-
-### WebSocket Real-Time Stream
-
-Clients connect to `ws://localhost:5001` (or `wss://` in production).
-
-**Sample Inbound Event (`telemetry:new`):**
-```json
-{
-  "event": "telemetry:new",
-  "data": {
-    "device_id": "ESP32-NODE-01",
-    "timestamp": "2026-10-12T12:00:00.000Z",
-    "temperature": 27.8,
-    "humidity": 65.4,
-    "pressure": 1012.8,
-    "heat_index": 29.6,
-    "rain_analog": 4095,
-    "rain_intensity": 0.0,
-    "is_raining": false,
-    "light_lux": null,
-    "gas_aqi": null,
-    "wind_speed": null
-  }
-}
+```cpp
+static const char* WIFI_SSID            = "Your_WiFi_SSID";
+static const char* WIFI_PASS            = "Your_WiFi_Password";
+static const char* MQTT_SERVER          = "your-cluster.hivemq.cloud"; // or local IP
+static const int   MQTT_PORT            = 8883;   // 1883 for local broker
+static const bool  MQTT_USE_TLS         = true;   // false for local broker
+static const char* MQTT_USER            = "weather_node_01";
+static const char* MQTT_PASS            = "YourSecureMqttPassword123";
+static const char* DEVICE_ID            = "ESP32-NODE-01";
 ```
 
 ---
 
-## 🚨 Alerting & Threshold Engine
+## 📡 REST API Reference
 
-The system evaluates all incoming telemetry against configurable environmental boundary limits:
+### Auth (`/api/auth`)
+| Method | Endpoint | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/register` | — | Register a new user account |
+| `POST` | `/login` | — | Sign in and receive JWT |
+| `GET` | `/me` | JWT | Get current user profile |
+| `POST` | `/logout` | — | Invalidate session |
+| `POST` | `/password-reset/request` | — | Request password reset email |
+| `POST` | `/password-reset/confirm` | — | Confirm reset with token |
 
-| Parameter | Unit | Warning Low | Warning High | Critical Low | Critical High | Action Triggered |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Temperature** | °C | `< 10.0` | `> 38.0` | `< 5.0` | `> 45.0` | Heatwave / Extreme Frost Warning |
-| **Humidity** | % | `< 20.0` | `> 85.0` | `< 10.0` | `> 95.0` | Saturation / Mold Risk Alert |
-| **Pressure** | hPa | `< 995.0` | `> 1030.0` | `< 985.0` | `> 1045.0` | Cyclone / Rapid Barometric Storm Drop |
-| **Precipitation** | mm/h | — | `> 5.0` | — | `> 25.0` | Flood Risk / Flash Downpour Alert |
+### Telemetry (`/api/telemetry`)
+| Method | Endpoint | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/latest?deviceId=...` | — | Latest sensor reading |
+| `GET` | `/latest/:deviceId` | — | Latest reading for a specific device |
+| `GET` | `/history?deviceId=...&range=24h` | — | Historical readings (`1h`, `6h`, `24h`, `7d`) |
+| `POST` | `/ingest` | API Key | HTTP fallback ingestion endpoint |
 
-- **Hysteresis Buffering**: Thresholds use a 5% deadband window to prevent rapid alert flapping near boundary limits.
-- **Auto-Resolution**: Once telemetry stays within nominal safety boundaries for 3 consecutive cycles, alerts auto-resolve.
+### Alerts (`/api/alerts`)
+| Method | Endpoint | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/` | — | All alerts (filterable by status, severity, deviceId) |
+| `GET` | `/active` | — | All currently active alerts |
+| `GET` | `/unread-count` | — | Count of unread active alerts |
+| `PUT` | `/mark-all-read` | — | Mark all alerts as read |
+| `PUT` | `/:alertId/read` | — | Mark a specific alert as read |
+| `PUT` | `/:alertId/resolve` | JWT (Admin) | Manually resolve an alert |
+
+### Devices (`/api/devices`)
+| Method | Endpoint | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/status` | — | Status of all registered devices |
+| `GET` | `/health` | — | Device health records |
+| `GET` | `/:deviceId` | — | Status of a specific device |
+| `POST` | `/` | JWT (Admin) | Register a new device node |
+| `DELETE` | `/:deviceId` | JWT (Admin) | Remove a device node |
+
+### Config (`/api/config`)
+| Method | Endpoint | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/thresholds` | JWT (Admin) | Retrieve current alert thresholds |
 
 ---
 
+### WebSocket Events
 
+Connect to `ws://localhost:5001` (or `wss://` in production). Inbound events:
 
+| Event | Trigger | Payload |
+| :--- | :--- | :--- |
+| `telemetry:new` | New sensor reading ingested | Full `SensorReading` document |
+| `alert:new` | Threshold breach detected | `AlertLog` document |
+| `alert:resolved` | Alert resolved | `AlertLog` document |
+| `device:status` | Device online/offline change | `{ device_id, status }` |
+| `connection:established` | Client connected | Server acknowledgment |
 
-## 🌐 Production Cloud Deployment
+---
 
-The system is architected for seamless deployment across standard cloud providers:
+## 🚨 Alert Thresholds
 
-| Layer | Cloud Provider |
+Default thresholds (configurable by admin via seed scripts):
+
+| Parameter | Warning | Critical | Unit |
+| :--- | :--- | :--- | :--- |
+| Temperature | > 35 or < 5 | > 40 or < 0 | °C |
+| Humidity | > 80 or < 20 | > 90 or < 10 | % |
+| Heat Index | > 32.2 | > 41.0 | °C |
+| Pressure | < 980 | < 950 | hPa |
+| Rain Intensity | > 25 | > 50 | mm/h |
+
+Alerts auto-resolve when readings return within safe bounds. Admins can also resolve manually via the Alerts page.
+
+---
+
+## 🔍 Sensor Status & Fault Handling
+
+The firmware intentionally publishes `null` for hardware channels that are not physically connected. The backend stores `null` in MongoDB. The dashboard handles this gracefully:
+
+- **Connected sensor with valid data** → displays reading + **`Operational`** badge.
+- **Not connected (null)** → displays **`N/A`** reading + **`Not Connected`** badge (no false alerts triggered).
+- **Sensor out of bounds** → reading flagged `is_valid: false` and dropped.
+
+---
+
+## 🧪 Testing
+
+```bash
+cd backend
+
+node src/tests/test_phase4.js   # Ingestion pipeline & device health
+node src/tests/test_phase5.js   # Threshold alert engine & resolution
+node src/tests/test_phase6.js   # REST API & authentication
+node src/tests/test_phase7.js   # WebSocket broadcasting
+```
+
+---
+
+## 🌐 Cloud Deployment
+
+| Layer | Recommended Provider |
 | :--- | :--- |
-| **MQTT Broker** | [ [EMQX Cloud](https://www.emqx.com/en/cloud) 
-| **Backend API** | [Render](https://render.com/)
-| **Database** | [MongoDB Atlas](https://www.mongodb.com/atlas) 
-| **Web Frontend**| [Vercel](https://vercel.com/)
+| MQTT Broker | [HiveMQ Cloud](https://www.hivemq.com/cloud/) or [EMQX Cloud](https://www.emqx.com/en/cloud) |
+| Backend API | [Render](https://render.com/) or [Railway](https://railway.app/) |
+| Database | [MongoDB Atlas](https://www.mongodb.com/atlas) |
+| Frontend | [Vercel](https://vercel.com/) or [Netlify](https://netlify.com/) |
 
-For complete step-by-step instructions with screenshots and environment checklists, consult **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** and the detailed **[docs/USER_MANUAL.md](docs/USER_MANUAL.md)**.
+See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for the full step-by-step guide.
 
 ---
 
-## Contributors
+## 👥 Academic Credits
 
 Developed as part of **IT303: Software Engineering** at the **Department of Information Technology, National Institute of Technology Karnataka (NITK), Surathkal**.
 
-### Project Team:
-- **C Thanmai Sai** (241IT015)
-- **Mili Dholaria** (241IT045)
-- **Thota Bhavya Sri** (241IT079)
+### Project Team
+- C Thanmai Sai
+- Mili Dholaria
+- Thota Bhavya Sri
 
-### Faculty Guidance:
-- **Prof. Jaidhar C. D.**  
+### Faculty Guidance
+**Prof. Jaidhar C. D.**  
+Department of Information Technology, NITK Surathkal
