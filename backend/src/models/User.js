@@ -28,8 +28,8 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['admin', 'operator'],
-      default: 'operator'
+      enum: ['admin', 'operator', 'user'],
+      default: 'user'
     },
     password_reset_token_hash: {
       type: String,

@@ -36,7 +36,9 @@ export default function TopHeader({
   lastUpdated,
   activeAlertCount = 0,
   activeAlerts = [],
+  unreadCount = 0,
   onResolveAlert,
+  onMarkAllAsRead,
   user,
   onLogout,
 }) {
@@ -63,15 +65,24 @@ export default function TopHeader({
     return () => clearInterval(timer);
   }, []);
 
+  // Notifications popup
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notifRef = useRef(null);
+
+  const handleToggleNotifications = () => {
+    const nextState = !showNotifications;
+    setShowNotifications(nextState);
+    // If opening notifications and there are unread items, mark as read immediately
+    if (nextState && unreadCount > 0 && typeof onMarkAllAsRead === 'function') {
+      onMarkAllAsRead();
+    }
+  };
+
   useEffect(() => {
     const onEscape = (event) => { if (event.key === 'Escape') setShowNotifications(false); };
     document.addEventListener('keydown', onEscape);
     return () => document.removeEventListener('keydown', onEscape);
   }, []);
-
-  // Notifications popup
-  const [showNotifications, setShowNotifications] = useState(false);
-  const notifRef = useRef(null);
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -107,7 +118,7 @@ export default function TopHeader({
         </div>
       </div>
 
-      {/* Right side: Location + Live Status + Theme Toggle + Clock + Notification Bell + Profile */}
+      {/* Right side: Location + Live Status + Clock + Notification Bell + Profile + Logout */}
       <div className="flex items-center gap-2 sm:gap-2.5">
         {/* Location Selector Indicator */}
         <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06]">
@@ -139,23 +150,22 @@ export default function TopHeader({
           </div>
         </div>
 
-
         {/* Notifications Bell Dropdown */}
         <div className="relative" ref={notifRef}>
           <button
             type="button"
-            onClick={() => setShowNotifications((prev) => !prev)}
-            className={`relative w-9 h-9 rounded-xl border flex items-center justify-center transition-all cursor-pointer shadow-sm ${showNotifications || validAlertCount > 0
+            onClick={handleToggleNotifications}
+            className={`relative w-9 h-9 rounded-xl border flex items-center justify-center transition-all cursor-pointer shadow-sm ${showNotifications || unreadCount > 0
                 ? 'bg-blue-50 dark:bg-[#60A5FA]/15 border-blue-200 dark:border-[#60A5FA]/30 text-blue-600 dark:text-[#60A5FA]'
                 : 'bg-slate-100 dark:bg-white/[0.03] border-slate-200 dark:border-white/[0.06] text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/[0.06]'
               }`}
             title="System Alerts & Notifications"
             aria-label="View notifications"
           >
-            <Bell size={16} className={validAlertCount > 0 ? 'text-[#EF4444] dark:text-[#F87171] animate-bounce-subtle' : ''} />
-            {validAlertCount > 0 && (
+            <Bell size={16} className={unreadCount > 0 ? 'text-[#EF4444] dark:text-[#F87171] animate-bounce-subtle' : ''} />
+            {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#EF4444] dark:bg-[#F87171] flex items-center justify-center text-[9px] font-bold text-white shadow-md">
-                {validAlertCount}
+                {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
           </button>
@@ -169,10 +179,10 @@ export default function TopHeader({
                   <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Alert Center</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-100 dark:bg-[#F87171]/20 text-rose-600 dark:text-[#F87171] font-bold border border-rose-200 dark:border-[#F87171]/30">
-                    {validAlertCount} active
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-bold border border-blue-200 dark:border-blue-800/40">
+                    {validAlertCount} total
                   </span>
-                  {/* Dedicated Close / Wrong (X) Button */}
+                  {/* Dedicated Close Button */}
                   <button
                     type="button"
                     onClick={() => setShowNotifications(false)}
@@ -187,9 +197,9 @@ export default function TopHeader({
 
               {validAlerts.length === 0 ? (
                 <div className="py-6 text-center">
-                  <Check size={20} className="text-[#10B981] dark:text-[#34D399] mx-auto mb-1.5" />
-                  <p className="text-xs font-semibold text-slate-900 dark:text-white">All Systems Normal</p>
-                  <p className="text-[10px] text-slate-500 dark:text-[#64748B]">No active breaches or anomalies</p>
+                  <Check size={22} className="text-[#10B981] dark:text-[#34D399] mx-auto mb-1.5" />
+                  <p className="text-xs font-semibold text-slate-900 dark:text-white">You're all caught up!</p>
+                  <p className="text-[10px] text-slate-500 dark:text-[#64748B]">No active alerts or sensor warnings</p>
                 </div>
               ) : (
                 <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
@@ -254,10 +264,24 @@ export default function TopHeader({
               <UserCheck size={14} className="text-[#059669] dark:text-[#34D399]" />
             )}
             <span className="text-xs font-semibold text-slate-800 dark:text-white truncate max-w-[100px]">
-              {user?.email ? user.email.split('@')[0] : 'Operator'}
+              {user?.email ? user.email.split('@')[0] : (user?.username || 'User')}
             </span>
           </div>
         </div>
+
+        {/* Prominent Header Logout Button */}
+        {onLogout && (
+          <button
+            type="button"
+            onClick={onLogout}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30 text-xs font-semibold transition-all cursor-pointer shadow-sm active:scale-95 ml-1"
+            title="Sign Out"
+            aria-label="Logout"
+          >
+            <LogOut size={13} />
+            <span className="hidden sm:inline">Logout</span>
+          </button>
+        )}
       </div>
     </header>
   );

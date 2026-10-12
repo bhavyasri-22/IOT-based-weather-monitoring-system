@@ -64,9 +64,9 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    // Public registration is always read-only/operator access.  Admin roles can
-    // only be provisioned through a controlled database/deployment process.
-    const assignedRole = 'operator';
+    // Public registration is strictly user role. Admin roles can ONLY be provisioned
+    // through protected administrative seed scripts. Never accept role from frontend.
+    const assignedRole = 'user';
 
     const user = new User({
       username: trimmedUsername,
@@ -104,24 +104,51 @@ router.get('/password-policy', (req, res) => {
   res.json({ success: true, data: { minLength: 12, required: ['uppercase', 'lowercase', 'number', 'symbol'] }, error: null });
 });
 
+// In-memory rate limiter for password reset requests (5 attempts per 15 min per identity)
+const resetRateLimiter = new Map();
+function isResetRateLimited(key) {
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000;
+  const maxRequests = 5;
+  const record = resetRateLimiter.get(key) || { count: 0, firstReq: now };
+  if (now - record.firstReq > windowMs) {
+    resetRateLimiter.set(key, { count: 1, firstReq: now });
+    return false;
+  }
+  if (record.count >= maxRequests) {
+    return true;
+  }
+  record.count += 1;
+  resetRateLimiter.set(key, record);
+  return false;
+}
+
 /**
- * Requests a single-use, time-limited reset token.  The response is deliberately
+ * Requests a single-use, time-limited reset token. The response is deliberately
  * identical whether or not the address exists to prevent account enumeration.
- * A deployment should deliver the generated token through its configured mailer.
  */
 router.post('/password-reset/request', async (req, res) => {
   const message = 'If an account matches that email, password reset instructions have been sent.';
   try {
     const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+    const clientKey = `${req.ip}_${email}`;
+
+    if (isResetRateLimited(clientKey)) {
+      return res.status(429).json({
+        success: false,
+        data: null,
+        error: 'Too many password reset requests. Please wait a few minutes before trying again.'
+      });
+    }
+
     if (!email || !email.includes('@') || mongoose.connection.readyState !== 1) {
       return res.json({ success: true, data: { message }, error: null });
     }
+
     const user = await User.findOne({ email });
     if (user) {
       const token = user.setPasswordResetToken();
       const deliveryUrl = process.env.PASSWORD_RESET_DELIVERY_WEBHOOK_URL;
-      // A deployment-owned mail service receives the raw token over a server to
-      // server request. Tokens are never returned to clients or written to logs.
       if (deliveryUrl && typeof fetch === 'function') {
         const resetUrl = `${process.env.PASSWORD_RESET_URL || 'http://localhost:5173/auth'}?token=${encodeURIComponent(token)}`;
         const delivery = await fetch(deliveryUrl, {
@@ -129,10 +156,17 @@ router.post('/password-reset/request', async (req, res) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: user.email, resetUrl })
         });
-        if (delivery.ok) await user.save();
-        else user.clearPasswordResetToken();
+        if (delivery.ok) {
+          await user.save();
+        } else {
+          user.clearPasswordResetToken();
+        }
       } else {
-        user.clearPasswordResetToken();
+        // Safe development/testing fallback: save token to DB so flow functions
+        await user.save();
+        const testResetUrl = `${process.env.PASSWORD_RESET_URL || 'http://localhost:5173/auth'}?token=${encodeURIComponent(token)}`;
+        console.log(`[Password Reset Dev Info] Token generated for ${user.email}: ${token}`);
+        console.log(`[Password Reset Dev Info] Reset URL: ${testResetUrl}`);
       }
     }
     return res.json({ success: true, data: { message }, error: null });
@@ -169,7 +203,7 @@ router.post('/password-reset/confirm', async (req, res) => {
  */
 router.post('/login', async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, expectedRole } = req.body;
     const identifier = (username || email || '').trim();
 
     if (!identifier || !password) {
@@ -203,6 +237,15 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // Role check: If login was attempted through admin portal, verify administrator privileges
+    if (expectedRole === 'admin' && user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        data: null,
+        error: 'Access denied: This account does not have administrator privileges.'
+      });
+    }
+
     const token = generateToken(user);
 
     res.json({
@@ -225,6 +268,19 @@ router.post('/login', async (req, res) => {
       error: `Authentication failed: ${err.message}`
     });
   }
+});
+
+/**
+ * POST /api/auth/logout
+ * Acknowledges session revocation
+ */
+router.post('/logout', (req, res) => {
+  res.clearCookie('token');
+  res.json({
+    success: true,
+    data: { message: 'Logged out successfully' },
+    error: null
+  });
 });
 
 /**

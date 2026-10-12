@@ -175,6 +175,26 @@ async function evaluateTelemetryAlerts(deviceId, telemetryData) {
         wsGateway.broadcastAlertResolved(activeThresholdAlert);
       }
 
+      // Do NOT generate sensor fault alerts for optional/unequipped hardware sensors
+      const OPTIONAL_UNMOUNTED_SENSORS = ['gas_aqi', 'wind_speed', 'light_lux'];
+      if (OPTIONAL_UNMOUNTED_SENSORS.includes(paramKey)) {
+        // Also auto-resolve any legacy sensor_fault alert for this unequipped sensor
+        const existingFaultAlert = await AlertLog.findOne({
+          device_id: deviceId,
+          parameter: paramKey,
+          alert_type: 'sensor_fault',
+          status: 'active'
+        });
+        if (existingFaultAlert) {
+          existingFaultAlert.status = 'resolved';
+          existingFaultAlert.resolved_at = new Date();
+          await existingFaultAlert.save();
+          resolvedAlerts.push(existingFaultAlert);
+          wsGateway.broadcastAlertResolved(existingFaultAlert);
+        }
+        continue;
+      }
+
       // Check if active sensor_fault alert already exists (Prevent Duplicates)
       const existingFaultAlert = await AlertLog.findOne({
         device_id: deviceId,

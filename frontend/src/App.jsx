@@ -51,7 +51,15 @@ function DashboardShell({ user, onLogout }) {
     updateFromWebSocket: updateTelemetry,
   } = useTelemetry(deviceId);
 
-  const { activeAlerts, addAlert, resolveAlert, manualResolve } = useAlerts();
+  const {
+    activeAlerts,
+    unreadCount,
+    addAlert,
+    resolveAlert,
+    markAllAsRead,
+    markAsRead,
+    manualResolve,
+  } = useAlerts();
 
   const handleWsEvent = useCallback((msg) => {
     const { event, data } = msg;
@@ -131,6 +139,8 @@ function DashboardShell({ user, onLogout }) {
         lastUpdated={lastUpdated}
         activeAlertCount={activeAlerts.length}
         activeAlerts={activeAlerts}
+        unreadCount={unreadCount}
+        onMarkAllAsRead={markAllAsRead}
         onResolveAlert={manualResolve}
         user={user}
         onLogout={onLogout}
@@ -202,17 +212,28 @@ export default function App() {
     setUser(u);
   }, []);
 
-  const handleLogout = useCallback(() => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_user');
-    setUser(null);
+  const handleLogout = useCallback(async () => {
+    try {
+      await authApi.logout();
+    } catch (err) {
+      console.warn('[Logout] Backend endpoint notification completed with fallback:', err?.message);
+    } finally {
+      // Clear all authentication credentials & user-specific client-side data
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+      sessionStorage.clear();
+      setUser(null);
+
+      // Force navigation and state clearance to avoid cached back-navigation into protected routes
+      window.location.href = '/';
+    }
   }, []);
 
   return (
     <Router>
         <Routes>
-          {/* Public routes */}
-          <Route path="/"     element={<LandingPage />} />
+          {/* Public Landing & Role Selection */}
+          <Route path="/" element={<LandingPage />} />
           <Route
             path="/auth"
             element={
@@ -223,10 +244,16 @@ export default function App() {
           />
           <Route path="/choose-access" element={<RoleSelection />} />
 
-          {/* The public dashboard is read-only. Admin-only controls still require a verified session. */}
+          {/* Protected Dashboard Route: requires authenticated user session */}
           <Route
             path="/dashboard/*"
-            element={<DashboardShell user={user} onLogout={handleLogout} />}
+            element={
+              user ? (
+                <DashboardShell user={user} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            }
           />
 
           {/* Catch-all */}

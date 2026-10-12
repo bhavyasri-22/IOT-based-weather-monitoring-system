@@ -1,4 +1,56 @@
 import React from 'react';
-const METRICS = [{ key: 'temperature', label: 'Temperature', unit: '°C', source: 'BME280' }, { key: 'humidity', label: 'Humidity', unit: '%', source: 'BME280' }, { key: 'pressure', label: 'Pressure', unit: 'hPa', source: 'BME280' }, { key: 'rain_intensity', label: 'Rainfall', unit: 'mm/h', source: 'FC-37' }, { key: 'gas_aqi', label: 'Raw gas reading', unit: '', source: 'MQ135 · calibration required' }, { key: 'wind_speed', label: 'Wind speed', unit: '', source: 'Wind sensor not integrated', unavailable: true }, { key: 'light_lux', label: 'Light intensity', unit: '', source: 'Light sensor not integrated', unavailable: true }];
-export default function Dashboard({ telemetry, deviceId, deviceStatus, lastUpdated, activeAlerts = [] }) { const stale = lastUpdated && Date.now() - new Date(lastUpdated).getTime() > 120000; return <section className="mx-auto max-w-6xl space-y-6 pb-10"><header className="rounded-2xl border bg-white p-6 shadow-sm" style={{ borderColor: '#bfdbfe' }}><p className="text-sm font-semibold text-blue-700">Environmental station {deviceId || 'Awaiting device'}</p><h2 className="mt-1 text-2xl font-bold text-blue-950">Weather overview</h2><p className="mt-2 text-sm text-slate-600">{!telemetry ? 'Awaiting data from the sensor node.' : stale ? 'Latest reading is stale. Check device connectivity.' : `Latest reading: ${new Date(lastUpdated || telemetry.timestamp).toLocaleString()}`}</p><p className="mt-1 text-xs text-slate-500">Device status: {deviceStatus || 'unknown'}</p></header><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{METRICS.map((metric) => <Metric key={metric.key} metric={metric} telemetry={telemetry} stale={stale} />)}</div><section className="rounded-2xl border bg-white p-6" style={{ borderColor: '#bfdbfe' }}><h3 className="font-bold text-blue-950">Active alerts</h3>{activeAlerts.length ? <ul className="mt-3 space-y-2">{activeAlerts.map((alert) => <li key={alert._id || alert.id} className="rounded-lg bg-blue-50 p-3 text-sm text-slate-700">{alert.message || alert.parameter}</li>)}</ul> : <p className="mt-2 text-sm text-slate-500">No notifications available.</p>}</section></section>; }
-function Metric({ metric, telemetry, stale }) { const value = telemetry?.[metric.key]; const unavailable = metric.unavailable || value == null || !Number.isFinite(Number(value)); return <article className="rounded-2xl border bg-white p-5 shadow-sm" style={{ borderColor: '#bfdbfe' }}><p className="text-sm font-semibold text-blue-950">{metric.label}</p><p className="mt-3 text-2xl font-bold text-blue-800">{unavailable ? (metric.unavailable ? 'Sensor unavailable' : stale ? 'Reading stale' : 'Awaiting data') : `${Number(value)} ${metric.unit}`}</p><p className="mt-2 text-xs text-slate-500">{metric.source}</p></article>; }
+import { motion } from 'framer-motion';
+import WeatherOverviewCard    from '../components/WeatherOverviewCard';
+import SensorConditionsGrid   from '../components/SensorConditionsGrid';
+import RainStatusCard         from '../components/RainStatusCard';
+import WeatherTrendChart      from '../components/WeatherTrendChart';
+import RecentReadingsTable    from '../components/RecentReadingsTable';
+import ActiveAlertsBanner     from '../components/ActiveAlertsBanner';
+
+export default function Dashboard({
+  telemetry,
+  deviceId,
+  deviceStatus,
+  wsState,
+  lastUpdated,
+  activeAlerts,
+  onResolveAlert,
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
+      className="space-y-6 pb-12 max-w-[1440px] mx-auto"
+    >
+      {/* Active Environmental Alerts */}
+      <ActiveAlertsBanner
+        activeAlerts={activeAlerts}
+        onResolve={onResolveAlert}
+      />
+
+      {/* Main Weather Overview */}
+      <WeatherOverviewCard
+        telemetry={telemetry}
+        lastUpdated={lastUpdated}
+        deviceStatus={deviceStatus}
+      />
+
+      {/* Sensor Conditions Grid */}
+      <SensorConditionsGrid telemetry={telemetry} />
+
+      {/* Rain Status & Recent Readings */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-5">
+          <RainStatusCard telemetry={telemetry} />
+        </div>
+        <div className="lg:col-span-7">
+          <RecentReadingsTable deviceId={deviceId} telemetry={telemetry} />
+        </div>
+      </div>
+
+      {/* Environmental Trend Chart */}
+      <WeatherTrendChart deviceId={deviceId} telemetry={telemetry} />
+    </motion.div>
+  );
+}

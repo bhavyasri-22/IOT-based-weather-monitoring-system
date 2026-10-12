@@ -82,15 +82,19 @@ async function request(path, options = {}) {
 
 // ── Auth Endpoints ─────────────────────────────────────────────
 export const authApi = {
-  login: (identifier, password) =>
+  login: (identifier, password, expectedRole) =>
     request('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ username: identifier, email: identifier, password })
+      body: JSON.stringify({ username: identifier, email: identifier, password, expectedRole })
     }),
-  register: (identifier, password, role = 'operator', email) =>
+  register: (identifier, password, email) =>
     request('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ username: identifier, email: email || identifier, password, role })
+      body: JSON.stringify({ username: identifier, email: email || identifier, password })
+    }),
+  logout: () =>
+    request('/auth/logout', {
+      method: 'POST'
     }),
   me: () => request('/auth/me'),
   users: () => request('/auth/users'),
@@ -123,6 +127,9 @@ export const alertsApi = {
     return request(`/alerts${q ? `?${q}` : ''}`);
   },
   active: () => request('/alerts/active'),
+  unreadCount: () => request('/alerts/unread-count'),
+  markAllRead: () => request('/alerts/mark-all-read', { method: 'PUT' }),
+  markRead: (alertId) => request(`/alerts/${alertId}/read`, { method: 'PUT' }),
   resolve: (alertId) => request(`/alerts/${alertId}/resolve`, { method: 'PUT' }),
 };
 

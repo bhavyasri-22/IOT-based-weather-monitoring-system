@@ -40,6 +40,15 @@ const alertLogSchema = new mongoose.Schema(
       default: 'active',
       index: true
     },
+    is_read: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
+    read_at: {
+      type: Date,
+      default: null
+    },
     triggered_at: {
       type: Date,
       default: Date.now
@@ -56,5 +65,6 @@ const alertLogSchema = new mongoose.Schema(
 
 // Compound index for fast lookup of active alerts per device and parameter
 alertLogSchema.index({ device_id: 1, parameter: 1, status: 1 });
+alertLogSchema.index({ is_read: 1, status: 1 });
 
 module.exports = mongoose.model('AlertLog', alertLogSchema);

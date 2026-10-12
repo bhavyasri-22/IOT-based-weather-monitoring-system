@@ -57,6 +57,89 @@ router.get('/active', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/alerts/unread-count
+ * Returns total count of unread active alerts
+ */
+router.get('/unread-count', async (req, res) => {
+  try {
+    const unreadCount = await AlertLog.countDocuments({
+      status: 'active',
+      $or: [{ is_read: false }, { is_read: { $exists: false } }]
+    });
+
+    res.json({
+      success: true,
+      count: unreadCount,
+      error: null
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      count: 0,
+      error: `Failed to fetch unread alert count: ${err.message}`
+    });
+  }
+});
+
+/**
+ * PUT /api/alerts/mark-all-read
+ * Marks all active unread alerts as read
+ */
+router.put('/mark-all-read', async (req, res) => {
+  try {
+    const result = await AlertLog.updateMany(
+      { status: 'active', $or: [{ is_read: false }, { is_read: { $exists: false } }] },
+      { $set: { is_read: true, read_at: new Date() } }
+    );
+
+    res.json({
+      success: true,
+      modifiedCount: result.modifiedCount || result.nModified || 0,
+      unreadCount: 0,
+      error: null
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: `Failed to mark alerts as read: ${err.message}`
+    });
+  }
+});
+
+/**
+ * PUT /api/alerts/:alertId/read
+ * Marks a specific alert as read
+ */
+router.put('/:alertId/read', async (req, res) => {
+  try {
+    const alert = await AlertLog.findById(req.params.alertId);
+    if (!alert) {
+      return res.status(404).json({ success: false, error: 'Alert not found' });
+    }
+    alert.is_read = true;
+    alert.read_at = new Date();
+    await alert.save();
+
+    const remainingUnread = await AlertLog.countDocuments({
+      status: 'active',
+      is_read: false
+    });
+
+    res.json({
+      success: true,
+      data: alert,
+      unreadCount: remainingUnread,
+      error: null
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: `Failed to mark alert as read: ${err.message}`
+    });
+  }
+});
+
 const wsGateway = require('../ws/gateway');
 
 /**
