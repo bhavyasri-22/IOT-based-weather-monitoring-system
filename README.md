@@ -61,7 +61,7 @@ Traditional weather tracking setups often rely on local-only networks (LAN), req
                    │ MQTT over TLS (Port 8883)                 │ HTTPS / WSS
                    ▼                                           ▼
        [ Cloud MQTT Broker ]                         [ Deployed Frontend ]
-     (HiveMQ Cloud / EMQX Cloud)                      (Vercel / Netlify)
+             (EMQX Cloud)                                  (Vercel)
                    │                                           │
                    │ MQTT over TLS (Port 8883)                 │ REST API / WebSocket
                    ▼                                           ▼
@@ -105,10 +105,6 @@ Traditional weather tracking setups often rely on local-only networks (LAN), req
 - **User Role (Registered Users)**: Sign in or create a new account using the Sign Up tab. Authenticated users have read-only access to live telemetry, sensor conditions, interactive time-series analytics, and CSV dataset downloads.
 - **Admin Role (Station Administrators)**: Authenticate with provisioned administrative credentials. Administrators possess elevated permissions to acknowledge and resolve active alerts, modify warning/critical threshold limits, and manage connected sensor hardware nodes.
 - **Transport & Identity Security**: Enforced TLS 8883 encryption on MQTT, HTTPS/WSS on the web application, JWT token verification, and Bcrypt password hashing.
-
-### 🎨 5. Modern 100% Light Theme UI & Navigation
-- **Light Theme Design**: Specially tailored `#F5FAFF` / `#EAF4FF` aesthetic with crisp cards, high-contrast typography, and zero dark theme styling across all elements.
-- **Effortless Navigation**: Dedicated "Back to top" button in the footer of every page, accompanied by a floating quick-return button.
 
 ---
 
@@ -159,7 +155,6 @@ Traditional weather tracking setups often rely on local-only networks (LAN), req
 - **Backend Service**: Node.js (v18+), Express.js, `ws` (WebSocket server), `mqtt` client, Mongoose ODM, JSON Web Tokens (JWT), Bcrypt.
 - **Database**: MongoDB Atlas (Cloud Time-Series Database & Document Storage).
 - **Frontend Dashboard**: React 18, Vite, Tailwind CSS, Lucide React, Framer Motion, Recharts.
-- **DevOps & Containers**: Docker, Docker Compose, PlatformIO CLI.
 
 ---
 
@@ -219,7 +214,7 @@ IOT-based-weather-monitoring-system/
 ### Prerequisites
 - **Node.js**: `v18.x` or higher installed ([nodejs.org](https://nodejs.org/))
 - **MongoDB**: Local MongoDB instance or free [MongoDB Atlas](https://www.mongodb.com/atlas) connection URI
-- **PlatformIO**: Recommended via VS Code extension or CLI ([platformio.org](https://platformio.org/))
+- **Arduino IDE**
 
 ---
 
@@ -245,17 +240,7 @@ cp firmware/esp32/src/secrets.h.example firmware/esp32/src/secrets.h
 
 ### 2. Launch Local Services
 
-To run the complete system locally, open **three terminal tabs**:
-
-#### Terminal 1: Local MQTT Broker
-```bash
-cd broker
-npm install
-npm start
-```
-*Local broker listens on MQTT port `1883`.*
-
-#### Terminal 2: Backend Ingestion & API Server
+#### Terminal 1: Backend Ingestion & API Server
 ```bash
 cd backend
 npm install
@@ -263,7 +248,7 @@ npm run dev
 ```
 *Backend server runs at `http://localhost:5001` (REST API & WebSocket).*
 
-#### Terminal 3: Frontend Dashboard
+#### Terminal 2: Frontend Dashboard
 ```bash
 cd frontend
 npm install
@@ -275,12 +260,12 @@ npm run dev
 
 ### 3. ESP32 Firmware Flashing
 
-1. Open `firmware/esp32` in **VS Code with the PlatformIO extension**.
+1. Open `firmware/esp32` in **Aurdino IDE**.
 2. Edit `firmware/esp32/src/secrets.h`:
    ```cpp
    static const char* WIFI_SSID             = "Your_WiFi_SSID";
    static const char* WIFI_PASS             = "Your_WiFi_Password";
-   static const char* MQTT_SERVER           = "192.168.1.100"; // Or Cloud Broker URL
+   static const char* MQTT_SERVER           = "192.168.1.1xx"; // Or Cloud Broker URL
    static const int   MQTT_PORT             = 1883;            // 8883 for TLS
    static const bool  MQTT_USE_TLS          = false;           // true for TLS
    static const char* MQTT_USER             = "";              // Cloud broker username
@@ -288,7 +273,7 @@ npm run dev
    static const char* DEVICE_ID             = "ESP32-NODE-01";
    ```
 3. Connect your ESP32 board via USB.
-4. Click **PlatformIO: Build** (`Ctrl+Alt+B` or `Cmd+Shift+B`) and **PlatformIO: Upload**.
+4. Click **verify** (`Ctrl+Alt+B` or `Cmd+Shift+B`) and **upload**.
 5. Open the **Serial Monitor** at baud rate `115200` to confirm sensor initialization and MQTT connectivity.
 
 ---
@@ -386,63 +371,32 @@ The system evaluates all incoming telemetry against configurable environmental b
 
 ---
 
-## 🔍 Sensor Fault Detection & Graceful Degradation
 
-The platform implements intelligent transducer validation:
 
-1. **Active Measurement**: Transducers producing valid numerical data are marked with an **`Operational`** status badge.
-2. **Missing Transducers**: If hardware is disconnected or omitted in the firmware (`nullptr`), the system displays **`Not Connected`** with `N/A` readings rather than triggering false alerts or displaying zero values.
-3. **Out-of-Range Sensor Anomaly**: If a physical sensor produces improbable readings (e.g., BME280 disconnected mid-operation resulting in -140°C), the validator flags the frame as **`Sensor Degraded`** and prevents corrupted points from polluting historical trend records.
-
----
-
-## 🧪 Testing & Quality Assurance
-
-The backend includes comprehensive automated verification suites covering end-to-end functionality:
-
-```bash
-cd backend
-
-# Phase 4: Ingestion pipeline, payload validation & device health watchdog
-node src/tests/test_phase4.js
-
-# Phase 5: Threshold alert triggers, hysteresis & resolution engine
-node src/tests/test_phase5.js
-
-# Phase 6: REST API routing, RBAC authentication & data formatting
-node src/tests/test_phase6.js
-
-# Phase 7: Real-time WebSocket broadcasting & live stream latency
-node src/tests/test_phase7.js
-```
-
----
 
 ## 🌐 Production Cloud Deployment
 
 The system is architected for seamless deployment across standard cloud providers:
 
-| Layer | Recommended Cloud Provider | Protocol / Port | Guide Reference |
-| :--- | :--- | :--- | :--- |
-| **MQTT Broker** | [HiveMQ Cloud](https://www.hivemq.com/cloud/) or [EMQX Cloud](https://www.emqx.com/en/cloud) | MQTTS / `8883` | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
-| **Backend API** | [Render](https://render.com/) or [Railway](https://railway.app/) | HTTPS / WSS | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
-| **Database** | [MongoDB Atlas](https://www.mongodb.com/atlas) | Mongo Wire / TLS | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
-| **Web Frontend**| [Vercel](https://vercel.com/) or [Netlify](https://netlify.com/) | HTTPS | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+| Layer | Cloud Provider |
+| :--- | :--- |
+| **MQTT Broker** | [ [EMQX Cloud](https://www.emqx.com/en/cloud) 
+| **Backend API** | [Render](https://render.com/)
+| **Database** | [MongoDB Atlas](https://www.mongodb.com/atlas) 
+| **Web Frontend**| [Vercel](https://vercel.com/)
 
 For complete step-by-step instructions with screenshots and environment checklists, consult **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** and the detailed **[docs/USER_MANUAL.md](docs/USER_MANUAL.md)**.
 
 ---
 
-## 👥 Academic Credits & Contributors
+## Contributors
 
 Developed as part of **IT303: Software Engineering** at the **Department of Information Technology, National Institute of Technology Karnataka (NITK), Surathkal**.
 
 ### Project Team:
-- **C Thanmai Sai** (NITK Surathkal)
-- **Mili Dholaria** (NITK Surathkal)
-- **Thota Bhavya Sri** (NITK Surathkal)
+- **C Thanmai Sai** (241IT015)
+- **Mili Dholaria** (241IT045)
+- **Thota Bhavya Sri** (241IT079)
 
 ### Faculty Guidance:
 - **Prof. Jaidhar C. D.**  
-  *Professor, Department of Information Technology*  
-  *National Institute of Technology Karnataka, Surathkal*
