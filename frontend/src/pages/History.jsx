@@ -4,17 +4,17 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { telemetryApi } from '../api/client';
-import { Download, Clock, Calendar, Thermometer, Droplets, Gauge, Wind, Sparkles, Sun, CloudRain } from 'lucide-react';
+import { Download, Clock, Thermometer, Droplets, Gauge, Wind, Sparkles, Sun, CloudRain } from 'lucide-react';
 import { sanitizeRain } from '../utils/weatherUtils';
 
 const METRICS = [
-  { key: 'temperature', label: 'Temperature', unit: '°C', color: '#FBBF24', icon: Thermometer },
-  { key: 'humidity', label: 'Humidity', unit: '%', color: '#38BDF8', icon: Droplets },
-  { key: 'pressure', label: 'Pressure', unit: 'hPa', color: '#60A5FA', icon: Gauge },
-  { key: 'wind_speed', label: 'Wind Speed', unit: 'km/h', color: '#34D399', icon: Wind },
-  { key: 'gas_aqi', label: 'Air Quality (AQI)', unit: 'AQI', color: '#818CF8', icon: Sparkles },
-  { key: 'rain_intensity', label: 'Precipitation', unit: 'mm/h', color: '#38BDF8', icon: CloudRain },
-  { key: 'light_lux', label: 'Illuminance (Lux)', unit: 'lx', color: '#FBBF24', icon: Sun },
+  { key: 'temperature', label: 'Temperature', unit: '°C', color: '#D97706', icon: Thermometer },
+  { key: 'humidity', label: 'Humidity', unit: '%', color: '#0284C7', icon: Droplets },
+  { key: 'pressure', label: 'Pressure', unit: 'hPa', color: '#2563EB', icon: Gauge },
+  { key: 'wind_speed', label: 'Wind Speed', unit: 'km/h', color: '#059669', icon: Wind },
+  { key: 'gas_aqi', label: 'Air Quality (AQI)', unit: 'AQI', color: '#7C3AED', icon: Sparkles },
+  { key: 'rain_intensity', label: 'Precipitation', unit: 'mm/h', color: '#0891B2', icon: CloudRain },
+  { key: 'light_lux', label: 'Illuminance (Lux)', unit: 'lx', color: '#D97706', icon: Sun },
 ];
 
 const RANGES = [
@@ -101,17 +101,17 @@ export default function History({ deviceId = 'ESP32_SURATHKAL_01' }) {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="space-y-6 pb-12 max-w-[1600px] mx-auto"
+      className="space-y-6 pb-12 max-w-[1600px] mx-auto text-slate-800"
     >
       {/* Header & Controls */}
-      <div className="p-6 rounded-2xl bg-[#101D2E]/80 border border-white/[0.08] backdrop-blur-xl shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="p-6 rounded-2xl bg-white/90 border border-sky-200/80 backdrop-blur-xl shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#60A5FA]/15 border border-[#60A5FA]/30 flex items-center justify-center text-[#60A5FA]">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shadow-xs">
             <Clock size={20} />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-white tracking-tight">Time-Series Telemetry Archive</h2>
-            <p className="text-xs text-[#64748B]">Granular sensor historical logs and exportable audit trail</p>
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight">Time-Series Telemetry Archive</h2>
+            <p className="text-xs text-slate-500">Granular sensor historical logs and exportable audit trail</p>
           </div>
         </div>
 
@@ -121,25 +121,25 @@ export default function History({ deviceId = 'ESP32_SURATHKAL_01' }) {
           <select
             value={metric}
             onChange={(e) => setMetric(e.target.value)}
-            className="px-3.5 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs font-semibold text-white focus:outline-none focus:border-[#60A5FA]"
+            className="px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs cursor-pointer"
           >
             {METRICS.map((m) => (
-              <option key={m.key} value={m.key} className="bg-[#0B1728] text-white">
+              <option key={m.key} value={m.key} className="bg-white text-slate-800">
                 {m.label} ({m.unit})
               </option>
             ))}
           </select>
 
           {/* Range tabs */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-[#0B1728]/80 border border-white/[0.06]">
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200">
             {RANGES.map((r) => (
               <button
                 key={r.key}
                 onClick={() => setRange(r.key)}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                   range === r.key
-                    ? 'bg-[#60A5FA]/20 text-[#60A5FA] border border-[#60A5FA]/30 font-semibold'
-                    : 'text-[#64748B] hover:text-[#94A3B8]'
+                    ? 'bg-white text-blue-600 border border-slate-200 shadow-xs font-semibold'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 {r.label}
@@ -149,7 +149,7 @@ export default function History({ deviceId = 'ESP32_SURATHKAL_01' }) {
 
           <button
             onClick={handleExportCSV}
-            className="px-3.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-semibold text-white flex items-center gap-1.5 transition-all"
+            className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
           >
             <Download size={13} />
             <span>Export CSV</span>
@@ -159,32 +159,32 @@ export default function History({ deviceId = 'ESP32_SURATHKAL_01' }) {
 
       {/* KPI Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="p-4 rounded-2xl bg-[#101D2E]/80 border border-white/[0.08] backdrop-blur-xl shadow-xl">
-          <span className="text-[11px] text-[#64748B] uppercase font-medium">Latest Reading</span>
-          <div className="text-2xl font-bold text-white mt-1 font-sans">{latest} {metricConf.unit}</div>
+        <div className="p-4 rounded-2xl bg-white/90 border border-slate-200 shadow-xs">
+          <span className="text-[11px] text-slate-500 uppercase font-medium">Latest Reading</span>
+          <div className="text-2xl font-bold text-slate-900 mt-1 font-sans">{latest} {metricConf.unit}</div>
         </div>
-        <div className="p-4 rounded-2xl bg-[#101D2E]/80 border border-white/[0.08] backdrop-blur-xl shadow-xl">
-          <span className="text-[11px] text-[#64748B] uppercase font-medium">Interval Average</span>
-          <div className="text-2xl font-bold text-[#34D399] mt-1 font-sans">{avg} {metricConf.unit}</div>
+        <div className="p-4 rounded-2xl bg-white/90 border border-slate-200 shadow-xs">
+          <span className="text-[11px] text-slate-500 uppercase font-medium">Interval Average</span>
+          <div className="text-2xl font-bold text-emerald-600 mt-1 font-sans">{avg} {metricConf.unit}</div>
         </div>
-        <div className="p-4 rounded-2xl bg-[#101D2E]/80 border border-white/[0.08] backdrop-blur-xl shadow-xl">
-          <span className="text-[11px] text-[#64748B] uppercase font-medium">Minimum</span>
-          <div className="text-2xl font-bold text-[#60A5FA] mt-1 font-sans">{min} {metricConf.unit}</div>
+        <div className="p-4 rounded-2xl bg-white/90 border border-slate-200 shadow-xs">
+          <span className="text-[11px] text-slate-500 uppercase font-medium">Minimum</span>
+          <div className="text-2xl font-bold text-blue-600 mt-1 font-sans">{min} {metricConf.unit}</div>
         </div>
-        <div className="p-4 rounded-2xl bg-[#101D2E]/80 border border-white/[0.08] backdrop-blur-xl shadow-xl">
-          <span className="text-[11px] text-[#64748B] uppercase font-medium">Maximum</span>
-          <div className="text-2xl font-bold text-[#FBBF24] mt-1 font-sans">{max} {metricConf.unit}</div>
+        <div className="p-4 rounded-2xl bg-white/90 border border-slate-200 shadow-xs">
+          <span className="text-[11px] text-slate-500 uppercase font-medium">Maximum</span>
+          <div className="text-2xl font-bold text-amber-600 mt-1 font-sans">{max} {metricConf.unit}</div>
         </div>
       </div>
 
       {/* History Chart */}
-      <div className="rounded-2xl p-6 bg-[#101D2E]/80 border border-white/[0.08] backdrop-blur-xl shadow-xl space-y-4">
+      <div className="rounded-2xl p-6 bg-white/90 border border-slate-200 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Icon size={16} style={{ color: metricConf.color }} />
-            <h3 className="text-base font-semibold text-white">{metricConf.label} Telemetry Graph</h3>
+            <h3 className="text-base font-semibold text-slate-900">{metricConf.label} Telemetry Graph</h3>
           </div>
-          <span className="text-xs text-[#64748B] font-mono">{data.length} sample points</span>
+          <span className="text-xs text-slate-500 font-mono">{data.length} sample points</span>
         </div>
 
         <div className="h-72 w-full pt-2">
@@ -196,18 +196,18 @@ export default function History({ deviceId = 'ESP32_SURATHKAL_01' }) {
                   <stop offset="95%" stopColor={metricConf.color} stopOpacity={0.0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" vertical={false} />
+              <CartesianGrid stroke="#E2E8F0" strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="time" stroke="#64748B" fontSize={11} tickLine={false} />
               <YAxis stroke="#64748B" fontSize={11} tickLine={false} unit={` ${metricConf.unit}`} />
               <Tooltip
                 content={({ active, payload, label }) => {
                   if (active && payload && payload.length) {
                     return (
-                      <div className="p-3 rounded-xl bg-[#0B1728]/95 border border-white/[0.12] shadow-2xl backdrop-blur-md text-xs">
-                        <p className="text-[#64748B] font-mono">{label}</p>
+                      <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-xl text-xs">
+                        <p className="text-slate-500 font-mono">{label}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="w-2 h-2 rounded-full" style={{ backgroundColor: metricConf.color }} />
-                          <span className="text-sm font-bold text-white">
+                          <span className="text-sm font-bold text-slate-900">
                             {payload[0].value} {metricConf.unit}
                           </span>
                         </div>
@@ -231,31 +231,31 @@ export default function History({ deviceId = 'ESP32_SURATHKAL_01' }) {
 
       {/* Raw Data Table */}
       {data.length > 0 && (
-        <div className="rounded-2xl bg-[#101D2E]/80 border border-white/[0.08] backdrop-blur-xl shadow-xl overflow-hidden">
-          <div className="p-4 border-b border-white/[0.06] flex items-center justify-between">
-            <h4 className="text-xs font-semibold text-white uppercase tracking-wider">Historical Telemetry Log</h4>
-            <span className="text-xs text-[#64748B]">Showing recent {Math.min(data.length, 25)} rows</span>
+        <div className="rounded-2xl bg-white border border-slate-200 shadow-xs overflow-hidden">
+          <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+            <h4 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">Historical Telemetry Log</h4>
+            <span className="text-xs text-slate-500">Showing recent {Math.min(data.length, 25)} rows</span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-white/[0.04] text-[10px] font-semibold tracking-widest text-[#64748B] uppercase">
+                <tr className="border-b border-slate-200 text-[10px] font-semibold tracking-widest text-slate-500 uppercase bg-slate-50/50">
                   <th className="text-left px-5 py-3">Timestamp</th>
                   <th className="text-left px-5 py-3">Metric Parameter</th>
                   <th className="text-right px-5 py-3">Recorded Value</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.02]">
+              <tbody className="divide-y divide-slate-100">
                 {data.slice(-25).reverse().map((row, i) => (
-                  <tr key={i} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="px-5 py-2.5 text-[#94A3B8] font-mono">
+                  <tr key={i} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="px-5 py-2.5 text-slate-500 font-mono">
                       {new Date(row.timestamp).toLocaleString()}
                     </td>
-                    <td className="px-5 py-2.5 text-white font-medium">
+                    <td className="px-5 py-2.5 text-slate-800 font-medium">
                       {metricConf.label}
                     </td>
-                    <td className="px-5 py-2.5 text-right font-semibold text-white font-mono">
+                    <td className="px-5 py-2.5 text-right font-semibold text-slate-900 font-mono">
                       {row.value} {metricConf.unit}
                     </td>
                   </tr>

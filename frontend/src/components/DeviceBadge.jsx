@@ -53,34 +53,33 @@ export default function DeviceBadge({ telemetry }) {
   }).length;
 
   return (
-    <div className="panel-card border border-[#26303B] p-4">
+    <div className="bg-white/95 border border-sky-200/80 rounded-2xl p-4 shadow-xs">
       <div className="flex items-center gap-2 mb-3">
-        <Cpu size={13} className="text-[#64748B]" />
-        <p className="text-[10px] font-semibold tracking-widest text-[#64748B]">DEVICE HEALTH</p>
+        <Cpu size={13} className="text-slate-500" />
+        <p className="text-[10px] font-semibold tracking-widest text-slate-500">DEVICE HEALTH</p>
       </div>
 
       {loading ? (
         <div className="space-y-2">
-          <div className="h-4 bg-[#1A212B] rounded animate-pulse w-2/3" />
-          <div className="h-3 bg-[#1A212B] rounded animate-pulse w-1/2" />
+          <div className="h-4 bg-slate-100 rounded animate-pulse w-2/3" />
+          <div className="h-3 bg-slate-100 rounded animate-pulse w-1/2" />
         </div>
       ) : !device ? (
         <div className="py-3 text-center">
-          <WifiOff size={20} className="text-[#64748B] mx-auto mb-1.5" />
-          <p className="text-xs text-[#64748B]">No device registered</p>
+          <WifiOff size={20} className="text-slate-400 mx-auto mb-1.5" />
+          <p className="text-xs text-slate-500">No device registered</p>
         </div>
       ) : (
         <div>
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-sm font-semibold text-[#F1F5F9] font-mono">{device.device_id}</p>
+              <p className="text-sm font-semibold text-slate-800 font-mono">{device.device_id}</p>
             </div>
             <div className="flex items-center gap-1.5">
               <span
-                className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-[#22C55E]' : 'bg-[#EF4444]'}`}
-                style={isOnline ? { boxShadow: '0 0 5px #22C55E99' } : {}}
+                className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-rose-500'}`}
               />
-              <span className={`text-[11px] font-semibold tracking-wider ${isOnline ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+              <span className={`text-[11px] font-semibold tracking-wider ${isOnline ? 'text-emerald-600' : 'text-rose-600'}`}>
                 {isOnline ? 'ONLINE' : 'OFFLINE'}
               </span>
             </div>
@@ -88,44 +87,44 @@ export default function DeviceBadge({ telemetry }) {
 
           {/* Stats row */}
           <div className="grid grid-cols-2 gap-2 mb-3">
-            <div className="bg-[#11161D] border border-[#26303B] rounded-lg px-3 py-2">
-              <p className="text-[9px] text-[#64748B] uppercase tracking-wider mb-0.5">Last Heartbeat</p>
+            <div className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+              <p className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Last Heartbeat</p>
               <div className="flex items-center gap-1">
-                <Clock size={10} className="text-[#64748B]" />
-                <p className="text-xs text-[#94A3B8] font-medium">{formatLastSeen(device.last_seen)}</p>
+                <Clock size={10} className="text-slate-400" />
+                <p className="text-xs text-slate-700 font-medium">{formatLastSeen(device.last_seen)}</p>
               </div>
             </div>
-            <div className="bg-[#11161D] border border-[#26303B] rounded-lg px-3 py-2">
-              <p className="text-[9px] text-[#64748B] uppercase tracking-wider mb-0.5">Sensors</p>
-              <p className="text-xs text-[#94A3B8] font-medium">
-                <span className={operationalSensors === SENSOR_HARDWARE.length ? 'text-[#22C55E]' : 'text-[#F59E0B]'}>
+            <div className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+              <p className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Sensors</p>
+              <p className="text-xs text-slate-700 font-medium">
+                <span className={operationalSensors === SENSOR_HARDWARE.length ? 'text-emerald-600' : 'text-amber-600'}>
                   {operationalSensors}
                 </span>
-                <span className="text-[#64748B]"> / {SENSOR_HARDWARE.length} ok</span>
+                <span className="text-slate-500"> / {SENSOR_HARDWARE.length} active</span>
               </p>
             </div>
           </div>
 
           {/* Sensor checklist */}
           <div>
-            <p className="text-[9px] font-semibold tracking-widest text-[#3A4654] uppercase mb-2">SENSORS</p>
+            <p className="text-[9px] font-semibold tracking-widest text-slate-500 uppercase mb-2">SENSORS</p>
             <div className="flex flex-col gap-1.5">
               {SENSOR_HARDWARE.map((sensor) => {
                 const val = telemetry?.[sensor.id] ?? telemetry?.derived?.[sensor.id];
                 const ok = val !== null && val !== undefined;
                 return (
                   <div key={sensor.id} className="flex items-center justify-between">
-                    <span className="text-[11px] text-[#94A3B8]">{sensor.label}</span>
+                    <span className="text-[11px] text-slate-600">{sensor.label}</span>
                     <div className="flex items-center gap-1">
                       {ok ? (
                         <>
-                          <CheckCircle size={10} className="text-[#22C55E]" />
-                          <span className="text-[10px] text-[#22C55E] font-medium">HEALTHY</span>
+                          <CheckCircle size={10} className="text-emerald-600" />
+                          <span className="text-[10px] text-emerald-600 font-medium">HEALTHY</span>
                         </>
                       ) : (
                         <>
-                          <XCircle size={10} className="text-[#64748B]" />
-                          <span className="text-[10px] text-[#64748B] font-medium">UNAVAIL.</span>
+                          <XCircle size={10} className="text-slate-400" />
+                          <span className="text-[10px] text-slate-400 font-medium">NOT CONNECTED</span>
                         </>
                       )}
                     </div>

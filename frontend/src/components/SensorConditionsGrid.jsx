@@ -70,7 +70,7 @@ export default function SensorConditionsGrid({ telemetry }) {
       status: tempStat.text,
       statusColor: tempStat.color,
       icon: Thermometer,
-      accent: 'bg-rose-500/10 text-rose-500 dark:bg-rose-500/15',
+      accent: 'bg-rose-500/10 text-rose-500',
       borderAccent: 'border-rose-500/20'
     },
     {
@@ -82,7 +82,7 @@ export default function SensorConditionsGrid({ telemetry }) {
       status: humStat.text,
       statusColor: humStat.color,
       icon: Droplets,
-      accent: 'bg-sky-500/10 text-sky-500 dark:bg-sky-500/15',
+      accent: 'bg-sky-500/10 text-sky-500',
       borderAccent: 'border-sky-500/20'
     },
     {
@@ -94,7 +94,7 @@ export default function SensorConditionsGrid({ telemetry }) {
       status: rainStat.text,
       statusColor: rainStat.color,
       icon: CloudRain,
-      accent: 'bg-blue-500/10 text-blue-500 dark:bg-blue-500/15',
+      accent: 'bg-blue-500/10 text-blue-500',
       borderAccent: 'border-blue-500/20'
     },
     {
@@ -106,7 +106,7 @@ export default function SensorConditionsGrid({ telemetry }) {
       status: aqiStat.text,
       statusColor: aqiStat.color,
       icon: Activity,
-      accent: 'bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/15',
+      accent: 'bg-emerald-500/10 text-emerald-500',
       borderAccent: 'border-emerald-500/20'
     },
     {
@@ -118,7 +118,7 @@ export default function SensorConditionsGrid({ telemetry }) {
       status: pressure != null && pressure < 1000 ? 'Low Pressure' : 'Normal Sea Level',
       statusColor: pressure != null && pressure < 1000 ? 'text-amber-500' : 'text-emerald-500',
       icon: Gauge,
-      accent: 'bg-amber-500/10 text-amber-500 dark:bg-amber-500/15',
+      accent: 'bg-amber-500/10 text-amber-500',
       borderAccent: 'border-amber-500/20'
     },
     {
@@ -130,7 +130,7 @@ export default function SensorConditionsGrid({ telemetry }) {
       status: lux != null ? (lux > 500 ? 'Daylight Solar' : 'Shaded / Night') : 'Sensor Offline',
       statusColor: 'text-slate-400',
       icon: Sun,
-      accent: 'bg-amber-400/10 text-amber-500 dark:bg-amber-400/15',
+      accent: 'bg-amber-400/10 text-amber-500',
       borderAccent: 'border-amber-400/20'
     }
   ];
@@ -138,10 +138,10 @@ export default function SensorConditionsGrid({ telemetry }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between px-1">
-        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 tracking-tight">
+        <h3 className="text-sm font-bold text-slate-800 tracking-tight">
           Current Sensor Telemetry
         </h3>
-        <span className="text-xs text-slate-400 dark:text-slate-500">
+        <span className="text-xs text-slate-400">
           Direct hardware readings
         </span>
       </div>
@@ -152,10 +152,10 @@ export default function SensorConditionsGrid({ telemetry }) {
           return (
             <div
               key={s.id}
-              className="rounded-2xl p-4 bg-white dark:bg-[#0E1A29]/80 border border-sky-100/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+              className="rounded-2xl p-4 bg-white[#0E1A29]/80 border border-sky-100/80[0.08] shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
             >
               <div className="flex items-center justify-between gap-2 mb-2">
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate">
+                <span className="text-[11px] font-semibold text-slate-500 truncate">
                   {s.label}
                 </span>
                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${s.accent}`}>
@@ -165,20 +165,20 @@ export default function SensorConditionsGrid({ telemetry }) {
 
               <div className="my-1">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white font-sans tabular-nums">
+                  <span className="text-xl sm:text-2xl font-bold text-slate-900 font-sans tabular-nums">
                     {s.value}
                   </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  <span className="text-xs text-slate-500 font-medium">
                     {s.unit}
                   </span>
                 </div>
               </div>
 
-              <div className="pt-2 mt-1 border-t border-slate-100 dark:border-white/[0.04] flex items-center justify-between text-[11px]">
+              <div className="pt-2 mt-1 border-t border-slate-100[0.04] flex items-center justify-between text-[11px]">
                 <span className={`font-medium ${s.statusColor} truncate`}>
                   {s.status}
                 </span>
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+                <span className="text-[10px] text-slate-400 font-mono">
                   {s.sensor}
                 </span>
               </div>

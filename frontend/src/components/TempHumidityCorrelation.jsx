@@ -34,27 +34,27 @@ export default function TempHumidityCorrelation({ telemetry }) {
   ];
 
   return (
-    <div className="rounded-2xl p-5 sm:p-6 bg-white dark:bg-[#101D2E]/80 border border-slate-200/80 dark:border-white/[0.08] backdrop-blur-xl shadow-sm dark:shadow-xl space-y-4 transition-colors">
+    <div className="rounded-2xl p-5 sm:p-6 bg-white[#101D2E]/80 border border-slate-200/80[0.08] backdrop-blur-xl shadow-sm space-y-4 transition-colors">
       {/* Header & Toggle Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-600 dark:text-[#60A5FA]">
+          <div className="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-600[#60A5FA]">
             <GitCompare size={16} />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white tracking-tight">Thermal vs Moisture Correlation</h3>
-            <p className="text-xs text-slate-500 dark:text-[#64748B]">Inverse thermodynamic relationship</p>
+            <h3 className="text-base font-semibold text-slate-900 tracking-tight">Thermal vs Moisture Correlation</h3>
+            <p className="text-xs text-slate-500[#64748B]">Inverse thermodynamic relationship</p>
           </div>
         </div>
 
         {/* View Toggle */}
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-[#0B1728]/80 border border-slate-200 dark:border-white/[0.06] self-start sm:self-auto">
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100[#0B1728]/80 border border-slate-200[0.06] self-start sm:self-auto">
           <button
             onClick={() => setViewMode('temp')}
             className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
               viewMode === 'temp'
-                ? 'bg-amber-100 dark:bg-[#FBBF24]/20 text-amber-700 dark:text-[#FBBF24] border border-amber-200 dark:border-[#FBBF24]/30 font-semibold'
-                : 'text-slate-500 dark:text-[#64748B] hover:text-slate-900 dark:hover:text-[#94A3B8]'
+                ? 'bg-amber-100[#FBBF24]/20 text-amber-700[#FBBF24] border border-amber-200[#FBBF24]/30 font-semibold'
+                : 'text-slate-500[#64748B] hover:text-slate-900:text-[#94A3B8]'
             }`}
           >
             Temp Only
@@ -63,8 +63,8 @@ export default function TempHumidityCorrelation({ telemetry }) {
             onClick={() => setViewMode('humidity')}
             className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
               viewMode === 'humidity'
-                ? 'bg-sky-100 dark:bg-[#38BDF8]/20 text-sky-700 dark:text-[#38BDF8] border border-sky-200 dark:border-[#38BDF8]/30 font-semibold'
-                : 'text-slate-500 dark:text-[#64748B] hover:text-slate-900 dark:hover:text-[#94A3B8]'
+                ? 'bg-sky-100[#38BDF8]/20 text-sky-700[#38BDF8] border border-sky-200[#38BDF8]/30 font-semibold'
+                : 'text-slate-500[#64748B] hover:text-slate-900:text-[#94A3B8]'
             }`}
           >
             Humidity Only
@@ -73,8 +73,8 @@ export default function TempHumidityCorrelation({ telemetry }) {
             onClick={() => setViewMode('both')}
             className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
               viewMode === 'both'
-                ? 'bg-white dark:bg-white/[0.1] text-blue-600 dark:text-white border border-slate-200 dark:border-white/[0.15] font-semibold shadow-sm'
-                : 'text-slate-500 dark:text-[#64748B] hover:text-slate-900 dark:hover:text-[#94A3B8]'
+                ? 'bg-white[0.1] text-blue-600 border border-slate-200[0.15] font-semibold shadow-sm'
+                : 'text-slate-500[#64748B] hover:text-slate-900:text-[#94A3B8]'
             }`}
           >
             Dual Overlay
@@ -117,15 +117,15 @@ export default function TempHumidityCorrelation({ telemetry }) {
               content={({ active, payload, label }) => {
                 if (active && payload && payload.length) {
                   return (
-                    <div className="p-3 rounded-xl bg-white dark:bg-[#0B1728]/95 border border-slate-200 dark:border-white/[0.12] shadow-2xl backdrop-blur-md text-xs space-y-1">
-                      <p className="text-slate-500 dark:text-[#64748B] font-mono">{label}</p>
+                    <div className="p-3 rounded-xl bg-white[#0B1728]/95 border border-slate-200[0.12] shadow-2xl backdrop-blur-md text-xs space-y-1">
+                      <p className="text-slate-500[#64748B] font-mono">{label}</p>
                       {payload.map((entry, idx) => (
                         <div key={idx} className="flex items-center justify-between gap-3">
                           <span className="flex items-center gap-1.5" style={{ color: entry.color }}>
                             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
                             {entry.name}:
                           </span>
-                          <span className="font-semibold text-slate-900 dark:text-white">
+                          <span className="font-semibold text-slate-900">
                             {entry.value} {entry.name === 'Temperature' ? '°C' : '%'}
                           </span>
                         </div>
@@ -165,18 +165,18 @@ export default function TempHumidityCorrelation({ telemetry }) {
       </div>
 
       {/* Legend & Stats */}
-      <div className="pt-2 border-t border-slate-100 dark:border-white/[0.04] flex items-center justify-between text-xs">
+      <div className="pt-2 border-t border-slate-100[0.04] flex items-center justify-between text-xs">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-[#F59E0B]" />
-            <span className="text-slate-600 dark:text-[#94A3B8]">Temp: <strong className="text-slate-900 dark:text-white font-mono">{temp}°C</strong></span>
+            <span className="text-slate-600[#94A3B8]">Temp: <strong className="text-slate-900 font-mono">{temp}°C</strong></span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-[#0284C7]" />
-            <span className="text-slate-600 dark:text-[#94A3B8]">Humidity: <strong className="text-slate-900 dark:text-white font-mono">{hum}%</strong></span>
+            <span className="text-slate-600[#94A3B8]">Humidity: <strong className="text-slate-900 font-mono">{hum}%</strong></span>
           </div>
         </div>
-        <span className="text-slate-400 dark:text-[#64748B] text-[11px] font-mono">r = -0.74 (Strong Inverse)</span>
+        <span className="text-slate-400[#64748B] text-[11px] font-mono">r = -0.74 (Strong Inverse)</span>
       </div>
     </div>
   );

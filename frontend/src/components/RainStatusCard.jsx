@@ -16,7 +16,7 @@ export default function RainStatusCard({ telemetry }) {
         state: 'Dry Surface',
         description: 'Sensor surface is currently dry. Optimal clear weather.',
         color: '#10B981',
-        bg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+        bg: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
         intensity: 'None (0.0 mm/h)',
         badge: 'Dry Baseline'
       };
@@ -27,7 +27,7 @@ export default function RainStatusCard({ telemetry }) {
         state: 'Light Drops',
         description: 'Light drizzle detected on FC-37 precipitation sensor.',
         color: '#0EA5E9',
-        bg: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20',
+        bg: 'bg-sky-500/10 text-sky-600 border-sky-500/20',
         intensity: 'Light Rain',
         badge: 'Active Rain'
       };
@@ -38,7 +38,7 @@ export default function RainStatusCard({ telemetry }) {
         state: 'Moderate Showers',
         description: 'Steady rainfall accumulation occurring at station.',
         color: '#3B82F6',
-        bg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+        bg: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
         intensity: 'Moderate Intensity',
         badge: 'Steady Rain'
       };
@@ -48,7 +48,7 @@ export default function RainStatusCard({ telemetry }) {
       state: 'Heavy Downpour',
       description: 'Precipitation exceeding 15 mm/h. Monitor drainage channels.',
       color: '#F59E0B',
-      bg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+      bg: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
       intensity: 'Heavy Precipitation',
       badge: 'Caution'
     };
@@ -58,7 +58,7 @@ export default function RainStatusCard({ telemetry }) {
   const barPct = Math.min(100, Math.max(0, (rainVal / 30) * 100));
 
   return (
-    <div className="rounded-3xl p-5 sm:p-6 bg-white dark:bg-[#0E1A29]/80 border border-sky-100/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+    <div className="rounded-3xl p-5 sm:p-6 bg-white[#0E1A29]/80 border border-sky-100/80[0.08] shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
       <div>
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
@@ -67,10 +67,10 @@ export default function RainStatusCard({ telemetry }) {
               {isRaining ? <CloudRain size={18} /> : <Sun size={18} />}
             </div>
             <div>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
+              <h4 className="text-sm font-bold text-slate-900 tracking-tight">
                 Precipitation & Surface Rain
               </h4>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              <p className="text-[11px] text-slate-500">
                 FC-37 gold plate transducer
               </p>
             </div>
@@ -82,21 +82,21 @@ export default function RainStatusCard({ telemetry }) {
         </div>
 
         {/* Current State Highlight */}
-          <div className="p-4 rounded-2xl bg-sky-50/70 dark:bg-white/[0.02] border border-sky-100 dark:border-white/[0.04] space-y-3">
+          <div className="p-4 rounded-2xl bg-sky-50/70[0.02] border border-sky-100[0.04] space-y-3">
           <div className="flex items-baseline justify-between">
             <div>
-              <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white font-sans tabular-nums">
+              <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-sans tabular-nums">
                 {rainVal.toFixed(1)}
               </span>
-              <span className="text-sm text-slate-500 dark:text-slate-400 ml-1 font-medium">mm/h</span>
+              <span className="text-sm text-slate-500 ml-1 font-medium">mm/h</span>
             </div>
-            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <span className="text-xs font-semibold text-slate-700">
               {details.state}
             </span>
           </div>
 
           {/* Progress bar */}
-          <div className="w-full bg-slate-200 dark:bg-white/[0.08] h-2 rounded-full overflow-hidden">
+          <div className="w-full bg-slate-200[0.08] h-2 rounded-full overflow-hidden">
             <motion.div
               className="h-full rounded-full"
               style={{ backgroundColor: details.color }}
@@ -105,14 +105,14 @@ export default function RainStatusCard({ telemetry }) {
             />
           </div>
 
-          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+          <p className="text-xs text-slate-500 leading-relaxed">
             {details.description}
           </p>
         </div>
       </div>
 
       {/* Sensor status footer */}
-      <div className="pt-3 mt-4 border-t border-slate-100 dark:border-white/[0.04] flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+      <div className="pt-3 mt-4 border-t border-slate-100[0.04] flex items-center justify-between text-xs text-slate-500">
         <span className="flex items-center gap-1 text-[11px]">
           <ShieldCheck size={13} className="text-emerald-500" />
           Hardware calibrated baseline

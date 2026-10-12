@@ -22,15 +22,15 @@ export default function ActiveAlertsBanner({ activeAlerts = [], onResolve }) {
             exit={{ opacity: 0, y: -6 }}
             className={`rounded-2xl p-4 flex items-center justify-between gap-3 border shadow-sm ${
               alert.severity === 'critical'
-                ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/50 text-rose-900 dark:text-rose-200'
-                : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/50 text-amber-900 dark:text-amber-200'
+                ? 'bg-rose-50 border-rose-200 text-rose-900'
+                : 'bg-amber-50 border-amber-200 text-amber-900'
             }`}
           >
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-xl flex-shrink-0 ${
                 alert.severity === 'critical'
-                  ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
-                  : 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                  ? 'bg-rose-500/15 text-rose-600'
+                  : 'bg-amber-500/15 text-amber-600'
               }`}>
                 <AlertTriangle size={18} />
               </div>
@@ -52,7 +52,7 @@ export default function ActiveAlertsBanner({ activeAlerts = [], onResolve }) {
             {onResolve && (
               <button
                 onClick={() => onResolve(alert._id || alert.id)}
-                className="px-3 py-1.5 rounded-xl bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 border border-current/20 text-xs font-semibold transition-colors flex-shrink-0"
+                className="px-3 py-1.5 rounded-xl bg-white/80 hover:bg-white:bg-white/20 border border-current/20 text-xs font-semibold transition-colors flex-shrink-0"
               >
                 Acknowledge
               </button>

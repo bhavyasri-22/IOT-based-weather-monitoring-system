@@ -172,7 +172,7 @@ export default function MultiMetricAnalytics({ deviceId, telemetry }) {
   const lastTimestamp = data.length > 0 ? data[data.length - 1].fullTimestamp : 'Awaiting data...';
 
   return (
-    <div className="rounded-2xl p-5 sm:p-6 bg-white dark:bg-[#101D2E]/80 border border-slate-200/80 dark:border-white/[0.08] backdrop-blur-xl shadow-sm dark:shadow-xl space-y-5 text-slate-800 dark:text-white transition-colors">
+    <div className="rounded-2xl p-5 sm:p-6 bg-white[#101D2E]/80 border border-slate-200/80[0.08] backdrop-blur-xl shadow-sm space-y-5 text-slate-800 transition-colors">
       {/* Header row: Title + Metrics Tabs + Time Range Selector */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
@@ -184,16 +184,16 @@ export default function MultiMetricAnalytics({ deviceId, telemetry }) {
               <Icon size={16} />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white tracking-tight">
+              <h3 className="text-base sm:text-lg font-semibold text-slate-900 tracking-tight">
                 {cfg.label} Trend Analysis
               </h3>
-              <p className="text-xs text-slate-500 dark:text-[#64748B]">Continuous telemetry stream and interval trendline</p>
+              <p className="text-xs text-slate-500[#64748B]">Continuous telemetry stream and interval trendline</p>
             </div>
           </div>
         </div>
 
         {/* Metric Selector Tabs */}
-        <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-[#0B1728]/80 border border-slate-200 dark:border-white/[0.06]">
+        <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-slate-100[#0B1728]/80 border border-slate-200[0.06]">
           {Object.entries(METRICS_CONFIG).map(([key, item]) => {
             const isSelected = activeMetric === key;
             return (
@@ -203,8 +203,8 @@ export default function MultiMetricAnalytics({ deviceId, telemetry }) {
                 onClick={() => setActiveMetric(key)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-white dark:bg-white/[0.1] text-blue-600 dark:text-white shadow-sm border border-slate-200 dark:border-white/[0.12] font-semibold'
-                    : 'text-slate-600 dark:text-[#64748B] hover:text-slate-900 dark:hover:text-[#94A3B8]'
+                    ? 'bg-white[0.1] text-blue-600 shadow-sm border border-slate-200[0.12] font-semibold'
+                    : 'text-slate-600[#64748B] hover:text-slate-900:text-[#94A3B8]'
                 }`}
               >
                 {item.label.split(' ')[0]}
@@ -214,7 +214,7 @@ export default function MultiMetricAnalytics({ deviceId, telemetry }) {
         </div>
 
         {/* Time Range Selector */}
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-[#0B1728]/80 border border-slate-200 dark:border-white/[0.06] self-start lg:self-auto">
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100[#0B1728]/80 border border-slate-200[0.06] self-start lg:self-auto">
           {TIME_RANGES.map((range) => {
             const isSelected = activeRange === range;
             return (
@@ -224,8 +224,8 @@ export default function MultiMetricAnalytics({ deviceId, telemetry }) {
                 onClick={() => setActiveRange(range)}
                 className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-blue-100 dark:bg-[#60A5FA]/20 text-blue-700 dark:text-[#60A5FA] border border-blue-200 dark:border-[#60A5FA]/30 font-semibold'
-                    : 'text-slate-600 dark:text-[#64748B] hover:text-slate-900 dark:hover:text-[#94A3B8]'
+                    ? 'bg-blue-100[#60A5FA]/20 text-blue-700[#60A5FA] border border-blue-200[#60A5FA]/30 font-semibold'
+                    : 'text-slate-600[#64748B] hover:text-slate-900:text-[#94A3B8]'
                 }`}
               >
                 {range}
@@ -236,34 +236,34 @@ export default function MultiMetricAnalytics({ deviceId, telemetry }) {
       </div>
 
       {/* Metric Current Readout & Timestamp Indicator */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.04]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 rounded-xl bg-slate-50[0.02] border border-slate-200/80[0.04]">
         <div className="flex items-center gap-4">
           <div>
-            <span className="text-[10px] text-slate-500 dark:text-[#64748B] uppercase tracking-wider font-semibold">
+            <span className="text-[10px] text-slate-500[#64748B] uppercase tracking-wider font-semibold">
               Current Telemetry
             </span>
-            <div className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white font-sans tabular-nums">
-              {currentVal} <span className="text-sm font-light text-slate-500 dark:text-[#94A3B8]">{cfg.unit}</span>
+            <div className="text-xl sm:text-2xl font-bold text-slate-900 font-sans tabular-nums">
+              {currentVal} <span className="text-sm font-light text-slate-500[#94A3B8]">{cfg.unit}</span>
             </div>
           </div>
-          <div className="hidden sm:block h-8 w-px bg-slate-200 dark:bg-white/[0.06]" />
+          <div className="hidden sm:block h-8 w-px bg-slate-200[0.06]" />
           <div className="hidden sm:block">
-            <span className="text-[10px] text-slate-500 dark:text-[#64748B] uppercase tracking-wider font-semibold">
+            <span className="text-[10px] text-slate-500[#64748B] uppercase tracking-wider font-semibold">
               Window Mode
             </span>
-            <div className="text-xs font-semibold text-blue-600 dark:text-[#60A5FA] mt-0.5">{activeRange} Continuous</div>
+            <div className="text-xs font-semibold text-blue-600[#60A5FA] mt-0.5">{activeRange} Continuous</div>
           </div>
         </div>
 
         {/* Timestamps info right in the dashboard card */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-[#94A3B8] font-mono bg-white dark:bg-white/[0.03] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/[0.06]">
-            <Clock size={12} className="text-blue-500 dark:text-[#60A5FA]" />
+          <div className="flex items-center gap-1.5 text-xs text-slate-600[#94A3B8] font-mono bg-white[0.03] px-2.5 py-1 rounded-lg border border-slate-200[0.06]">
+            <Clock size={12} className="text-blue-500[#60A5FA]" />
             <span className="text-[11px]">{lastTimestamp}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-[#34D399] animate-pulse" />
-            <span className="text-[11px] text-slate-500 dark:text-[#94A3B8] font-mono hidden md:inline">Live</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500[#34D399] animate-pulse" />
+            <span className="text-[11px] text-slate-500[#94A3B8] font-mono hidden md:inline">Live</span>
           </div>
         </div>
       </div>
@@ -305,15 +305,15 @@ export default function MultiMetricAnalytics({ deviceId, telemetry }) {
                 if (active && payload && payload.length) {
                   const pt = payload[0].payload;
                   return (
-                    <div className="p-3 rounded-xl bg-white dark:bg-[#0B1728]/95 border border-slate-200 dark:border-white/[0.12] shadow-2xl backdrop-blur-md">
-                      <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-[#64748B] font-mono border-b border-slate-100 dark:border-white/[0.08] pb-1.5 mb-1.5">
+                    <div className="p-3 rounded-xl bg-white[#0B1728]/95 border border-slate-200[0.12] shadow-2xl backdrop-blur-md">
+                      <div className="flex items-center gap-1.5 text-[10px] text-slate-500[#64748B] font-mono border-b border-slate-100[0.08] pb-1.5 mb-1.5">
                         <Clock size={11} className="text-blue-500" />
                         <span>{pt.fullTimestamp || label}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cfg.color }} />
-                        <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{cfg.label}:</span>
-                        <span className="text-sm font-bold text-slate-900 dark:text-white tabular-nums">
+                        <span className="text-xs font-medium text-slate-600">{cfg.label}:</span>
+                        <span className="text-sm font-bold text-slate-900 tabular-nums">
                           {payload[0].value} {cfg.unit}
                         </span>
                       </div>

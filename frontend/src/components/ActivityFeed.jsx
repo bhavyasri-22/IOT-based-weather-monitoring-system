@@ -12,29 +12,12 @@ function formatRelativeTime(ts) {
   return `${Math.floor(diff / 3600)}h ago`;
 }
 
-function EventIcon({ type }) {
-  switch (type) {
-    case 'telemetry':
-      return <Activity size={11} className="text-[#38BDF8]" />;
-    case 'alert':
-      return <AlertTriangle size={11} className="text-[#EF4444]" />;
-    case 'alert_resolved':
-      return <Zap size={11} className="text-[#22C55E]" />;
-    case 'heartbeat':
-      return <Radio size={11} className="text-[#94A3B8]" />;
-    case 'device':
-      return <Cpu size={11} className="text-[#F59E0B]" />;
-    default:
-      return <Activity size={11} className="text-[#64748B]" />;
-  }
-}
-
 const EVENT_DOT = {
-  telemetry: 'bg-[#38BDF8]',
-  alert: 'bg-[#EF4444]',
-  alert_resolved: 'bg-[#22C55E]',
-  heartbeat: 'bg-[#94A3B8]',
-  device: 'bg-[#F59E0B]',
+  telemetry: 'bg-sky-500',
+  alert: 'bg-rose-500',
+  alert_resolved: 'bg-emerald-500',
+  heartbeat: 'bg-slate-400',
+  device: 'bg-amber-500',
 };
 
 export default function ActivityFeed({ events = [] }) {
@@ -49,10 +32,10 @@ export default function ActivityFeed({ events = [] }) {
   }, [events.length]);
 
   return (
-    <div className="panel-card border border-[#26303B] p-4 flex flex-col">
+    <div className="bg-white/95 border border-sky-200/80 rounded-2xl p-4 shadow-xs flex flex-col">
       <div className="flex items-center gap-2 mb-3 flex-shrink-0">
-        <Activity size={13} className="text-[#64748B]" />
-        <p className="text-[10px] font-semibold tracking-widest text-[#64748B]">RECENT ACTIVITY</p>
+        <Activity size={13} className="text-slate-500" />
+        <p className="text-[10px] font-semibold tracking-widest text-slate-500 uppercase">RECENT ACTIVITY</p>
       </div>
 
       <div
@@ -62,9 +45,9 @@ export default function ActivityFeed({ events = [] }) {
       >
         {displayed.length === 0 ? (
           <div className="py-6 text-center">
-            <Radio size={18} className="text-[#3A4654] mx-auto mb-2" />
-            <p className="text-xs text-[#64748B]">Waiting for events...</p>
-            <p className="text-[10px] text-[#3A4654] mt-0.5">Real-time activity will appear here</p>
+            <Radio size={18} className="text-slate-400 mx-auto mb-2" />
+            <p className="text-xs text-slate-600">Waiting for events...</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Real-time activity will appear here</p>
           </div>
         ) : (
           displayed.map((evt) => (
@@ -73,15 +56,15 @@ export default function ActivityFeed({ events = [] }) {
               className="flex items-start gap-2.5 group"
             >
               <div className="flex-shrink-0 mt-0.5">
-                <div className={`w-1.5 h-1.5 rounded-full mt-1 ${EVENT_DOT[evt.type] || 'bg-[#64748B]'}`} />
+                <div className={`w-1.5 h-1.5 rounded-full mt-1 ${EVENT_DOT[evt.type] || 'bg-slate-400'}`} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-[#94A3B8] leading-snug">{evt.title}</p>
+                <p className="text-xs text-slate-800 leading-snug">{evt.title}</p>
                 {evt.subtitle && (
-                  <p className="text-[10px] text-[#64748B] mt-0.5 truncate">{evt.subtitle}</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5 truncate">{evt.subtitle}</p>
                 )}
               </div>
-              <span className="text-[10px] text-[#3A4654] flex-shrink-0 whitespace-nowrap group-hover:text-[#64748B] transition-colors">
+              <span className="text-[10px] text-slate-400 flex-shrink-0 whitespace-nowrap group-hover:text-slate-600 transition-colors">
                 {formatRelativeTime(evt.timestamp)}
               </span>
             </div>

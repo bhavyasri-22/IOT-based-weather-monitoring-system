@@ -53,10 +53,10 @@ export default function WeatherHero({ telemetry, lastUpdated, deviceStatus }) {
   const fmt = (val, suffix = '') => val != null ? `${val}${suffix}` : '—';
 
   return (
-    <div className="relative overflow-hidden rounded-2xl p-6 sm:p-8 bg-white dark:bg-[#101D2E]/70 border border-slate-200/80 dark:border-white/[0.08] backdrop-blur-2xl shadow-sm dark:shadow-2xl transition-colors text-slate-800 dark:text-white">
+    <div className="relative overflow-hidden rounded-2xl p-6 sm:p-8 bg-white[#101D2E]/70 border border-slate-200/80[0.08] backdrop-blur-2xl shadow-sm transition-colors text-slate-800">
       {/* Ambient glows */}
-      <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-400/10 dark:bg-[#60A5FA]/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-cyan-400/10 dark:bg-[#38BDF8]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-400/10[#60A5FA]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-cyan-400/10[#38BDF8]/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative z-10">
         {/* ── Location + Temp + Sub-metrics */}
@@ -65,24 +65,24 @@ export default function WeatherHero({ telemetry, lastUpdated, deviceStatus }) {
           {/* Location + condition badge + timestamp */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-blue-500/10 dark:bg-[#60A5FA]/10 border border-blue-500/25 dark:border-[#60A5FA]/25 flex items-center justify-center">
-                <MapPin size={17} className="text-blue-600 dark:text-[#60A5FA]" />
+              <div className="w-9 h-9 rounded-xl bg-blue-500/10[#60A5FA]/10 border border-blue-500/25[#60A5FA]/25 flex items-center justify-center">
+                <MapPin size={17} className="text-blue-600[#60A5FA]" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                     {userLoc.city || 'Detecting Location...'}
                   </h2>
                   {userLoc.coordsFormatted && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-[#94A3B8] border border-slate-200 dark:border-white/[0.08] font-mono">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100[0.06] text-slate-600[#94A3B8] border border-slate-200[0.08] font-mono">
                       {userLoc.coordsFormatted}
                     </span>
                   )}
                 </div>
-                <div className="flex flex-wrap items-center gap-2 mt-0.5 text-xs text-slate-500 dark:text-[#64748B]">
+                <div className="flex flex-wrap items-center gap-2 mt-0.5 text-xs text-slate-500[#64748B]">
                   <span>{userLoc.fullAddress || 'Environmental Station'}</span>
                   <span>·</span>
-                  <span className="inline-flex items-center gap-1 font-mono text-blue-600 dark:text-[#60A5FA] font-medium bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-100 dark:border-blue-500/20">
+                  <span className="inline-flex items-center gap-1 font-mono text-blue-600[#60A5FA] font-medium bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
                     <Clock size={11} />
                     {lastUpdated ? `${new Date(lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })} (${formatRelativeTime(lastUpdated)})` : 'Live Sync'}
                   </span>
@@ -150,42 +150,42 @@ export default function WeatherHero({ telemetry, lastUpdated, deviceStatus }) {
             <div>
               {temp != null ? (
                 <div className="flex items-baseline">
-                  <span className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight text-slate-900 dark:text-white font-sans">
+                  <span className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight text-slate-900 font-sans">
                     {temp}
                   </span>
-                  <span className="text-3xl sm:text-4xl text-blue-600 dark:text-[#60A5FA] font-light ml-1">°C</span>
+                  <span className="text-3xl sm:text-4xl text-blue-600[#60A5FA] font-light ml-1">°C</span>
                 </div>
               ) : (
-                <div className="text-4xl font-semibold text-slate-400 dark:text-[#64748B]">Sensor offline</div>
+                <div className="text-4xl font-semibold text-slate-400[#64748B]">Sensor offline</div>
               )}
               <div className="flex items-center gap-2 mt-1">
                 {feelsLike != null ? (
-                  <span className="text-sm font-medium text-slate-600 dark:text-[#94A3B8]">
+                  <span className="text-sm font-medium text-slate-600[#94A3B8]">
                     Feels like <span className="text-amber-500 font-bold">{feelsLike}°C</span>
                   </span>
                 ) : (
-                  <span className="text-sm text-slate-400 dark:text-[#64748B]">Heat index: —</span>
+                  <span className="text-sm text-slate-400[#64748B]">Heat index: —</span>
                 )}
-                {description && <><span className="text-xs text-slate-400 dark:text-[#64748B]">·</span><span className="text-xs text-slate-500 dark:text-[#64748B]">{description}</span></>}
+                {description && <><span className="text-xs text-slate-400[#64748B]">·</span><span className="text-xs text-slate-500[#64748B]">{description}</span></>}
               </div>
             </div>
           </div>
 
           {/* Sub-metrics row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-slate-200/80 dark:border-white/[0.06]">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-slate-200/80[0.06]">
             {[
               { label: 'Humidity',   value: fmt(humidity, '%'),      icon: Droplets, color: '#0EA5E9' },
               { label: 'Wind',       value: fmt(windSpeed, ' km/h'), icon: Wind,     color: '#3B82F6' },
               { label: 'Pressure',   value: fmt(pressure, ' hPa'),   icon: Gauge,    color: '#F59E0B' },
               { label: 'Visibility', value: fmt(visibilityKm, ' km'),icon: Eye,      color: '#10B981' },
             ].map(({ label, value, icon: Icon, color }) => (
-              <div key={label} className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.04]">
+              <div key={label} className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50[0.02] border border-slate-200/80[0.04]">
                 <div className="p-2 rounded-lg" style={{ backgroundColor: `${color}15`, color }}>
                   <Icon size={16} />
                 </div>
                 <div>
-                  <p className="text-[11px] text-slate-500 dark:text-[#64748B] font-medium">{label}</p>
-                  <p className="text-sm font-bold text-slate-900 dark:text-[#F1F5F9]">{value}</p>
+                  <p className="text-[11px] text-slate-500[#64748B] font-medium">{label}</p>
+                  <p className="text-sm font-bold text-slate-900[#F1F5F9]">{value}</p>
                 </div>
               </div>
             ))}

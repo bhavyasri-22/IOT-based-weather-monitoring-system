@@ -3,28 +3,27 @@ import { useLocation, Link } from 'react-router-dom';
 import {
   Menu,
   X,
-  MapPin,
   Bell,
   Clock,
-  Radio,
+  MapPin,
+  LogOut,
   ShieldCheck,
   UserCheck,
   ChevronRight,
-  Check,
   AlertTriangle,
-  LogOut
+  Check
 } from 'lucide-react';
-import { formatRelativeTime } from '../utils/weatherUtils';
 import useUserLocation from '../hooks/useUserLocation';
+import { formatRelativeTime } from '../utils/weatherUtils';
 
-const PAGE_META = {
-  '/dashboard':            { title: 'Weather Overview',        subtitle: 'Real-time environmental conditions' },
-  '/dashboard/live':       { title: 'Live Sensor Monitor',     subtitle: 'High-frequency telemetry streams' },
-  '/dashboard/analytics':  { title: 'Environmental Analytics', subtitle: 'Multi-sensor historical trend intelligence' },
-  '/dashboard/history':    { title: 'Historical Archive',      subtitle: 'Time-series data logs and exports' },
-  '/dashboard/devices':    { title: 'Sensors & Hardware',      subtitle: 'Node diagnostics, pinouts, and calibration' },
-  '/dashboard/alerts':     { title: 'Environmental Alerts',    subtitle: 'Active system breaches and audit logs' },
-  '/dashboard/admin':      { title: 'System Configuration',    subtitle: 'Alert threshold limits and node parameters' },
+const PAGE_TITLES = {
+  '/dashboard': { title: 'Environmental Overview', subtitle: 'Live Weather Station Gateway' },
+  '/dashboard/live': { title: 'Real-time Telemetry Monitor', subtitle: 'Direct Node Data Ingestion' },
+  '/dashboard/analytics': { title: 'Historical Environmental Analytics', subtitle: 'Longitudinal Trend Correlator' },
+  '/dashboard/devices': { title: 'Hardware Node Registry', subtitle: 'Sensor Infrastructure Health' },
+  '/dashboard/alerts': { title: 'Safety Alerts & Incidents', subtitle: 'Automated Threshold System' },
+  '/dashboard/history': { title: 'Telemetry Logs Archive', subtitle: 'Historical Weather Observations' },
+  '/dashboard/admin': { title: 'Administrator Control Panel', subtitle: 'System & Parameter Calibration' },
 };
 
 export default function TopHeader({
@@ -37,53 +36,51 @@ export default function TopHeader({
   activeAlertCount = 0,
   activeAlerts = [],
   unreadCount = 0,
-  onResolveAlert,
   onMarkAllAsRead,
+  onResolveAlert,
   user,
   onLogout,
 }) {
-  const { pathname } = useLocation();
+  const location = useLocation();
   const userLoc = useUserLocation();
-  const meta = PAGE_META[pathname] || { title: 'Weather Overview', subtitle: 'Real-time environmental conditions' };
+  const [clockTime, setClockTime] = useState('');
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notifRef = useRef(null);
 
   const isOnline = deviceStatus === 'online';
   const isWsConnected = wsState === 'connected';
 
-  // Filter out any bogus 4095 flood alerts
-  const validAlerts = (activeAlerts || []).filter(
-    (a) => (a.status === 'active' || !a.resolved) &&
-      !(a.parameter === 'rain_intensity' && (a.trigger_value >= 100 || (a.message && a.message.includes('4095'))))
-  );
-  const validAlertCount = validAlerts.length;
-
-  // Live wall clock
-  const [clockTime, setClockTime] = useState(() => new Date().toLocaleTimeString());
+  // Live system clock updater
   useEffect(() => {
-    const timer = setInterval(() => {
-      setClockTime(new Date().toLocaleTimeString());
-    }, 1000);
-    return () => clearInterval(timer);
+    function updateClock() {
+      const now = new Date();
+      setClockTime(
+        now.toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true,
+        })
+      );
+    }
+    updateClock();
+    const interval = setInterval(updateClock, 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  // Notifications popup
-  const [showNotifications, setShowNotifications] = useState(false);
-  const notifRef = useRef(null);
-
-  const handleToggleNotifications = () => {
-    const nextState = !showNotifications;
-    setShowNotifications(nextState);
-    // If opening notifications and there are unread items, mark as read immediately
-    if (nextState && unreadCount > 0 && typeof onMarkAllAsRead === 'function') {
-      onMarkAllAsRead();
-    }
+  const meta = PAGE_TITLES[location.pathname] || {
+    title: 'IoT Weather Console',
+    subtitle: 'Real-time Environmental Monitoring',
   };
 
-  useEffect(() => {
-    const onEscape = (event) => { if (event.key === 'Escape') setShowNotifications(false); };
-    document.addEventListener('keydown', onEscape);
-    return () => document.removeEventListener('keydown', onEscape);
-  }, []);
+  const handleToggleNotifications = () => {
+    if (!showNotifications && typeof onMarkAllAsRead === 'function') {
+      onMarkAllAsRead();
+    }
+    setShowNotifications((prev) => !prev);
+  };
 
+  // Close flyout when clicking outside
   useEffect(() => {
     function handleClickOutside(e) {
       if (notifRef.current && !notifRef.current.contains(e.target)) {
@@ -94,14 +91,17 @@ export default function TopHeader({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const validAlerts = Array.isArray(activeAlerts) ? activeAlerts : [];
+  const validAlertCount = validAlerts.length;
+
   return (
-    <header className="sticky top-0 z-40 h-16 w-full px-4 sm:px-6 bg-white/90 dark:bg-[#07111F]/80 backdrop-blur-2xl border-b border-slate-200/80 dark:border-white/[0.08] flex items-center justify-between transition-colors shadow-sm dark:shadow-none">
+    <header className="sticky top-0 z-40 h-16 w-full px-4 sm:px-6 bg-white/95 backdrop-blur-2xl border-b border-slate-200 flex items-center justify-between transition-colors shadow-xs">
       {/* Left side: Hamburger ☰ menu trigger + Page Title */}
       <div className="flex items-center gap-3 sm:gap-4">
         <button
           type="button"
           onClick={onToggleSidebar}
-          className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-white/[0.04] hover:bg-slate-200 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center text-slate-700 dark:text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm"
+          className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 flex items-center justify-center text-slate-700 transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-xs"
           aria-label="Toggle Navigation Drawer"
           title={isSidebarOpen ? "Close Menu" : "Open Menu"}
         >
@@ -109,10 +109,10 @@ export default function TopHeader({
         </button>
 
         <div>
-          <h1 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white tracking-tight leading-tight">
+          <h1 className="text-base sm:text-lg font-semibold text-slate-900 tracking-tight leading-tight">
             IOT – Weather Monitoring System
           </h1>
-          <p className="text-[11px] text-slate-500 dark:text-[#64748B] hidden sm:block leading-tight">
+          <p className="text-[11px] text-slate-500 hidden sm:block leading-tight">
             {meta.subtitle}
           </p>
         </div>
@@ -121,31 +121,31 @@ export default function TopHeader({
       {/* Right side: Location + Live Status + Clock + Notification Bell + Profile + Logout */}
       <div className="flex items-center gap-2 sm:gap-2.5">
         {/* Location Selector Indicator */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06]">
-          <MapPin size={13} className="text-blue-500 dark:text-[#60A5FA]" />
-          <span className="text-xs font-semibold text-slate-800 dark:text-[#F1F5F9]">
+        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200">
+          <MapPin size={13} className="text-blue-500" />
+          <span className="text-xs font-semibold text-slate-800">
             {userLoc.city || 'Detecting Location...'}
           </span>
         </div>
 
         {/* Live Status Indicator */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06]">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200">
           {isWsConnected ? (
             <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#10B981] dark:bg-[#34D399] shadow-[0_0_8px_#10B981] animate-pulse" />
-              <span className="text-xs font-bold tracking-wider text-[#059669] dark:text-[#34D399]">LIVE</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10B981] animate-pulse" />
+              <span className="text-xs font-bold tracking-wider text-emerald-600">LIVE</span>
             </div>
           ) : (
             <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#F59E0B] animate-ping" />
-              <span className="text-xs font-bold tracking-wider text-[#D97706] dark:text-[#F59E0B]">Reconnecting...</span>
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+              <span className="text-xs font-bold tracking-wider text-amber-600">Reconnecting...</span>
             </div>
           )}
 
-          <span className="hidden sm:inline w-px h-3.5 bg-slate-300 dark:bg-white/[0.1]" />
+          <span className="hidden sm:inline w-px h-3.5 bg-slate-300" />
 
-          <div className="hidden sm:flex items-center gap-1 text-xs text-slate-600 dark:text-[#94A3B8] font-mono">
-            <Clock size={12} className="text-slate-400 dark:text-[#64748B]" />
+          <div className="hidden sm:flex items-center gap-1 text-xs text-slate-600 font-mono">
+            <Clock size={12} className="text-slate-400" />
             <span>{clockTime}</span>
           </div>
         </div>
@@ -155,16 +155,17 @@ export default function TopHeader({
           <button
             type="button"
             onClick={handleToggleNotifications}
-            className={`relative w-9 h-9 rounded-xl border flex items-center justify-center transition-all cursor-pointer shadow-sm ${showNotifications || unreadCount > 0
-                ? 'bg-blue-50 dark:bg-[#60A5FA]/15 border-blue-200 dark:border-[#60A5FA]/30 text-blue-600 dark:text-[#60A5FA]'
-                : 'bg-slate-100 dark:bg-white/[0.03] border-slate-200 dark:border-white/[0.06] text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/[0.06]'
-              }`}
+            className={`relative w-9 h-9 rounded-xl border flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+              showNotifications || unreadCount > 0
+                ? 'bg-blue-50 border-blue-200 text-blue-600'
+                : 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+            }`}
             title="System Alerts & Notifications"
             aria-label="View notifications"
           >
-            <Bell size={16} className={unreadCount > 0 ? 'text-[#EF4444] dark:text-[#F87171] animate-bounce-subtle' : ''} />
+            <Bell size={16} className={unreadCount > 0 ? 'text-rose-500' : ''} />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#EF4444] dark:bg-[#F87171] flex items-center justify-center text-[9px] font-bold text-white shadow-md">
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 flex items-center justify-center text-[9px] font-bold text-white shadow-md">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
@@ -172,21 +173,20 @@ export default function TopHeader({
 
           {/* Notifications Flyout */}
           {showNotifications && (
-            <div className="absolute right-0 top-12 w-80 sm:w-88 p-4 rounded-2xl bg-white dark:bg-[#0B1728]/95 border border-slate-200 dark:border-white/[0.12] shadow-2xl backdrop-blur-2xl z-50 space-y-3 text-slate-800 dark:text-white">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/[0.08]">
+            <div className="absolute right-0 top-12 w-80 sm:w-88 p-4 rounded-2xl bg-white border border-slate-200 shadow-2xl backdrop-blur-2xl z-50 space-y-3 text-slate-800">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200">
                 <div className="flex items-center gap-2">
-                  <Bell size={14} className="text-blue-500 dark:text-[#60A5FA]" />
-                  <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Alert Center</span>
+                  <Bell size={14} className="text-blue-500" />
+                  <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">Alert Center</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-bold border border-blue-200 dark:border-blue-800/40">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold border border-blue-200">
                     {validAlertCount} total
                   </span>
-                  {/* Dedicated Close Button */}
                   <button
                     type="button"
                     onClick={() => setShowNotifications(false)}
-                    className="w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.12] text-slate-500 dark:text-[#94A3B8] flex items-center justify-center cursor-pointer transition-colors"
+                    className="w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer transition-colors"
                     title="Close"
                     aria-label="Close"
                   >
@@ -197,34 +197,34 @@ export default function TopHeader({
 
               {validAlerts.length === 0 ? (
                 <div className="py-6 text-center">
-                  <Check size={22} className="text-[#10B981] dark:text-[#34D399] mx-auto mb-1.5" />
-                  <p className="text-xs font-semibold text-slate-900 dark:text-white">You're all caught up!</p>
-                  <p className="text-[10px] text-slate-500 dark:text-[#64748B]">No active alerts or sensor warnings</p>
+                  <Check size={22} className="text-emerald-500 mx-auto mb-1.5" />
+                  <p className="text-xs font-semibold text-slate-900">You're all caught up!</p>
+                  <p className="text-[10px] text-slate-500">No active alerts or sensor warnings</p>
                 </div>
               ) : (
                 <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                   {validAlerts.map((a) => (
                     <div
                       key={a._id || a.id}
-                      className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06] text-xs flex items-start gap-2.5"
+                      className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-start gap-2.5"
                     >
-                      <AlertTriangle size={14} className="text-rose-500 dark:text-[#F87171] flex-shrink-0 mt-0.5" />
+                      <AlertTriangle size={14} className="text-rose-500 flex-shrink-0 mt-0.5" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1 mb-0.5">
-                          <span className="text-[9px] font-bold uppercase text-rose-600 dark:text-[#F87171]">
+                          <span className="text-[9px] font-bold uppercase text-rose-600">
                             {a.parameter} · {a.severity}
                           </span>
-                          <span className="text-[9px] text-slate-400 dark:text-[#64748B] font-mono">
+                          <span className="text-[9px] text-slate-400 font-mono">
                             {formatRelativeTime(a.triggered_at || a.createdAt)}
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-700 dark:text-[#E2E8F0] leading-snug">{a.message}</p>
+                        <p className="text-[11px] text-slate-700 leading-snug">{a.message}</p>
                       </div>
                       {user?.role === 'admin' && onResolveAlert && (a._id || a.id) && (
                         <button
                           type="button"
                           onClick={() => onResolveAlert(a._id || a.id)}
-                          className="p-1 rounded bg-slate-200/80 hover:bg-emerald-100 dark:bg-white/[0.05] dark:hover:bg-[#34D399]/20 text-slate-600 hover:text-emerald-600 dark:text-[#94A3B8] dark:hover:text-[#34D399] transition-all cursor-pointer"
+                          className="p-1 rounded bg-slate-200 hover:bg-emerald-100 text-slate-600 hover:text-emerald-600 transition-all cursor-pointer"
                           title="Resolve alert"
                         >
                           <Check size={12} />
@@ -235,18 +235,18 @@ export default function TopHeader({
                 </div>
               )}
 
-              <div className="pt-2 border-t border-slate-200 dark:border-white/[0.06] flex items-center justify-between text-xs">
+              <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-xs">
                 <Link
                   to="/dashboard/alerts"
                   onClick={() => setShowNotifications(false)}
-                  className="text-blue-600 dark:text-[#60A5FA] hover:underline flex items-center gap-1 font-semibold"
+                  className="text-blue-600 hover:underline flex items-center gap-1 font-semibold"
                 >
                   View full logs <ChevronRight size={12} />
                 </Link>
                 <button
                   type="button"
                   onClick={() => setShowNotifications(false)}
-                  className="text-slate-500 hover:text-slate-700 dark:text-[#64748B] dark:hover:text-[#94A3B8] cursor-pointer"
+                  className="text-slate-500 hover:text-slate-700 cursor-pointer"
                 >
                   Close
                 </button>
@@ -257,13 +257,13 @@ export default function TopHeader({
 
         {/* Profile / User Badge */}
         <div className="hidden sm:flex items-center gap-2 pl-1.5">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06]">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200">
             {user?.role === 'admin' ? (
-              <ShieldCheck size={14} className="text-blue-500 dark:text-[#60A5FA]" />
+              <ShieldCheck size={14} className="text-blue-500" />
             ) : (
-              <UserCheck size={14} className="text-[#059669] dark:text-[#34D399]" />
+              <UserCheck size={14} className="text-emerald-600" />
             )}
-            <span className="text-xs font-semibold text-slate-800 dark:text-white truncate max-w-[100px]">
+            <span className="text-xs font-semibold text-slate-800 truncate max-w-[100px]">
               {user?.email ? user.email.split('@')[0] : (user?.username || 'User')}
             </span>
           </div>
@@ -274,7 +274,7 @@ export default function TopHeader({
           <button
             type="button"
             onClick={onLogout}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30 text-xs font-semibold transition-all cursor-pointer shadow-sm active:scale-95 ml-1"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-semibold transition-all cursor-pointer shadow-xs active:scale-95 ml-1"
             title="Sign Out"
             aria-label="Logout"
           >

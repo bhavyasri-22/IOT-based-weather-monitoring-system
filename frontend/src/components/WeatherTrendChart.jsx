@@ -34,8 +34,8 @@ const CustomTooltip = ({ active, payload, label, metric }) => {
     : label;
 
   return (
-    <div className="px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.12] bg-white/95 dark:bg-[#0B1522]/95 backdrop-blur-md text-xs shadow-xl text-slate-800 dark:text-white">
-      <div className="text-[10px] text-slate-400 dark:text-slate-400 mb-1 font-mono">
+    <div className="px-3.5 py-2.5 rounded-xl border border-slate-200[0.12] bg-white/95[#0B1522]/95 backdrop-blur-md text-xs shadow-xl text-slate-800">
+      <div className="text-[10px] text-slate-400 mb-1 font-mono">
         {timeStr}
       </div>
       <div className="flex items-center gap-2 font-bold">
@@ -126,21 +126,21 @@ export default function WeatherTrendChart({ deviceId, telemetry }) {
   }, [data]);
 
   return (
-    <div className="rounded-3xl p-5 sm:p-6 bg-white dark:bg-[#0E1A29]/80 border border-sky-100/80 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-all space-y-4">
+    <div className="rounded-3xl p-5 sm:p-6 bg-white[#0E1A29]/80 border border-sky-100/80[0.08] shadow-sm hover:shadow-md transition-all space-y-4">
       {/* Header with Title & Metric Toggle Buttons */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+          <h3 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <TrendingUp size={16} className="text-sky-500" />
             Environmental Trend Analysis
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             Real-time multi-point telemetry curve
           </p>
         </div>
 
         {/* Metric Selector Tabs */}
-        <div className="flex items-center gap-1 p-1 rounded-2xl bg-slate-100 dark:bg-[#07111E] border border-slate-200/70 dark:border-white/[0.06]">
+        <div className="flex items-center gap-1 p-1 rounded-2xl bg-slate-100[#07111E] border border-slate-200/70[0.06]">
           {METRICS.map((m) => {
             const Icon = m.icon;
             const isSelected = selectedMetric === m.key;
@@ -150,8 +150,8 @@ export default function WeatherTrendChart({ deviceId, telemetry }) {
                 onClick={() => setSelectedMetric(m.key)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                   isSelected
-                    ? 'bg-white dark:bg-white/[0.1] text-slate-900 dark:text-white shadow-sm border border-slate-200/80 dark:border-white/[0.1]'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-white[0.1] text-slate-900 shadow-sm border border-slate-200/80[0.1]'
+                    : 'text-slate-500 hover:text-slate-900:text-white'
                 }`}
               >
                 <Icon size={13} style={{ color: isSelected ? m.color : undefined }} />
@@ -163,11 +163,11 @@ export default function WeatherTrendChart({ deviceId, telemetry }) {
       </div>
 
       {/* Summary Stat Bar */}
-      <div className="flex items-center justify-between px-1 py-1 text-xs text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-white/[0.04]">
+      <div className="flex items-center justify-between px-1 py-1 text-xs text-slate-500 border-b border-slate-100[0.04]">
         <div className="flex items-center gap-4">
-          <span>Current: <strong className="text-slate-900 dark:text-white font-mono">{latestVal ?? '—'} {activeMetric.unit}</strong></span>
-          <span>Min: <strong className="text-slate-700 dark:text-slate-300 font-mono">{minVal ?? '—'}</strong></span>
-          <span>Max: <strong className="text-slate-700 dark:text-slate-300 font-mono">{maxVal ?? '—'}</strong></span>
+          <span>Current: <strong className="text-slate-900 font-mono">{latestVal ?? '—'} {activeMetric.unit}</strong></span>
+          <span>Min: <strong className="text-slate-700 font-mono">{minVal ?? '—'}</strong></span>
+          <span>Max: <strong className="text-slate-700 font-mono">{maxVal ?? '—'}</strong></span>
         </div>
         <span className="font-mono text-[11px] text-slate-400">Live 24H Window</span>
       </div>

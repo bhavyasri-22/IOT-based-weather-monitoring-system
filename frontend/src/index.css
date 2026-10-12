@@ -22,15 +22,6 @@
     --color-danger:     #C62828;
   }
 
-  html.dark {
-    --color-bg:         #07111F;
-    --color-bg-card:    rgba(14,26,41,0.88);
-    --color-border:     rgba(255,255,255,0.08);
-    --color-text-main:  #F1F5F9;
-    --color-text-sub:   #94A3B8;
-    --color-text-muted: #64748B;
-  }
-
   html, body {
     background-color: var(--color-bg);
     color: var(--color-text-main);
@@ -45,8 +36,6 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(25,118,210,0.25); border-radius: 9999px; }
   ::-webkit-scrollbar-thumb:hover { background: rgba(25,118,210,0.45); }
-  html.dark ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); }
-  html.dark ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
 }
 
 /* ── Dashboard card surface ───────────────────────────────── */
@@ -65,17 +54,6 @@
   transform: translateY(-1px);
 }
 
-html.dark .card {
-  background: rgba(14,26,41,0.88);
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
-}
-
-html.dark .card:hover {
-  border-color: rgba(255,255,255,0.14);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.55);
-}
-
 /* ── Glass elevated ───────────────────────────────────────── */
 .glass-panel {
   background: rgba(255,255,255,0.72);
@@ -85,20 +63,17 @@ html.dark .card:hover {
   -webkit-backdrop-filter: blur(16px);
 }
 
-html.dark .glass-panel {
-  background: rgba(16,29,46,0.72);
-  border: 1px solid rgba(255,255,255,0.08);
-}
-
 .glass-panel-static {
   background: rgba(255,255,255,0.72);
   border: 1px solid rgba(144,202,249,0.45);
   border-radius: 18px;
 }
 
-html.dark .glass-panel-static {
-  background: rgba(16,29,46,0.65);
-  border: 1px solid rgba(255,255,255,0.06);
+.panel-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(144, 202, 249, 0.5);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.06);
 }
 
 /* ── Glow accents ─────────────────────────────────────────── */

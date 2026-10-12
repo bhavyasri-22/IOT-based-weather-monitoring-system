@@ -3,18 +3,13 @@ import { motion } from 'framer-motion';
 import { 
   BarChart3, 
   Download, 
-  Calendar, 
-  Filter, 
-  TrendingUp, 
-  TrendingDown, 
-  Layers,
-  Thermometer,
-  Droplets,
-  Gauge,
-  Wind,
-  Sparkles,
-  CloudRain,
-  Sun
+  Thermometer, 
+  Droplets, 
+  Gauge, 
+  Wind, 
+  Sparkles, 
+  CloudRain, 
+  Sun 
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -28,13 +23,13 @@ import {
 import { telemetryApi } from '../api/client';
 
 const METRICS = [
-  { id: 'temperature', label: 'Temperature', unit: '°C', color: '#FBBF24', icon: Thermometer },
-  { id: 'humidity', label: 'Humidity', unit: '%', color: '#38BDF8', icon: Droplets },
-  { id: 'pressure', label: 'Pressure', unit: 'hPa', color: '#60A5FA', icon: Gauge },
-  { id: 'wind_speed', label: 'Wind Speed', unit: 'km/h', color: '#34D399', icon: Wind },
-  { id: 'gas_aqi', label: 'Air Quality', unit: 'AQI', color: '#818CF8', icon: Sparkles },
-  { id: 'rain_intensity', label: 'Rainfall', unit: 'mm/h', color: '#38BDF8', icon: CloudRain },
-  { id: 'light_lux', label: 'Ambient Light', unit: 'lx', color: '#FBBF24', icon: Sun },
+  { id: 'temperature', label: 'Temperature', unit: '°C', color: '#D97706', icon: Thermometer },
+  { id: 'humidity', label: 'Humidity', unit: '%', color: '#0284C7', icon: Droplets },
+  { id: 'pressure', label: 'Pressure', unit: 'hPa', color: '#2563EB', icon: Gauge },
+  { id: 'wind_speed', label: 'Wind Speed', unit: 'km/h', color: '#059669', icon: Wind },
+  { id: 'gas_aqi', label: 'Air Quality', unit: 'AQI', color: '#7C3AED', icon: Sparkles },
+  { id: 'rain_intensity', label: 'Rainfall', unit: 'mm/h', color: '#0891B2', icon: CloudRain },
+  { id: 'light_lux', label: 'Ambient Light', unit: 'lx', color: '#D97706', icon: Sun },
 ];
 
 export default function Analytics({ deviceId = 'ESP32_SURATHKAL_01', telemetry }) {
@@ -112,33 +107,33 @@ export default function Analytics({ deviceId = 'ESP32_SURATHKAL_01', telemetry }
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="space-y-6 pb-12 max-w-[1600px] mx-auto"
+      className="space-y-6 pb-12 max-w-[1600px] mx-auto text-slate-800"
     >
       {/* Top Banner & Control Bar */}
-      <div className="p-6 rounded-2xl bg-[#101D2E]/80 border border-white/[0.08] backdrop-blur-xl shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="p-6 rounded-2xl bg-white/90 border border-sky-200/80 backdrop-blur-xl shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#60A5FA]/15 border border-[#60A5FA]/30 flex items-center justify-center text-[#60A5FA]">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shadow-xs">
               <BarChart3 size={18} />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white tracking-tight">Environmental Historical Analytics</h2>
-              <p className="text-xs text-[#64748B]">Multi-sensor trendline correlation, statistical ranges and exports</p>
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight">Environmental Historical Analytics</h2>
+              <p className="text-xs text-slate-500">Multi-sensor trendline correlation, statistical ranges and exports</p>
             </div>
           </div>
         </div>
 
         {/* Controls: Time Range + Export */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-[#0B1728]/80 border border-white/[0.06]">
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200">
             {['1h', '6h', '24h', '7d', '30d'].map((r) => (
               <button
                 key={r}
                 onClick={() => setRange(r)}
-                className={`px-3 py-1 rounded-lg text-xs font-medium uppercase transition-all ${
+                className={`px-3 py-1 rounded-lg text-xs font-medium uppercase transition-all cursor-pointer ${
                   range === r
-                    ? 'bg-[#60A5FA]/20 text-[#60A5FA] border border-[#60A5FA]/30 font-semibold'
-                    : 'text-[#64748B] hover:text-[#94A3B8]'
+                    ? 'bg-white text-blue-600 border border-slate-200 shadow-xs font-semibold'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 {r}
@@ -148,7 +143,7 @@ export default function Analytics({ deviceId = 'ESP32_SURATHKAL_01', telemetry }
 
           <button
             onClick={handleExportCSV}
-            className="px-3.5 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-xs font-semibold text-white flex items-center gap-1.5 transition-all shadow-sm"
+            className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
           >
             <Download size={13} />
             <span>Export CSV</span>
@@ -165,10 +160,10 @@ export default function Analytics({ deviceId = 'ESP32_SURATHKAL_01', telemetry }
             <button
               key={m.id}
               onClick={() => setMetric(m.id)}
-              className={`p-3.5 rounded-xl border text-left transition-all ${
+              className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
                 isSel
-                  ? 'bg-[#142337] border-[#60A5FA]/50 shadow-lg'
-                  : 'bg-[#101D2E]/60 border-white/[0.06] hover:border-white/[0.12] hover:bg-[#101D2E]'
+                  ? 'bg-blue-50/80 border-blue-400 shadow-xs ring-1 ring-blue-300'
+                  : 'bg-white/90 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
               }`}
             >
               <div
@@ -177,40 +172,40 @@ export default function Analytics({ deviceId = 'ESP32_SURATHKAL_01', telemetry }
               >
                 <MIcon size={14} />
               </div>
-              <span className="text-xs font-semibold text-white block">{m.label}</span>
-              <span className="text-[10px] text-[#64748B] font-mono">{m.unit}</span>
+              <span className={`text-xs font-semibold block ${isSel ? 'text-blue-900' : 'text-slate-900'}`}>{m.label}</span>
+              <span className="text-[10px] text-slate-500 font-mono">{m.unit}</span>
             </button>
           );
         })}
       </div>
 
       {/* Main Analytics Graph & Statistics */}
-      <div className="rounded-2xl p-6 bg-[#101D2E]/80 border border-white/[0.08] backdrop-blur-xl shadow-xl space-y-6">
+      <div className="rounded-2xl p-6 bg-white/90 border border-slate-200 shadow-xs space-y-6">
         {/* Statistical KPI Row */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-            <span className="text-[11px] text-[#64748B] uppercase font-medium tracking-wider">Current Sample</span>
-            <div className="text-2xl font-bold text-white mt-1 font-sans">
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <span className="text-[11px] text-slate-500 uppercase font-medium tracking-wider">Current Sample</span>
+            <div className="text-2xl font-bold text-slate-900 mt-1 font-sans">
               {values.length > 0 ? values[values.length - 1] : '—'}{' '}
-              <span className="text-sm font-light text-[#94A3B8]">{activeCfg.unit}</span>
+              <span className="text-sm font-light text-slate-500">{activeCfg.unit}</span>
             </div>
           </div>
-          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-            <span className="text-[11px] text-[#64748B] uppercase font-medium tracking-wider">Window Minimum</span>
-            <div className="text-2xl font-bold text-[#60A5FA] mt-1 font-sans">
-              {minVal} <span className="text-sm font-light text-[#94A3B8]">{activeCfg.unit}</span>
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <span className="text-[11px] text-slate-500 uppercase font-medium tracking-wider">Window Minimum</span>
+            <div className="text-2xl font-bold text-blue-600 mt-1 font-sans">
+              {minVal} <span className="text-sm font-light text-slate-500">{activeCfg.unit}</span>
             </div>
           </div>
-          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-            <span className="text-[11px] text-[#64748B] uppercase font-medium tracking-wider">Window Average</span>
-            <div className="text-2xl font-bold text-[#34D399] mt-1 font-sans">
-              {avgVal} <span className="text-sm font-light text-[#94A3B8]">{activeCfg.unit}</span>
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <span className="text-[11px] text-slate-500 uppercase font-medium tracking-wider">Window Average</span>
+            <div className="text-2xl font-bold text-emerald-600 mt-1 font-sans">
+              {avgVal} <span className="text-sm font-light text-slate-500">{activeCfg.unit}</span>
             </div>
           </div>
-          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-            <span className="text-[11px] text-[#64748B] uppercase font-medium tracking-wider">Window Maximum</span>
-            <div className="text-2xl font-bold text-[#FBBF24] mt-1 font-sans">
-              {maxVal} <span className="text-sm font-light text-[#94A3B8]">{activeCfg.unit}</span>
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <span className="text-[11px] text-slate-500 uppercase font-medium tracking-wider">Window Maximum</span>
+            <div className="text-2xl font-bold text-amber-600 mt-1 font-sans">
+              {maxVal} <span className="text-sm font-light text-slate-500">{activeCfg.unit}</span>
             </div>
           </div>
         </div>
@@ -225,18 +220,18 @@ export default function Analytics({ deviceId = 'ESP32_SURATHKAL_01', telemetry }
                   <stop offset="95%" stopColor={activeCfg.color} stopOpacity={0.0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" vertical={false} />
+              <CartesianGrid stroke="#E2E8F0" strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="time" stroke="#64748B" fontSize={11} tickLine={false} />
               <YAxis stroke="#64748B" fontSize={11} tickLine={false} unit={` ${activeCfg.unit}`} />
               <Tooltip
                 content={({ active, payload, label }) => {
                   if (active && payload && payload.length) {
                     return (
-                      <div className="p-3.5 rounded-xl bg-[#0B1728]/95 border border-white/[0.12] shadow-2xl backdrop-blur-md text-xs">
-                        <p className="text-[#64748B] font-mono">{label}</p>
+                      <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xl text-xs">
+                        <p className="text-slate-500 font-mono">{label}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="w-2 h-2 rounded-full" style={{ backgroundColor: activeCfg.color }} />
-                          <span className="text-sm font-bold text-white">
+                          <span className="text-sm font-bold text-slate-900">
                             {payload[0].value} {activeCfg.unit}
                           </span>
                         </div>

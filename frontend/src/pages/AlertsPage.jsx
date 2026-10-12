@@ -1,16 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { alertsApi } from '../api/client';
 import { 
-  Bell, 
   AlertTriangle, 
   CheckCircle2, 
-  Clock, 
   Check, 
   RefreshCw, 
-  Filter,
-  Search,
-  ShieldAlert
+  Search, 
+  ShieldAlert 
 } from 'lucide-react';
 import { formatRelativeTime } from '../utils/weatherUtils';
 
@@ -78,41 +75,41 @@ export default function AlertsPage({ user, onResolve }) {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="space-y-6 pb-12 max-w-[1600px] mx-auto text-slate-800 dark:text-white"
+      className="space-y-6 pb-12 max-w-[1600px] mx-auto text-slate-800"
     >
       {/* Top Banner & Statistics */}
-      <div className="p-6 rounded-2xl bg-white dark:bg-[#101D2E]/80 border border-slate-200/80 dark:border-white/[0.08] backdrop-blur-xl shadow-sm dark:shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition-colors">
+      <div className="p-6 rounded-2xl bg-white/90 border border-sky-200/80 backdrop-blur-xl shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-[#F87171]/15 border border-rose-200 dark:border-[#F87171]/30 flex items-center justify-center text-rose-600 dark:text-[#F87171]">
+          <div className="w-10 h-10 rounded-xl bg-rose-100 border border-rose-200 flex items-center justify-center text-rose-600">
             <ShieldAlert size={20} />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Environmental Alerts & Audit Center</h2>
-            <p className="text-xs text-slate-500 dark:text-[#64748B]">Real-time safety rules, breach events, and incident resolutions</p>
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight">Environmental Alerts & Audit Center</h2>
+            <p className="text-xs text-slate-500">Real-time safety rules, breach events, and incident resolutions</p>
           </div>
         </div>
 
         {/* Counter Badges */}
         <div className="flex items-center gap-3 text-xs">
-          <div className="px-3 py-2 rounded-xl bg-rose-50 dark:bg-[#F87171]/10 border border-rose-200 dark:border-[#F87171]/20 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-rose-500 dark:bg-[#F87171]" />
-            <span className="text-rose-600 dark:text-[#F87171] font-semibold">{criticalCount} Critical</span>
+          <div className="px-3 py-2 rounded-xl bg-rose-50 border border-rose-200 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-rose-500" />
+            <span className="text-rose-700 font-semibold">{criticalCount} Critical</span>
           </div>
-          <div className="px-3 py-2 rounded-xl bg-amber-50 dark:bg-[#FBBF24]/10 border border-amber-200 dark:border-[#FBBF24]/20 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-amber-500 dark:bg-[#FBBF24]" />
-            <span className="text-amber-600 dark:text-[#FBBF24] font-semibold">{activeCount} Active</span>
+          <div className="px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-500" />
+            <span className="text-amber-800 font-semibold">{activeCount} Active</span>
           </div>
-          <div className="px-3 py-2 rounded-xl bg-emerald-50 dark:bg-[#34D399]/10 border border-emerald-200 dark:border-[#34D399]/20 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-[#34D399]" />
-            <span className="text-emerald-600 dark:text-[#34D399] font-semibold">{resolvedCount} Resolved</span>
+          <div className="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="text-emerald-700 font-semibold">{resolvedCount} Resolved</span>
           </div>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="p-4 rounded-2xl bg-white dark:bg-[#101D2E]/80 border border-slate-200/80 dark:border-white/[0.08] backdrop-blur-xl shadow-sm dark:shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors">
+      <div className="p-4 rounded-2xl bg-white/90 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Filter Tabs */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-[#0B1728]/80 border border-slate-200 dark:border-white/[0.06] overflow-x-auto">
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200 overflow-x-auto">
           {['all', 'critical', 'warning', 'resolved'].map((t) => (
             <button
               key={t}
@@ -120,8 +117,8 @@ export default function AlertsPage({ user, onResolve }) {
               onClick={() => setTab(t)}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all cursor-pointer ${
                 tab === t
-                  ? 'bg-white dark:bg-white/[0.1] text-blue-600 dark:text-white shadow-sm border border-slate-200 dark:border-white/[0.12]'
-                  : 'text-slate-600 dark:text-[#64748B] hover:text-slate-900 dark:hover:text-[#94A3B8]'
+                  ? 'bg-white text-blue-700 shadow-xs border border-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               {t}
@@ -132,20 +129,20 @@ export default function AlertsPage({ user, onResolve }) {
         {/* Search Input & Refresh Button */}
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#64748B]" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Search alerts..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-3 py-1.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#64748B] focus:outline-none focus:border-blue-500 dark:focus:border-[#60A5FA]"
+              className="pl-9 pr-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500"
             />
           </div>
 
           <button
             type="button"
             onClick={fetchAlerts}
-            className="p-2 rounded-xl bg-slate-100 dark:bg-white/[0.03] hover:bg-slate-200 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
+            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 hover:text-slate-900 transition-all cursor-pointer"
             title="Refresh"
           >
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
@@ -154,16 +151,16 @@ export default function AlertsPage({ user, onResolve }) {
       </div>
 
       {/* Alerts Table/List */}
-      <div className="rounded-2xl bg-white dark:bg-[#101D2E]/80 border border-slate-200/80 dark:border-white/[0.08] backdrop-blur-xl shadow-sm dark:shadow-xl overflow-hidden transition-colors">
+      <div className="rounded-2xl bg-white border border-slate-200 shadow-xs overflow-hidden">
         {error && <p className="m-4 rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}</p>}
         {filtered.length === 0 ? (
           <div className="py-16 text-center">
-            <CheckCircle2 size={36} className="text-emerald-500 dark:text-[#34D399] mx-auto mb-2 opacity-80" />
-            <p className="text-base font-semibold text-slate-900 dark:text-white">No alerts found</p>
-            <p className="text-xs text-slate-500 dark:text-[#64748B] mt-0.5">All monitored sensors are operating within defined thresholds</p>
+            <CheckCircle2 size={36} className="text-emerald-500 mx-auto mb-2 opacity-80" />
+            <p className="text-base font-semibold text-slate-900">No alerts found</p>
+            <p className="text-xs text-slate-500 mt-0.5">All monitored sensors are operating within defined thresholds</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-white/[0.04]">
+          <div className="divide-y divide-slate-100">
             {filtered.map((alert) => {
               const isCrit = alert.severity === 'critical';
               const isResolved = alert.status === 'resolved' || alert.resolved;
@@ -172,16 +169,16 @@ export default function AlertsPage({ user, onResolve }) {
               return (
                 <div
                   key={alertKey}
-                  className="p-4 sm:p-5 hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  className="p-4 sm:p-5 hover:bg-slate-50/80 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                 >
                   <div className="flex items-start gap-3.5 min-w-0">
                     <div
                       className={`p-2.5 rounded-xl flex-shrink-0 mt-0.5 ${
                         isResolved
-                          ? 'bg-emerald-100 text-emerald-600 dark:bg-[#34D399]/15 dark:text-[#34D399]'
+                          ? 'bg-emerald-100 text-emerald-600'
                           : isCrit
-                          ? 'bg-rose-100 text-rose-600 dark:bg-[#F87171]/15 dark:text-[#F87171]'
-                          : 'bg-amber-100 text-amber-600 dark:bg-[#FBBF24]/15 dark:text-[#FBBF24]'
+                          ? 'bg-rose-100 text-rose-600'
+                          : 'bg-amber-100 text-amber-600'
                       }`}
                     >
                       {isResolved ? (
@@ -196,23 +193,23 @@ export default function AlertsPage({ user, onResolve }) {
                         <span
                           className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
                             isResolved
-                              ? 'bg-emerald-100 text-emerald-700 dark:bg-[#34D399]/20 dark:text-[#34D399]'
+                              ? 'bg-emerald-100 text-emerald-800'
                               : isCrit
-                              ? 'bg-rose-100 text-rose-700 dark:bg-[#F87171]/20 dark:text-[#F87171]'
-                              : 'bg-amber-100 text-amber-700 dark:bg-[#FBBF24]/20 dark:text-[#FBBF24]'
+                              ? 'bg-rose-100 text-rose-800'
+                              : 'bg-amber-100 text-amber-800'
                           }`}
                         >
                           {isResolved ? 'Resolved' : alert.severity}
                         </span>
-                        <span className="text-xs font-mono text-blue-600 dark:text-[#60A5FA] uppercase font-semibold">
+                        <span className="text-xs font-mono text-blue-600 uppercase font-semibold">
                           {alert.parameter}
                         </span>
-                        <span className="text-xs text-slate-400 dark:text-[#64748B]">·</span>
-                        <span className="text-xs text-slate-500 dark:text-[#64748B] font-mono">
+                        <span className="text-xs text-slate-400">·</span>
+                        <span className="text-xs text-slate-500 font-mono">
                           {formatRelativeTime(alert.triggered_at || alert.createdAt)}
                         </span>
                       </div>
-                      <p className="text-sm font-medium text-slate-800 dark:text-white leading-relaxed">{alert.message}</p>
+                      <p className="text-sm font-medium text-slate-800 leading-relaxed">{alert.message}</p>
                     </div>
                   </div>
 
@@ -220,8 +217,8 @@ export default function AlertsPage({ user, onResolve }) {
                   <div className="flex items-center gap-4 self-end sm:self-center flex-shrink-0">
                     {alert.trigger_value != null && (
                       <div className="text-right">
-                        <span className="text-[10px] text-slate-400 dark:text-[#64748B] block font-mono uppercase">Reading</span>
-                        <span className="text-sm font-bold text-slate-900 dark:text-white font-mono">{alert.trigger_value}</span>
+                        <span className="text-[10px] text-slate-400 block font-mono uppercase">Reading</span>
+                        <span className="text-sm font-bold text-slate-900 font-mono">{alert.trigger_value}</span>
                       </div>
                     )}
 
@@ -229,7 +226,7 @@ export default function AlertsPage({ user, onResolve }) {
                       <button
                         type="button"
                         onClick={() => handleResolveAlert(alertKey)}
-                        className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-100 dark:bg-white/[0.05] dark:hover:bg-[#34D399]/20 border border-slate-200 dark:border-white/[0.08] hover:border-emerald-300 dark:hover:border-[#34D399]/40 text-slate-700 hover:text-emerald-700 dark:text-[#94A3B8] dark:hover:text-[#34D399] transition-all text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-sm"
+                        className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-100 border border-slate-200 hover:border-emerald-300 text-slate-700 hover:text-emerald-700 transition-all text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs"
                       >
                         <Check size={13} />
                         <span>Acknowledge & Resolve</span>

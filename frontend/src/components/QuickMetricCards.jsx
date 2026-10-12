@@ -261,10 +261,10 @@ export default function QuickMetricCards({ telemetry, activeAlerts = [] }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: index * 0.04 }}
             whileHover={{ y: -2 }}
-            className={`group relative p-4 rounded-xl backdrop-blur-xl transition-all duration-200 shadow-sm dark:shadow-lg ${
+            className={`group relative p-4 rounded-xl backdrop-blur-xl transition-all duration-200 shadow-sm ${
               c.isAlert
-                ? 'bg-rose-50/60 dark:bg-[#1C131D]/90 border border-rose-300/80 dark:border-rose-500/40 hover:border-rose-400'
-                : 'bg-white dark:bg-[#101D2E]/80 border border-slate-200/80 dark:border-white/[0.08] hover:border-blue-400 dark:hover:border-white/[0.18]'
+                ? 'bg-rose-50/60[#1C131D]/90 border border-rose-300/80 hover:border-rose-400'
+                : 'bg-white[#101D2E]/80 border border-slate-200/80[0.08] hover:border-blue-400:border-white/[0.18]'
             }`}
           >
             {/* Top row */}
@@ -285,20 +285,20 @@ export default function QuickMetricCards({ telemetry, activeAlerts = [] }) {
             {/* Label + Value */}
             <div>
               <div className="flex items-center justify-between">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-[#64748B]">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500[#64748B]">
                   {c.title}
                 </p>
                 {c.isAlert && (
                   <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
                 )}
               </div>
-              <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white font-sans tracking-tight mt-1 tabular-nums">
+              <p className="text-xl sm:text-2xl font-bold text-slate-900 font-sans tracking-tight mt-1 tabular-nums">
                 {c.value}
               </p>
             </div>
 
             {/* Bottom status – dynamically reflects actual threshold state */}
-            <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-white/[0.04] flex items-center justify-between text-[11px] gap-1">
+            <div className="mt-3 pt-2.5 border-t border-slate-100[0.04] flex items-center justify-between text-[11px] gap-1">
               <span
                 className={`font-bold px-1.5 py-0.5 rounded text-[10px] truncate max-w-[130px] border ${
                   c.isAlert ? 'animate-pulse' : ''
@@ -311,7 +311,7 @@ export default function QuickMetricCards({ telemetry, activeAlerts = [] }) {
               >
                 {c.status}
               </span>
-              <span className="text-slate-400 dark:text-[#64748B] text-[10px] truncate text-right">
+              <span className="text-slate-400[#64748B] text-[10px] truncate text-right">
                 {c.subText}
               </span>
             </div>
