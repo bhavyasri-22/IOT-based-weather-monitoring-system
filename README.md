@@ -1,6 +1,5 @@
 # 🌦️ IoT-Based Real-Time Weather Monitoring System
 
-[![Build & Tests](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
 [![Hardware](https://img.shields.io/badge/Hardware-ESP32%20%7C%20BME280%20%7C%20FC--37-blue.svg)]()
 [![Backend](https://img.shields.io/badge/Backend-Node.js%20%7C%20Express%20%7C%20WebSocket-informational.svg)]()
 [![Database](https://img.shields.io/badge/Database-MongoDB%20Atlas-success.svg)]()
@@ -10,7 +9,7 @@
 
 > A production-grade, end-to-end environmental intelligence and early-warning platform built with **ESP32**, **Cloud MQTT over TLS (Port 8883)**, **Node.js/Express**, **MongoDB Atlas**, and **React + Vite**. Designed to deliver microclimate atmospheric telemetry, sub-second live streaming, threshold-based automated alerting, and historical analytics over the public Internet.
 
-Developed for **IT303 – Internet of Things** at **National Institute of Technology Karnataka (NITK), Surathkal**, under the guidance of **Prof. Jaidhar C. D.**
+Developed for **IT303 – Software Engineering** at **National Institute of Technology Karnataka (NITK), Surathkal**, under the guidance of **Prof. Jaidhar C. D.**
 
 ---
 
@@ -34,7 +33,6 @@ Developed for **IT303 – Internet of Things** at **National Institute of Techno
 - [Testing & Quality Assurance](#-testing--quality-assurance)
 - [Production Cloud Deployment](#-production-cloud-deployment)
 - [Academic Credits & Contributors](#-academic-credits--contributors)
-- [License](#-license)
 
 ---
 
@@ -78,9 +76,8 @@ Traditional weather tracking setups often rely on local-only networks (LAN), req
 ### Data Pipeline Walkthrough:
 1. **Sensing & Calibration**: The ESP32 reads physical environmental transducers every 3 seconds. Raw ADC and I2C signals are calibrated and packaged into a JSON payload.
 2. **Secure Transport**: The telemetry packet is transmitted via **MQTTS (TLS v1.2/1.3)** over TCP port `8883` to the Cloud Broker.
-3. **Ingestion & Validation**: The backend ingestion service validates incoming frames against JSON schema rules, calculates derived parameters (such as **Heat Index** and **Dew Point**), and checks for threshold anomalies.
-4. **Persistence & Broadcasting**: Validated telemetry is persisted to **MongoDB Atlas** while simultaneously being broadcast to all connected web clients through active **WebSockets (`telemetry:new`)**.
-5. **Real-Time Presentation**: React components update gauges, charts, and alert ribbons dynamically with zero page reloads.
+3. **Persistence & Broadcasting**: Validated telemetry is persisted to **MongoDB Atlas** while simultaneously being broadcast to all connected web clients through active **WebSockets (`telemetry:new`)**.
+4. **Real-Time Presentation**: React components update gauges, charts, and alert ribbons dynamically with zero page reloads.
 
 ---
 
@@ -103,10 +100,11 @@ Traditional weather tracking setups often rely on local-only networks (LAN), req
 - **Statistical Aggregations**: Automatic computation of `Min`, `Max`, `Average`, and standard deviation.
 - **One-Click CSV Export**: Download timestamped historical telemetry datasets for laboratory reporting and statistical analysis.
 
-### 🛡️ 4. Role-Based Access Control (RBAC) & Security
-- **Guest / Public Mode**: Immediate read-only access to live telemetry, conditions, and analytics without friction.
-- **Administrator Portal**: Secure JWT authentication with Bcrypt password hashing to configure threshold limits, manage node registrations, and resolve system alerts.
-- **Transport Security**: Enforced TLS 8883 encryption on MQTT and HTTPS/WSS on web clients.
+### 🛡️ 4. Role-Based Access Control (RBAC) & Authentication
+- **Sign In / Sign Up Required**: The dashboard is fully protected. All users must register or log in at `/auth` before accessing any part of the platform. Unauthenticated access attempts to `/dashboard/*` are automatically redirected to the sign-in portal.
+- **User Role (Registered Users)**: Sign in or create a new account using the Sign Up tab. Authenticated users have read-only access to live telemetry, sensor conditions, interactive time-series analytics, and CSV dataset downloads.
+- **Admin Role (Station Administrators)**: Authenticate with provisioned administrative credentials. Administrators possess elevated permissions to acknowledge and resolve active alerts, modify warning/critical threshold limits, and manage connected sensor hardware nodes.
+- **Transport & Identity Security**: Enforced TLS 8883 encryption on MQTT, HTTPS/WSS on the web application, JWT token verification, and Bcrypt password hashing.
 
 ### 🎨 5. Modern 100% Light Theme UI & Navigation
 - **Light Theme Design**: Specially tailored `#F5FAFF` / `#EAF4FF` aesthetic with crisp cards, high-contrast typography, and zero dark theme styling across all elements.
@@ -437,7 +435,7 @@ For complete step-by-step instructions with screenshots and environment checklis
 
 ## 👥 Academic Credits & Contributors
 
-Developed as part of **IT303: Internet of Things** at the **Department of Information Technology, National Institute of Technology Karnataka (NITK), Surathkal**.
+Developed as part of **IT303: Software Engineering** at the **Department of Information Technology, National Institute of Technology Karnataka (NITK), Surathkal**.
 
 ### Project Team:
 - **C Thanmai Sai** (NITK Surathkal)
@@ -448,9 +446,3 @@ Developed as part of **IT303: Internet of Things** at the **Department of Inform
 - **Prof. Jaidhar C. D.**  
   *Professor, Department of Information Technology*  
   *National Institute of Technology Karnataka, Surathkal*
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License** — feel free to use, modify, and distribute for academic, scientific, and open-source applications.

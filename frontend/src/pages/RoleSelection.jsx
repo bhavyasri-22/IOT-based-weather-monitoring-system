@@ -38,14 +38,14 @@ export default function RoleSelection() {
           Select Your Role
         </h1>
         <p className="mt-2 text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-          Choose an access role to proceed. Users have direct read-only access to weather telemetry; administrators must authenticate with provisioned credentials.
+          Choose an access role to proceed. All users and administrators must sign in or register to access the weather monitoring platform.
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2 text-left">
-          {/* USER CARD: Directly go to dashboard */}
+          {/* USER CARD: Go to User sign-in / registration */}
           <button
             type="button"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/auth?role=user')}
             className="group relative rounded-2xl border p-6 transition-all hover:scale-[1.02] active:scale-[0.99] hover:shadow-lg cursor-pointer bg-white hover:bg-blue-50/80"
             style={{ borderColor: '#BBDEFB' }}
           >
@@ -57,10 +57,10 @@ export default function RoleSelection() {
               <ArrowRight size={16} className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
             </h2>
             <p className="mt-1 text-xs text-slate-600 leading-normal">
-              Direct access to live weather telemetry, sensor conditions, and trend graphs in read-only mode.
+              Sign in or create an account to view live weather telemetry, sensor conditions, and trend graphs in read-only mode.
             </p>
             <div className="mt-4 pt-3 border-t border-blue-100 text-[11px] font-bold text-blue-700 flex items-center gap-1">
-              Direct Dashboard Access &rarr;
+              User Sign In / Sign Up &rarr;
             </div>
           </button>
 

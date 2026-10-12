@@ -1,5 +1,5 @@
 # NATIONAL INSTITUTE OF TECHNOLOGY KARNATAKA, SURATHKAL
-### Department of Information Technology (IT303 – Internet of Things)
+### Department of Information Technology (IT303 – Software Engineering)
 
 ---
 
@@ -334,7 +334,7 @@ The application layout includes several persistent UI controls:
 For technical issues, sensor recalibration requests, or system enhancement proposals, please reach out to the project team:
 
 * **Department:** Department of Information Technology, National Institute of Technology Karnataka (NITK), Surathkal, Mangalore – 575025.
-* **Course:** IT303 – Internet of Things
+* **Course:** IT303 – Software Engineering
 * **Project Developers:** C Thanmai Sai, Mili Dholaria, Thota Bhavya Sri
 * **Project Guide:** Prof. Jaidhar C. D.
 * **Platform Deployed URL:** [https://iot-based-weather-monitoring-system.vercel.app/](https://iot-based-weather-monitoring-system.vercel.app/)
