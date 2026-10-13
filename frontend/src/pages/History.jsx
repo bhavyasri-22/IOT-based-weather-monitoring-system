@@ -8,13 +8,13 @@ import { Download, Clock, Thermometer, Droplets, Gauge, Wind, Sparkles, Sun, Clo
 import { sanitizeRain } from '../utils/weatherUtils';
 
 const METRICS = [
-  { key: 'temperature', label: 'Temperature', unit: '°C', color: '#D97706', icon: Thermometer },
-  { key: 'humidity', label: 'Humidity', unit: '%', color: '#0284C7', icon: Droplets },
-  { key: 'pressure', label: 'Pressure', unit: 'hPa', color: '#2563EB', icon: Gauge },
-  { key: 'wind_speed', label: 'Wind Speed', unit: 'km/h', color: '#059669', icon: Wind },
-  { key: 'gas_aqi', label: 'Air Quality (AQI)', unit: 'AQI', color: '#7C3AED', icon: Sparkles },
-  { key: 'rain_intensity', label: 'Precipitation', unit: 'mm/h', color: '#0891B2', icon: CloudRain },
-  { key: 'light_lux', label: 'Illuminance (Lux)', unit: 'lx', color: '#D97706', icon: Sun },
+  { key: 'temperature', label: 'Temperature', unit: '°C', color: '#D97706', icon: Thermometer, installed: true },
+  { key: 'humidity', label: 'Humidity', unit: '%', color: '#0284C7', icon: Droplets, installed: true },
+  { key: 'pressure', label: 'Pressure', unit: 'hPa', color: '#2563EB', icon: Gauge, installed: true },
+  { key: 'rain_intensity', label: 'Precipitation', unit: 'mm/h', color: '#0891B2', icon: CloudRain, installed: true },
+  { key: 'gas_aqi', label: 'Gas Reading (Raw MQ-135)', unit: 'raw', color: '#7C3AED', icon: Sparkles, installed: false, statusLabel: 'Uncalibrated / Unavailable' },
+  { key: 'wind_speed', label: 'Wind Speed', unit: 'km/h', color: '#059669', icon: Wind, installed: false, statusLabel: 'Not Installed' },
+  { key: 'light_lux', label: 'Ambient Light (BH1750)', unit: 'lx', color: '#D97706', icon: Sun, installed: false, statusLabel: 'Not Installed' },
 ];
 
 const RANGES = [
@@ -53,28 +53,14 @@ export default function History({ deviceId = 'ESP32_SURATHKAL_01' }) {
           });
         setData(points);
       } else {
-        generateFallback();
+        setData([]);
       }
     } catch {
-      generateFallback();
+      setData([]);
     } finally {
       setLoading(false);
     }
   }, [deviceId, metric, range]);
-
-  function generateFallback() {
-    const base = metric === 'temperature' ? 28.4 : metric === 'humidity' ? 74 : metric === 'pressure' ? 1008 : metric === 'wind_speed' ? 12 : 42;
-    const pts = [];
-    for (let i = 24; i >= 0; i--) {
-      const d = new Date(Date.now() - i * 3600000);
-      pts.push({
-        timestamp: d.toISOString(),
-        time: d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        value: Number((base + (Math.sin(i * 0.5) * 0.1 * base)).toFixed(2)),
-      });
-    }
-    setData(pts);
-  }
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -125,7 +111,7 @@ export default function History({ deviceId = 'ESP32_SURATHKAL_01' }) {
           >
             {METRICS.map((m) => (
               <option key={m.key} value={m.key} className="bg-white text-slate-800">
-                {m.label} ({m.unit})
+                {m.label} {m.installed ? `(${m.unit})` : `— [${m.statusLabel}]`}
               </option>
             ))}
           </select>
@@ -187,9 +173,23 @@ export default function History({ deviceId = 'ESP32_SURATHKAL_01' }) {
           <span className="text-xs text-slate-500 font-mono">{data.length} sample points</span>
         </div>
 
-        <div className="h-72 w-full pt-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+        {data.length === 0 ? (
+          <div className="h-72 w-full flex flex-col items-center justify-center text-center p-8 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 mb-3 shadow-xs">
+              <Icon size={22} />
+            </div>
+            <h4 className="text-sm font-bold text-slate-800">No Recorded Measurements</h4>
+            <p className="text-xs text-slate-500 max-w-md mt-1.5 leading-relaxed">
+              {!metricConf.installed
+                ? `${metricConf.label} is an uninstalled hardware channel and produces null values.`
+                : `No sensor telemetry recorded for ${metricConf.label} in the selected interval.`
+              }
+            </p>
+          </div>
+        ) : (
+          <div className="h-72 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="histGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor={metricConf.color} stopOpacity={0.3} />

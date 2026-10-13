@@ -145,28 +145,54 @@ router.post('/password-reset/request', async (req, res) => {
       return res.json({ success: true, data: { message }, error: null });
     }
 
-    const user = await User.findOne({ email });
     if (user) {
-      const token = user.setPasswordResetToken();
       const deliveryUrl = process.env.PASSWORD_RESET_DELIVERY_WEBHOOK_URL;
-      if (deliveryUrl && typeof fetch === 'function') {
-        const resetUrl = `${process.env.PASSWORD_RESET_URL || 'http://localhost:5173/auth'}?token=${encodeURIComponent(token)}`;
-        const delivery = await fetch(deliveryUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: user.email, resetUrl })
-        });
-        if (delivery.ok) {
-          await user.save();
-        } else {
+      const isProduction = process.env.NODE_ENV === 'production';
+
+      if (isProduction) {
+        if (!deliveryUrl) {
+          console.error('[Password Reset Security] In production, PASSWORD_RESET_DELIVERY_WEBHOOK_URL is required. Refusing to create or store reset token without secure delivery channel.');
           user.clearPasswordResetToken();
+          await user.save();
+        } else if (typeof fetch === 'function') {
+          const token = user.setPasswordResetToken();
+          const resetUrl = `${process.env.PASSWORD_RESET_URL || 'http://localhost:5173/auth'}?token=${encodeURIComponent(token)}`;
+          const delivery = await fetch(deliveryUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: user.email, resetUrl })
+          });
+          if (delivery.ok) {
+            await user.save();
+          } else {
+            user.clearPasswordResetToken();
+            await user.save();
+          }
         }
       } else {
-        // Safe development/testing fallback: save token to DB so flow functions
-        await user.save();
-        const testResetUrl = `${process.env.PASSWORD_RESET_URL || 'http://localhost:5173/auth'}?token=${encodeURIComponent(token)}`;
-        console.log(`[Password Reset Dev Info] Token generated for ${user.email}: ${token}`);
-        console.log(`[Password Reset Dev Info] Reset URL: ${testResetUrl}`);
+        // Non-production (local development only)
+        if (deliveryUrl && typeof fetch === 'function') {
+          const token = user.setPasswordResetToken();
+          const resetUrl = `${process.env.PASSWORD_RESET_URL || 'http://localhost:5173/auth'}?token=${encodeURIComponent(token)}`;
+          const delivery = await fetch(deliveryUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: user.email, resetUrl })
+          });
+          if (delivery.ok) {
+            await user.save();
+          } else {
+            user.clearPasswordResetToken();
+            await user.save();
+          }
+        } else {
+          // Deliberate local testing fallback only
+          const token = user.setPasswordResetToken();
+          await user.save();
+          const testResetUrl = `${process.env.PASSWORD_RESET_URL || 'http://localhost:5173/auth'}?token=${encodeURIComponent(token)}`;
+          console.log(`[Password Reset Dev Info] Token generated for ${user.email}: ${token}`);
+          console.log(`[Password Reset Dev Info] Reset URL: ${testResetUrl}`);
+        }
       }
     }
     return res.json({ success: true, data: { message }, error: null });

@@ -84,9 +84,9 @@ router.get('/unread-count', async (req, res) => {
 
 /**
  * PUT /api/alerts/mark-all-read
- * Marks all active unread alerts as read
+ * Marks all active unread alerts as read (Requires authenticated user)
  */
-router.put('/mark-all-read', async (req, res) => {
+router.put('/mark-all-read', authenticateJWT, async (req, res) => {
   try {
     const result = await AlertLog.updateMany(
       { status: 'active', $or: [{ is_read: false }, { is_read: { $exists: false } }] },
@@ -109,9 +109,9 @@ router.put('/mark-all-read', async (req, res) => {
 
 /**
  * PUT /api/alerts/:alertId/read
- * Marks a specific alert as read
+ * Marks a specific alert as read (Requires authenticated user)
  */
-router.put('/:alertId/read', async (req, res) => {
+router.put('/:alertId/read', authenticateJWT, async (req, res) => {
   try {
     const alert = await AlertLog.findById(req.params.alertId);
     if (!alert) {

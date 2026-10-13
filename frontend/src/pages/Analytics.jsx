@@ -23,13 +23,13 @@ import {
 import { telemetryApi } from '../api/client';
 
 const METRICS = [
-  { id: 'temperature', label: 'Temperature', unit: '°C', color: '#D97706', icon: Thermometer },
-  { id: 'humidity', label: 'Humidity', unit: '%', color: '#0284C7', icon: Droplets },
-  { id: 'pressure', label: 'Pressure', unit: 'hPa', color: '#2563EB', icon: Gauge },
-  { id: 'wind_speed', label: 'Wind Speed', unit: 'km/h', color: '#059669', icon: Wind },
-  { id: 'gas_aqi', label: 'Air Quality', unit: 'AQI', color: '#7C3AED', icon: Sparkles },
-  { id: 'rain_intensity', label: 'Rainfall', unit: 'mm/h', color: '#0891B2', icon: CloudRain },
-  { id: 'light_lux', label: 'Ambient Light', unit: 'lx', color: '#D97706', icon: Sun },
+  { id: 'temperature', label: 'Temperature', unit: '°C', color: '#D97706', icon: Thermometer, installed: true },
+  { id: 'humidity', label: 'Humidity', unit: '%', color: '#0284C7', icon: Droplets, installed: true },
+  { id: 'pressure', label: 'Pressure', unit: 'hPa', color: '#2563EB', icon: Gauge, installed: true },
+  { id: 'rain_intensity', label: 'Precipitation', unit: 'mm/h', color: '#0891B2', icon: CloudRain, installed: true },
+  { id: 'gas_aqi', label: 'Gas Reading (Raw MQ-135)', unit: 'raw', color: '#7C3AED', icon: Sparkles, installed: false, statusLabel: 'Uncalibrated / Unavailable' },
+  { id: 'wind_speed', label: 'Wind Speed', unit: 'km/h', color: '#059669', icon: Wind, installed: false, statusLabel: 'Not Installed' },
+  { id: 'light_lux', label: 'Ambient Light', unit: 'lx', color: '#D97706', icon: Sun, installed: false, statusLabel: 'Not Installed' },
 ];
 
 export default function Analytics({ deviceId = 'ESP32_SURATHKAL_01', telemetry }) {
@@ -47,36 +47,23 @@ export default function Analytics({ deviceId = 'ESP32_SURATHKAL_01', telemetry }
       const res = await telemetryApi.history(deviceId, metric, range, 120);
       const readings = res?.data || res || [];
       if (Array.isArray(readings) && readings.length > 0) {
-        const mapped = readings.map((r) => ({
-          time: new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          val: Number(Number(r.value).toFixed(2)),
-          raw: r.timestamp,
-        }));
+        const mapped = readings
+          .filter((r) => r.value != null || r[metric] != null)
+          .map((r) => ({
+            time: new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            val: Number(Number(r.value ?? r[metric]).toFixed(2)),
+            raw: r.timestamp,
+          }));
         setChartData(mapped);
       } else {
-        generateSynthesizedSeries(metric, range);
+        setChartData([]);
       }
     } catch {
-      generateSynthesizedSeries(metric, range);
+      setChartData([]);
     } finally {
       setLoading(false);
     }
   }, [deviceId, metric, range]);
-
-  function generateSynthesizedSeries(met, rng) {
-    const count = 24;
-    const base = met === 'temperature' ? 28.4 : met === 'humidity' ? 74 : met === 'pressure' ? 1008 : met === 'wind_speed' ? 12 : met === 'gas_aqi' ? 42 : met === 'rain_intensity' ? 2.4 : 742;
-    const points = [];
-    for (let i = count; i >= 0; i--) {
-      const d = new Date(Date.now() - i * 3600000);
-      const noise = (Math.sin(i * 0.4) * 0.1 + (Math.random() - 0.5) * 0.05) * base;
-      points.push({
-        time: d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        val: Number((base + noise).toFixed(2)),
-      });
-    }
-    setChartData(points);
-  }
 
   useEffect(() => {
     loadData();
@@ -160,20 +147,31 @@ export default function Analytics({ deviceId = 'ESP32_SURATHKAL_01', telemetry }
             <button
               key={m.id}
               onClick={() => setMetric(m.id)}
-              className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+              className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer relative ${
                 isSel
                   ? 'bg-blue-50/80 border-blue-400 shadow-xs ring-1 ring-blue-300'
                   : 'bg-white/90 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
               }`}
             >
-              <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center mb-2"
-                style={{ backgroundColor: `${m.color}15`, color: m.color, border: `1px solid ${m.color}30` }}
-              >
-                <MIcon size={14} />
+              <div className="flex items-center justify-between mb-2">
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: `${m.color}15`, color: m.color, border: `1px solid ${m.color}30` }}
+                >
+                  <MIcon size={14} />
+                </div>
+                {!m.installed && (
+                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
+                    Slot
+                  </span>
+                )}
               </div>
-              <span className={`text-xs font-semibold block ${isSel ? 'text-blue-900' : 'text-slate-900'}`}>{m.label}</span>
-              <span className="text-[10px] text-slate-500 font-mono">{m.unit}</span>
+              <span className={`text-xs font-semibold block leading-tight ${isSel ? 'text-blue-900' : 'text-slate-900'}`}>
+                {m.label}
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono mt-0.5 block">
+                {m.installed ? m.unit : m.statusLabel}
+              </span>
             </button>
           );
         })}
@@ -210,10 +208,24 @@ export default function Analytics({ deviceId = 'ESP32_SURATHKAL_01', telemetry }
           </div>
         </div>
 
-        {/* Large Analytics Chart */}
-        <div className="h-96 w-full pt-4">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+        {/* Large Analytics Chart or Empty State */}
+        {chartData.length === 0 ? (
+          <div className="h-96 w-full flex flex-col items-center justify-center text-center p-8 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 mb-3 shadow-xs">
+              <Icon size={22} />
+            </div>
+            <h4 className="text-sm font-bold text-slate-800">No Recorded Measurements</h4>
+            <p className="text-xs text-slate-500 max-w-md mt-1.5 leading-relaxed">
+              {!activeCfg.installed
+                ? `${activeCfg.label} is an uninstalled slot channel on the physical hardware and produces null telemetry readings.`
+                : `No sensor telemetry points recorded for ${activeCfg.label} across the selected ${range} interval. Measurements will appear live once ingested.`
+              }
+            </p>
+          </div>
+        ) : (
+          <div className="h-96 w-full pt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="analyticsGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor={activeCfg.color} stopOpacity={0.35} />
