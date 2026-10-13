@@ -68,9 +68,9 @@ Choose any public cloud MQTT provider (e.g., [HiveMQ Cloud](https://www.hivemq.c
 
 ---
 
-### Step 3: Deploy Backend Service (e.g. Render / Railway / Docker / VPS)
+### Step 3: Deploy Backend Service (Render / Railway / VPS)
 
-#### Option A: Deploying on Render / Railway
+#### Deploying on Render or Railway
 1. Connect your GitHub repository.
 2. Set **Root Directory** to `backend`.
 3. Set **Build Command** to `npm install`.
@@ -87,12 +87,6 @@ Choose any public cloud MQTT provider (e.g., [HiveMQ Cloud](https://www.hivemq.c
 | `JWT_SECRET` | `generate_a_random_64_char_hex_secret` | Signs auth tokens |
 | `DEVICE_API_KEY` | `generate_a_secure_device_key` | Hardware REST fallback key |
 | `CORS_ORIGIN` | `https://your-weather-dashboard.vercel.app` | Allowed frontend URL |
-
-#### Option B: Deploying with Docker
-```bash
-# Build and launch with docker-compose.prod.yml
-docker compose -f docker-compose.prod.yml up -d
-```
 
 ---
 
