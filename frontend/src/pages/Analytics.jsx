@@ -263,7 +263,8 @@ export default function Analytics({ deviceId = 'ESP32_SURATHKAL_01', telemetry }
             </AreaChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      )}
+    </div>
     </motion.div>
   );
 }

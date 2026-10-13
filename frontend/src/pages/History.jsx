@@ -227,7 +227,8 @@ export default function History({ deviceId = 'ESP32_SURATHKAL_01' }) {
             </AreaChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      )}
+    </div>
 
       {/* Raw Data Table */}
       {data.length > 0 && (
