@@ -146,53 +146,72 @@ router.post('/password-reset/request', async (req, res) => {
     }
 
     if (user) {
-      const deliveryUrl = process.env.PASSWORD_RESET_DELIVERY_WEBHOOK_URL;
+      const hasDeliveryChannel = Boolean(process.env.RESEND_API_KEY || process.env.PASSWORD_RESET_DELIVERY_WEBHOOK_URL);
       const isProduction = process.env.NODE_ENV === 'production';
 
-      if (isProduction) {
-        if (!deliveryUrl) {
-          console.error('[Password Reset Security] In production, PASSWORD_RESET_DELIVERY_WEBHOOK_URL is required. Refusing to create or store reset token without secure delivery channel.');
+      if (isProduction && !hasDeliveryChannel) {
+        console.error('[Password Reset Security] In production, RESEND_API_KEY or PASSWORD_RESET_DELIVERY_WEBHOOK_URL is required. Refusing to create or store reset token without secure delivery channel.');
+        user.clearPasswordResetToken();
+        await user.save();
+      } else if (hasDeliveryChannel) {
+        const token = user.setPasswordResetToken();
+        const resetUrl = `${process.env.PASSWORD_RESET_URL || 'http://localhost:5173/auth'}?token=${encodeURIComponent(token)}`;
+        
+        let sent = false;
+        try {
+          if (process.env.RESEND_API_KEY) {
+            const fromEmail = process.env.RESEND_FROM_EMAIL || 'IoT Weather Monitoring <onboarding@resend.dev>';
+            const resendRes = await fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                from: fromEmail,
+                to: [user.email],
+                subject: 'Reset Your Password – IoT Weather Monitoring System',
+                html: `
+                  <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; border: 1px solid #E2E8F0; border-radius: 12px; background-color: #F8FAFC;">
+                    <h2 style="color: #0F172A; margin-bottom: 12px;">Password Reset Request</h2>
+                    <p style="color: #475569; font-size: 14px; line-height: 1.5;">Hello,</p>
+                    <p style="color: #475569; font-size: 14px; line-height: 1.5;">A password reset was requested for your account on the <strong>IoT Weather Monitoring System</strong>. Click the button below to choose a new password:</p>
+                    <p style="margin: 24px 0;">
+                      <a href="${resetUrl}" style="background-color: #1976D2; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">Reset Password</a>
+                    </p>
+                    <p style="color: #64748B; font-size: 12px; line-height: 1.4;">Or copy and paste this URL into your browser:<br/><a href="${resetUrl}" style="color: #1976D2;">${resetUrl}</a></p>
+                    <p style="color: #94A3B8; font-size: 11px; margin-top: 24px; border-top: 1px solid #E2E8F0; padding-top: 12px;">This link expires in 15 minutes. If you did not request this, you can safely ignore this email.</p>
+                  </div>
+                `
+              })
+            });
+            sent = resendRes.ok;
+          } else if (process.env.PASSWORD_RESET_DELIVERY_WEBHOOK_URL) {
+            const webhookRes = await fetch(process.env.PASSWORD_RESET_DELIVERY_WEBHOOK_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: user.email, resetUrl })
+            });
+            sent = webhookRes.ok;
+          }
+        } catch (err) {
+          console.error('[Password Reset Dispatch Error]:', err.message);
+          sent = false;
+        }
+
+        if (sent) {
+          await user.save();
+        } else {
           user.clearPasswordResetToken();
           await user.save();
-        } else if (typeof fetch === 'function') {
-          const token = user.setPasswordResetToken();
-          const resetUrl = `${process.env.PASSWORD_RESET_URL || 'http://localhost:5173/auth'}?token=${encodeURIComponent(token)}`;
-          const delivery = await fetch(deliveryUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: user.email, resetUrl })
-          });
-          if (delivery.ok) {
-            await user.save();
-          } else {
-            user.clearPasswordResetToken();
-            await user.save();
-          }
         }
       } else {
-        // Non-production (local development only)
-        if (deliveryUrl && typeof fetch === 'function') {
-          const token = user.setPasswordResetToken();
-          const resetUrl = `${process.env.PASSWORD_RESET_URL || 'http://localhost:5173/auth'}?token=${encodeURIComponent(token)}`;
-          const delivery = await fetch(deliveryUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: user.email, resetUrl })
-          });
-          if (delivery.ok) {
-            await user.save();
-          } else {
-            user.clearPasswordResetToken();
-            await user.save();
-          }
-        } else {
-          // Deliberate local testing fallback only
-          const token = user.setPasswordResetToken();
-          await user.save();
-          const testResetUrl = `${process.env.PASSWORD_RESET_URL || 'http://localhost:5173/auth'}?token=${encodeURIComponent(token)}`;
-          console.log(`[Password Reset Dev Info] Token generated for ${user.email}: ${token}`);
-          console.log(`[Password Reset Dev Info] Reset URL: ${testResetUrl}`);
-        }
+        // Safe development/testing fallback (NODE_ENV !== 'production' only)
+        const token = user.setPasswordResetToken();
+        await user.save();
+        const testResetUrl = `${process.env.PASSWORD_RESET_URL || 'http://localhost:5173/auth'}?token=${encodeURIComponent(token)}`;
+        console.log(`[Password Reset Dev Info] Token generated for ${user.email}: ${token}`);
+        console.log(`[Password Reset Dev Info] Reset URL: ${testResetUrl}`);
       }
     }
     return res.json({ success: true, data: { message }, error: null });
