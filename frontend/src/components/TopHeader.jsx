@@ -264,7 +264,7 @@ export default function TopHeader({
               <UserCheck size={14} className="text-emerald-600" />
             )}
             <span className="text-xs font-semibold text-slate-800 truncate max-w-[100px]">
-              {user?.email ? user.email.split('@')[0] : (user?.username || 'User')}
+              {user?.username || (user?.email ? user.email.split('@')[0] : 'User')}
             </span>
           </div>
         </div>

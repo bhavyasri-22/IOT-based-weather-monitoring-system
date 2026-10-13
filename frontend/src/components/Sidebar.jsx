@@ -170,11 +170,11 @@ export default function Sidebar({
               <div className="flex items-center justify-between pt-1">
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="w-7 h-7 rounded-lg bg-slate-200 flex items-center justify-center text-slate-700 text-xs font-bold">
-                    {user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
+                    {(user?.username || user?.email || 'U').charAt(0).toUpperCase()}
                   </div>
                   <div className="truncate">
                     <p className="text-xs font-semibold text-slate-800 truncate">
-                      {user?.email ? user.email.split('@')[0] : 'Operator'}
+                      {user?.username || (user?.email ? user.email.split('@')[0] : 'User')}
                     </p>
                     <p className="text-[10px] text-slate-500 capitalize">{user?.role || 'operator'}</p>
                   </div>
