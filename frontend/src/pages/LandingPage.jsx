@@ -132,17 +132,21 @@ export default function LandingPage() {
         </motion.button>
       </main>
 
-      {/* Bottom navigation button to go to top of page */}
-      <div className="pb-8 flex justify-center">
+      {/* ── Footer ───────────────────────────────────────────── */}
+      <footer className="w-full pb-8 pt-6 flex flex-col items-center gap-3 text-center border-t border-blue-200/50 bg-white/40 backdrop-blur-xs">
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/90 border border-slate-200 text-slate-700 hover:text-blue-600 hover:border-blue-300 shadow-sm hover:shadow transition-all text-xs font-semibold"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/90 border border-slate-200 text-slate-700 hover:text-blue-600 hover:border-blue-300 shadow-sm hover:shadow transition-all text-xs font-semibold cursor-pointer active:scale-95"
           aria-label="Back to top"
         >
           <ArrowUp size={14} />
           <span>Back to Top</span>
         </button>
-      </div>
+
+        <p className="text-xs text-slate-600 font-medium">
+          © {new Date().getFullYear()} IoT – Weather Monitoring System. All Rights Reserved.
+        </p>
+      </footer>
     </div>
   );
 }
