@@ -291,6 +291,15 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // Capture the PREVIOUS login time before overwriting it, so the
+    // frontend can display "last logged in at <previous session time>"
+    const previousLoginAt = user.last_login_at || null;
+
+    // Persist previous login time alongside the new current login time
+    user.previous_login_at = previousLoginAt;
+    user.last_login_at = new Date();
+    await user.save();
+
     const token = generateToken(user);
 
     res.json({
@@ -300,7 +309,8 @@ router.post('/login', async (req, res) => {
           id: user._id,
           username: user.username,
           email: user.email,
-          role: user.role
+          role: user.role,
+          previous_login_at: previousLoginAt   // previous session — null on very first login
         },
         token
       },

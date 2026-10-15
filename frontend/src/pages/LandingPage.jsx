@@ -22,16 +22,16 @@ export default function LandingPage() {
             <CloudSun size={22} />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-blue-950 tracking-tight leading-none">
+            <h2 className="text-base font-bold text-blue-950 tracking-tight leading-none">
               IoT Weather Monitoring
             </h2>
-            <p className="text-[11px] font-semibold text-blue-600 mt-0.5">
+            <p className="text-xs font-semibold text-blue-600 mt-0.5">
               IT303 Software Engineering
             </p>
           </div>
         </div>
 
-        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-white/80 border border-blue-200 text-blue-800 shadow-sm">
+        <span className="text-sm font-semibold px-4 py-1.5 rounded-full bg-white/80 border border-blue-200 text-blue-800 shadow-sm">
           NIT Karnataka
         </span>
       </header>
@@ -43,14 +43,14 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 text-xs font-bold border shadow-sm"
+          className="inline-flex items-center gap-2 px-5 py-2 rounded-full mb-8 text-sm font-bold border shadow-sm"
           style={{
             background: 'rgba(255, 255, 255, 0.85)',
             borderColor: '#90CAF9',
             color: '#1565C0',
           }}
         >
-          <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+          <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
           IT303 Software Engineering · NIT Karnataka
         </motion.div>
 
@@ -59,7 +59,7 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-tight mb-5"
+          className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-tight mb-6"
           style={{ color: '#0A2540' }}
         >
           IoT-Based Weather{' '}
@@ -71,7 +71,7 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="text-base sm:text-lg max-w-2xl mb-8 leading-relaxed font-normal"
+          className="text-lg sm:text-xl max-w-2xl mb-10 leading-relaxed font-normal"
           style={{ color: '#2C5282' }}
         >
           A real-time environmental monitoring platform developed to collect, process,
@@ -84,19 +84,19 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.28 }}
-          className="mb-8 px-6 py-4 rounded-2xl max-w-xl w-full border shadow-sm"
+          className="mb-10 px-7 py-5 rounded-2xl max-w-xl w-full border shadow-sm"
           style={{
             background: 'rgba(255, 255, 255, 0.9)',
             borderColor: '#BBDEFB',
           }}
         >
-          <p className="text-[11px] font-bold uppercase tracking-wider mb-2 text-blue-600">
+          <p className="text-xs font-bold uppercase tracking-wider mb-3 text-blue-600">
             Developed By
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mb-2">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 mb-3">
             {TEAM.map((name, i) => (
               <React.Fragment key={name}>
-                <span className="text-sm font-semibold text-blue-950">
+                <span className="text-base font-semibold text-blue-950">
                   {name}
                 </span>
                 {i < TEAM.length - 1 && (
@@ -105,7 +105,7 @@ export default function LandingPage() {
               </React.Fragment>
             ))}
           </div>
-          <p className="text-xs text-slate-600">
+          <p className="text-sm text-slate-600">
             Part of <span className="font-semibold text-blue-900">IT303 Software Engineering Course</span>
             {' '}·{' '}
             Under the guidance of{' '}
@@ -121,14 +121,14 @@ export default function LandingPage() {
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={() => navigate('/choose-access')}
-          className="inline-flex items-center gap-3 px-8 py-3.5 rounded-2xl text-white font-bold text-base shadow-xl transition-all cursor-pointer"
+          className="inline-flex items-center gap-3 px-10 py-4 rounded-2xl text-white font-bold text-lg shadow-xl transition-all cursor-pointer"
           style={{
             background: 'linear-gradient(135deg, #1976D2 0%, #0D47A1 100%)',
             boxShadow: '0 8px 24px rgba(25, 118, 210, 0.35)',
           }}
         >
           Check Out Now
-          <ArrowRight size={19} />
+          <ArrowRight size={22} />
         </motion.button>
       </main>
 
@@ -143,7 +143,7 @@ export default function LandingPage() {
           <span>Back to Top</span>
         </button>
 
-        <p className="text-xs text-slate-600 font-medium">
+        <p className="text-sm text-slate-600 font-medium">
           © {new Date().getFullYear()} IoT – Weather Monitoring System. All Rights Reserved.
         </p>
       </footer>

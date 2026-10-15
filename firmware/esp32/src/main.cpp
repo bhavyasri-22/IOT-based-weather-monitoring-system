@@ -174,9 +174,9 @@ void publishTelemetry() {
         temp > -40.0 && temp < 85.0 &&
         press > 300.0 && press < 1250.0 &&
         hum >= 0.0 && hum <= 100.0) {
-      doc["temperature"] = serialized(String(temp, 2));
-      doc["humidity"]    = serialized(String(hum, 2));
-      doc["pressure"]    = serialized(String(press, 2));
+      doc["temperature"] = temp;
+      doc["humidity"]    = hum;
+      doc["pressure"]    = press;
     } else {
       doc["temperature"] = nullptr;
       doc["humidity"]    = nullptr;
@@ -201,7 +201,7 @@ void publishTelemetry() {
   } else {
     rainRate = 0.0; // Dry surface
   }
-  doc["rain_intensity"] = serialized(String(rainRate, 1));
+  doc["rain_intensity"] = rainRate;
 
   doc["gas_aqi"]    = nullptr; // MQ-135 (optional channel)
   doc["wind_speed"] = nullptr; // Anemometer (optional channel)
@@ -228,9 +228,7 @@ void publishTelemetry() {
     pushOfflineBuffer(payloadStr);
 
 #ifdef ENABLE_HTTPS_FALLBACK
-    if (ENABLE_HTTPS_FALLBACK) {
-      sendHttpsFallback(payloadStr);
-    }
+    sendHttpsFallback(payloadStr);
 #endif
   }
 }

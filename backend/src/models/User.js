@@ -38,6 +38,14 @@ const userSchema = new mongoose.Schema(
     password_reset_expires_at: {
       type: Date,
       default: null
+    },
+    last_login_at: {
+      type: Date,
+      default: null
+    },
+    previous_login_at: {
+      type: Date,
+      default: null
     }
   },
   {
